@@ -56,7 +56,7 @@ class PlatformManager {
       }
 
       // Aktif maç yoksa Galatasaray vs Fenerbahçe derbi maçını anında sahada başlat!
-      if (!window.matchEngine?.isActive) {
+      if (!window.matchEngine?.isActive && param !== 'no-auto') {
         this.launchQuickDerbyMatch();
       }
 
@@ -902,14 +902,14 @@ class PlatformManager {
     }
   }
 
-  closeGameModeSelector() {
+  closeGameModeSelector(skipLaunch = false) {
     const modal = document.getElementById('game-modes-modal');
     if (modal) {
       modal.style.display = 'none';
       modal.classList.add('hidden');
       modal.classList.remove('active');
     }
-    if (!window.matchEngine?.isActive) {
+    if (!skipLaunch && !window.matchEngine?.isActive) {
       this.launchCustomQuickMatch();
     }
   }
@@ -1066,8 +1066,8 @@ class PlatformManager {
       color: parseInt(awayTeam.colors[0].replace('#', '0x')) || 0x0c2461
     };
 
-    this.showView('game');
-    this.closeGameModeSelector();
+    this.showView('game', 'no-auto');
+    this.closeGameModeSelector(true);
 
     // Hava durumunu stadyuma uygula
     if (window.gameInstance && window.gameInstance.stadium && window.gameInstance.stadium.setWeather) {

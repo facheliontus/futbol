@@ -79,7 +79,8 @@ class Game {
 
     // 2. Kamera
     this.camera = new THREE.PerspectiveCamera(55, this.width / this.height, 0.1, 200);
-    this.setCameraBehindBall();
+    this.camera.position.set(0, 16.5, 18.0);
+    this.camera.lookAt(0, 0.8, -3.0);
 
     // 3. Renderer
     this.renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
