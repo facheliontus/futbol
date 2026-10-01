@@ -300,34 +300,156 @@ class Stadium {
     this.scene.add(eastStand);
   }
 
-  // REKLAM LED PANOLARI (Saha Kenarı)
+  // REKLAM LED PANOLARI (Saha Kenarı & Kale Arkası - FitBULLK Markalı Hareketli LED)
   createBanners() {
-    const bannerCanvas = document.createElement('canvas');
-    bannerCanvas.width = 1024;
-    bannerCanvas.height = 128;
-    const bctx = bannerCanvas.getContext('2d');
+    this.bannerCanvas = document.createElement('canvas');
+    this.bannerCanvas.width = 2048;
+    this.bannerCanvas.height = 256;
+    this.bctx = this.bannerCanvas.getContext('2d');
 
-    // Parlak neon stadyum reklamları
-    bctx.fillStyle = '#0a0e17';
-    bctx.fillRect(0, 0, 1024, 128);
+    // İlk çizim (Görsel yüklenene kadar anında görünen profesyonel LED tasarım)
+    this.drawBannerTexture(null);
 
-    bctx.font = 'bold 36px "Segoe UI", sans-serif';
-    bctx.fillStyle = '#00f2fe';
-    bctx.fillText('⚽ E-FOOTBALL PRO', 40, 75);
+    // FitBULLK Boğa Logosunu Yükle
+    const logoImg = new Image();
+    logoImg.crossOrigin = 'anonymous';
+    logoImg.src = 'assets/fitbullk.png';
+    logoImg.onload = () => {
+      this.drawBannerTexture(logoImg);
+      if (this.bannerTex) this.bannerTex.needsUpdate = true;
+    };
 
-    bctx.fillStyle = '#f1c40f';
-    bctx.fillText('🏆 CHAMPIONS LEAGUE', 430, 75);
+    this.bannerTex = new THREE.CanvasTexture(this.bannerCanvas);
+    this.bannerTex.wrapS = THREE.RepeatWrapping;
+    this.bannerTex.wrapT = THREE.RepeatWrapping;
+    this.bannerTex.repeat.set(3, 1);
 
-    bctx.fillStyle = '#ff007f';
-    bctx.fillText('⚡ GOLDEN BOOT', 830, 75);
+    const bannerMat = new THREE.MeshBasicMaterial({
+      map: this.bannerTex,
+      side: THREE.DoubleSide
+    });
 
-    const bannerTex = new THREE.CanvasTexture(bannerCanvas);
-    const bannerMat = new THREE.MeshBasicMaterial({ map: bannerTex });
-
-    // Kale arkası reklam panosu
-    const backBanner = new THREE.Mesh(new THREE.PlaneGeometry(42, 1.2), bannerMat);
-    backBanner.position.set(0, 0.6, -4.5);
+    // 1. Kale Arkası Büyük LED Reklam Panosu
+    const backBanner = new THREE.Mesh(new THREE.PlaneGeometry(54, 1.45), bannerMat);
+    backBanner.position.set(0, 0.72, -4.6);
     this.scene.add(backBanner);
+
+    // Pano Üst Neon Çerçeve Çizgisi (Kırmızı Kor Işıma)
+    const topTrimMat = new THREE.MeshBasicMaterial({ color: 0xff1744 });
+    const topTrim = new THREE.Mesh(new THREE.BoxGeometry(54.2, 0.05, 0.08), topTrimMat);
+    topTrim.position.set(0, 1.45, -4.59);
+    this.scene.add(topTrim);
+
+    // 2. Sol Saha Kenarı LED Panosu (Doğu Çizgisi)
+    const leftBanner = new THREE.Mesh(new THREE.PlaneGeometry(85, 1.45), bannerMat);
+    leftBanner.position.set(-33, 0.72, 30);
+    leftBanner.rotation.y = Math.PI / 2;
+    this.scene.add(leftBanner);
+
+    // 3. Sağ Saha Kenarı LED Panosu (Batı Çizgisi)
+    const rightBanner = new THREE.Mesh(new THREE.PlaneGeometry(85, 1.45), bannerMat);
+    rightBanner.position.set(33, 0.72, 30);
+    rightBanner.rotation.y = -Math.PI / 2;
+    this.scene.add(rightBanner);
+
+    this.ledBoards = [backBanner, leftBanner, rightBanner];
+  }
+
+  // FitBULLK Logo ve Tipografisini LED Canvas'a Çiz
+  drawBannerTexture(logoImg = null) {
+    const ctx = this.bctx;
+    if (!ctx) return;
+
+    // Koyu Karbon LED Panel Zemin
+    ctx.fillStyle = '#080b12';
+    ctx.fillRect(0, 0, 2048, 256);
+
+    // İnce LED Matris Noktaları (Stadyum ekranı ızgarası)
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.03)';
+    for (let x = 0; x < 2048; x += 8) {
+      ctx.fillRect(x, 0, 2, 256);
+    }
+    for (let y = 0; y < 256; y += 8) {
+      ctx.fillRect(0, y, 2048, 2);
+    }
+
+    // Üst ve Alt Kırmızı/Altın LED Neon Kenarlık
+    ctx.fillStyle = '#ff1744';
+    ctx.fillRect(0, 0, 2048, 6);
+    ctx.fillStyle = '#ffd700';
+    ctx.fillRect(0, 250, 2048, 6);
+
+    // 2 Tekrar Eden Ana FitBULLK Bloğu (1024px aralıkla)
+    for (let block = 0; block < 2; block++) {
+      const offsetX = block * 1024;
+
+      // 1. Logo Çizimi
+      if (logoImg && logoImg.complete && logoImg.naturalWidth > 0) {
+        ctx.save();
+        // Kırmızı ışıma efekti
+        ctx.shadowColor = '#ff1744';
+        ctx.shadowBlur = 20;
+        ctx.drawImage(logoImg, offsetX + 35, 28, 200, 200);
+        ctx.restore();
+      } else {
+        // Yedek şık boğa amblemi
+        ctx.save();
+        ctx.fillStyle = '#ff1744';
+        ctx.beginPath();
+        ctx.arc(offsetX + 135, 128, 85, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold 64px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('🐂', offsetX + 135, 130);
+        ctx.restore();
+      }
+
+      // 2. "FitBULLK" Tipografisi
+      ctx.save();
+      ctx.textAlign = 'left';
+      ctx.textBaseline = 'alphabetic';
+
+      // "Fit" (Parlak Beyaz / Buz Mavisi)
+      ctx.font = '900 86px "Segoe UI", "Impact", sans-serif';
+      ctx.fillStyle = '#ffffff';
+      ctx.shadowColor = 'rgba(0, 242, 254, 0.7)';
+      ctx.shadowBlur = 12;
+      ctx.fillText('Fit', offsetX + 255, 138);
+
+      const fitW = ctx.measureText('Fit').width;
+
+      // "BULL" (Ateş Kırmızısı & Neon Kor)
+      ctx.fillStyle = '#ff1744';
+      ctx.shadowColor = '#ff1744';
+      ctx.shadowBlur = 26;
+      ctx.fillText('BULL', offsetX + 255 + fitW, 138);
+
+      const bullW = ctx.measureText('BULL').width;
+
+      // "K" (Elektrik Sarısı / Altın)
+      ctx.fillStyle = '#ffd700';
+      ctx.shadowColor = '#ffd700';
+      ctx.shadowBlur = 22;
+      ctx.fillText('K', offsetX + 255 + fitW + bullW, 138);
+
+      ctx.shadowBlur = 0;
+
+      // Slogan / Alt Başlık
+      ctx.font = 'bold 22px "Segoe UI", sans-serif';
+      ctx.fillStyle = '#e2e8f0';
+      ctx.fillText('⚡ SUPREME ATHLETIC POWER & NUTRITION ⚡', offsetX + 260, 185);
+
+      // 3. LED Dinamik Enerji Okları (>>>)
+      ctx.font = '900 52px sans-serif';
+      ctx.fillStyle = '#ff1744';
+      ctx.shadowColor = '#ff1744';
+      ctx.shadowBlur = 18;
+      ctx.fillText('>>>', offsetX + 870, 138);
+
+      ctx.restore();
+    }
   }
 
   // IŞIKLANDIRMA (Stadyum Projektörleri)
@@ -369,6 +491,13 @@ class Stadium {
         this.netMesh.position.z = startZ;
       }
     }, 20);
+  }
+
+  // Her Kare LED Reklam Panosu Kayan Akış Animasyonu
+  update(dt) {
+    if (this.bannerTex) {
+      this.bannerTex.offset.x -= dt * 0.12; // Sürekli pürüzsüz sağdan sola akan LED şerit
+    }
   }
 }
 

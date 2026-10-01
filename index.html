@@ -30,9 +30,10 @@
       </div>
 
       <div class="hud-actions">
+        <button id="btn-online-mode-toggle" class="hud-btn online-mode-toggle-btn" style="display: none;" title="Oyun Modunu Değiştir">🔄 MOD DEĞİŞTİR: 🤝 2 KİŞİLİK EŞLİ HÜCUM</button>
         <button id="btn-sound-toggle" class="hud-btn" title="Sesi Aç / Kapat">🔊</button>
         <button id="btn-retry-shot" class="hud-btn" title="Pozisyonu Tekrar Dene (R)">🔄 TEKRAR VUR (R)</button>
-        <button id="btn-open-online" class="hud-btn online-pulse-btn" title="Arkadaşınla 1v1 Oyna">🌐 ONLINE OYNA</button>
+        <button id="btn-open-online" class="hud-btn online-pulse-btn" title="Arkadaşınla Oyna">🌐 ONLINE OYNA</button>
         <button id="btn-new-career" class="hud-btn" title="Yeni Kariyer Başlat">⭐ KARİYER</button>
         <button id="btn-fullscreen" class="hud-btn" title="Tam Ekran (F)">⛶ TAM EKRAN</button>
       </div>
@@ -251,15 +252,15 @@
       <div class="form-group">
         <label class="form-label">OYUN MODUNU SEÇİN</label>
         <div class="online-mode-grid">
-          <div class="online-mode-card selected" data-mode="duel">
-            <div class="mode-icon">🧤</div>
-            <div class="mode-title">1v1 DÜELLO</div>
-            <div class="mode-desc">Biri şut çeker, diğeri kaleyi korur! Her tur roller değişir.</div>
-          </div>
-          <div class="online-mode-card" data-mode="coop">
+          <div class="online-mode-card selected" data-mode="coop">
             <div class="mode-icon">🤝</div>
             <div class="mode-title">2 KİŞİLİK EŞLİ HÜCUM</div>
             <div class="mode-desc">Bot Kaleciye Karşı! Biri orta/pas açar, diğeri voleyle 90'a yapıştırır!</div>
+          </div>
+          <div class="online-mode-card" data-mode="duel">
+            <div class="mode-icon">🧤</div>
+            <div class="mode-title">1v1 DÜELLO</div>
+            <div class="mode-desc">Biri şut çeker, diğeri kaleyi korur! Her tur roller değişir.</div>
           </div>
         </div>
       </div>
@@ -282,6 +283,14 @@
         </div>
 
         <div id="host-waiting-box" class="hidden" style="text-align: center; padding: 1rem 0;">
+          <div style="background: rgba(255, 255, 255, 0.08); border-radius: 12px; padding: 0.7rem 1rem; margin-bottom: 0.8rem; display: flex; align-items: center; justify-content: space-between; border: 1px solid rgba(255,255,255,0.15); text-align: left;">
+            <div>
+              <span style="font-size: 0.75rem; color: #94a3b8; display: block; font-weight: 700;">SEÇİLİ OYUN MODU:</span>
+              <span id="host-waiting-mode-badge" style="font-size: 0.95rem; font-weight: 800; color: #00ff88;">🤝 2 KİŞİLİK EŞLİ HÜCUM (BOT KALECİ)</span>
+            </div>
+            <button id="btn-host-toggle-mode" type="button" class="hud-btn" style="font-size: 0.8rem; padding: 0.4rem 0.8rem; border-color: #f1c40f; color: #f1c40f;">🔄 DEĞİŞTİR</button>
+          </div>
+
           <span style="font-size: 0.85rem; color: #94a3b8; font-weight: 700;">PAYLAŞILACAK ODA KODUN:</span>
           <div id="host-room-code-display" class="online-room-code-badge">----</div>
           

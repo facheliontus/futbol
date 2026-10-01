@@ -144,6 +144,26 @@ class UIManager {
       });
     });
 
+    // 7.6 Online Oyun Sırasında Canlı Mod Değiştirme Butonu (Üst HUD Bar)
+    const btnOnlineModeToggle = document.getElementById('btn-online-mode-toggle');
+    if (btnOnlineModeToggle) {
+      btnOnlineModeToggle.addEventListener('click', () => {
+        if (window.onlineManager) {
+          window.onlineManager.toggleGameMode();
+        }
+      });
+    }
+
+    // 7.7 Host Bekleme Ekranında Mod Değiştirme Butonu
+    const btnHostToggleMode = document.getElementById('btn-host-toggle-mode');
+    if (btnHostToggleMode) {
+      btnHostToggleMode.addEventListener('click', () => {
+        if (window.onlineManager) {
+          window.onlineManager.toggleHostLobbyMode();
+        }
+      });
+    }
+
     // 8. Online Oda Kur Butonu
     const btnCreateRoom = document.getElementById('btn-create-room-action');
     if (btnCreateRoom) {

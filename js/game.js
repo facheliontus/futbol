@@ -154,9 +154,12 @@ class Game {
 
   // YENİ POZİSYON / SENARYO YÜKLE
   setupScenario(scenario) {
+    this.isCoopMatch = false;
     this.currentScenario = scenario;
     this.shotCooldown = false;
     this.timeScale = 1.0;
+
+    this.playerModels.clearAll();
 
     const isGK = this.career.player.position === 'GK';
     const club = this.career.getCurrentClub();
@@ -1012,6 +1015,11 @@ class Game {
     // Kaleci Idle Salınımı
     if (this.playerModels) {
       this.playerModels.updateIdle(now / 1000);
+    }
+
+    // Stadyum LED Reklam Panoları Kayan Akış Animasyonu
+    if (this.stadium) {
+      this.stadium.update(dt);
     }
 
     this.renderer.render(this.scene, this.camera);

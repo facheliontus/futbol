@@ -93,15 +93,15 @@ class OnlineManager {
     this.connected = false;
     this.isOnlineMatch = false;
 
-    // Oyun Modu: 'duel' (1v1) veya 'coop' (2 Kişilik Eşli Hücum)
-    this.gameMode = 'duel';
+    // Oyun Modu: 'coop' (2 Kişilik Eşli Hücum) veya 'duel' (1v1)
+    this.gameMode = 'coop';
 
     // Online Maç Durumu
-    this.myRole = 'striker'; // duel için: 'striker'/'goalkeeper', coop için: 'passer'/'shooter'
+    this.myRole = 'passer'; // coop için: 'passer'/'shooter', duel için: 'striker'/'goalkeeper'
     this.localPlayerName = 'Oyuncu 1';
     this.remotePlayerName = 'Oyuncu 2';
     this.currentRound = 1;
-    this.maxRounds = 5;
+    this.maxRounds = 6;
     this.score = { host: 0, guest: 0 };
     this.coopScore = { goals: 0, attempts: 0 };
     this.game = null;
@@ -146,16 +146,16 @@ class OnlineManager {
     this.roomCode = this.generateRoomCode();
     this.isHost = true;
 
-    // Seçili modu arayüzden al
-    const coopCard = document.querySelector('.online-mode-card[data-mode="coop"]');
-    if (coopCard && coopCard.classList.contains('selected')) {
-      this.gameMode = 'coop';
-      this.myRole = 'passer';
-      this.maxRounds = 6;
-    } else {
+    // Seçili modu arayüzden al (varsayılan: coop)
+    const duelCard = document.querySelector('.online-mode-card[data-mode="duel"]');
+    if (duelCard && duelCard.classList.contains('selected')) {
       this.gameMode = 'duel';
       this.myRole = 'striker';
       this.maxRounds = 5;
+    } else {
+      this.gameMode = 'coop';
+      this.myRole = 'passer';
+      this.maxRounds = 6;
     }
 
     const peerId = this.getPeerIdFromCode(this.roomCode);
@@ -260,6 +260,7 @@ class OnlineManager {
     this.conn.on('close', () => {
       this.connected = false;
       this.isOnlineMatch = false;
+      this.updateModeToggleBtnUI();
       alert("Arkadaşınız oyundan ayrıldı veya bağlantı koptu!");
       window.location.reload();
     });
@@ -281,6 +282,11 @@ class OnlineManager {
           this.gameMode = data.gameMode;
           this.maxRounds = (this.gameMode === 'coop') ? 6 : 5;
         }
+        break;
+
+      // CANLI OYUN MODU DEĞİŞTİRME SENKRONİZASYONU
+      case 'switch_mode':
+        this.switchGameMode(data.mode, false);
         break;
 
       // 1v1 DÜELLO VERİLERİ
@@ -364,6 +370,7 @@ class OnlineManager {
     this.coopScore = { goals: 0, attempts: 0 };
     this.maxRounds = (this.gameMode === 'coop') ? 6 : 5;
 
+    this.updateModeToggleBtnUI();
     this.setupCurrentRound();
   }
 
@@ -657,11 +664,99 @@ class OnlineManager {
     }
   }
 
+  // ==========================================================
+  // CANLI MOD DEĞİŞTİRME & SENKRONİZASYON METODLARI
+  // ==========================================================
+
+  // Oyun içinde tek tıkla 1v1 veya 2 Kişilik Eşli Hücum moduna geçiş yap
+  toggleGameMode() {
+    if (!this.isOnlineMatch) return;
+    const nextMode = (this.gameMode === 'duel') ? 'coop' : 'duel';
+    this.switchGameMode(nextMode, true);
+  }
+
+  // Modu uygula, HUD'ı güncelle ve gerekiyorsa rakip oyuncuya bildir
+  switchGameMode(newMode, broadcast = true) {
+    this.gameMode = newMode;
+    this.currentRound = 1;
+    this.score = { host: 0, guest: 0 };
+    this.coopScore = { goals: 0, attempts: 0 };
+    this.maxRounds = (this.gameMode === 'coop') ? 6 : 5;
+
+    this.updateModeToggleBtnUI();
+
+    if (broadcast) {
+      this.send({
+        type: 'switch_mode',
+        mode: newMode
+      });
+    }
+
+    const modeTitle = (newMode === 'coop') 
+      ? "🤝 2 KİŞİLİK EŞLİ HÜCUM (BOT KALECİYE KARŞI)" 
+      : "🧤 1v1 DÜELLO (FORVET VS KALECİ)";
+
+    if (this.game) {
+      this.game.showGoalBanner("🎮 MOD: " + modeTitle);
+      this.setupCurrentRound();
+    }
+  }
+
+  // Üst HUD barındaki Mod Değiştirme Butonunun Durumunu Güncelle
+  updateModeToggleBtnUI() {
+    const btnToggle = document.getElementById('btn-online-mode-toggle');
+    if (!btnToggle) return;
+
+    if (!this.isOnlineMatch) {
+      btnToggle.style.display = 'none';
+      return;
+    }
+
+    btnToggle.style.display = 'inline-flex';
+    if (this.gameMode === 'coop') {
+      btnToggle.innerHTML = `🔄 MODU DEĞİŞTİR: 🧤 1v1 DÜELLO`;
+      btnToggle.title = "Tıkla ve 1v1 Düello Moduna Geç (Forvet vs Kaleci)";
+      btnToggle.className = "hud-btn online-mode-toggle-btn coop-active";
+    } else {
+      btnToggle.innerHTML = `🔄 MODU DEĞİŞTİR: 🤝 2 KİŞİLİK EŞLİ HÜCUM`;
+      btnToggle.title = "Tıkla ve 2 Kişilik Eşli Hücum Moduna Geç (Bot Kaleciye Karşı)";
+      btnToggle.className = "hud-btn online-mode-toggle-btn duel-active";
+    }
+  }
+
+  // Host Bekleme Odasında Modu Değiştirme
+  toggleHostLobbyMode() {
+    this.gameMode = (this.gameMode === 'duel') ? 'coop' : 'duel';
+    this.updateHostWaitingModeUI();
+    const modeCards = document.querySelectorAll('.online-mode-card');
+    modeCards.forEach(c => {
+      if (c.getAttribute('data-mode') === this.gameMode) {
+        c.classList.add('selected');
+      } else {
+        c.classList.remove('selected');
+      }
+    });
+  }
+
+  updateHostWaitingModeUI() {
+    const badge = document.getElementById('host-waiting-mode-badge');
+    if (badge) {
+      if (this.gameMode === 'coop') {
+        badge.innerHTML = "🤝 2 KİŞİLİK EŞLİ HÜCUM (BOT KALECİ)";
+        badge.style.color = "#00ff88";
+      } else {
+        badge.innerHTML = "🧤 1v1 DÜELLO (KALECİ & FORVET)";
+        badge.style.color = "#00f2fe";
+      }
+    }
+  }
+
   // ARAYÜZ GÜNCELLEMELERİ
   showHostWaitingUI(code) {
     document.getElementById('host-room-code-display').innerText = code;
     document.getElementById('host-waiting-box').classList.remove('hidden');
     document.getElementById('host-init-box').classList.add('hidden');
+    this.updateHostWaitingModeUI();
     const modeName = (this.gameMode === 'coop') ? "2 Kişilik Eşli Hücum" : "1v1 Düello";
     this.updateStatusText(`[${modeName}] Oda Kodu hazır! Arkadaşın bekleniyor...`, "waiting");
 

@@ -124,6 +124,44 @@ body, html {
   box-shadow: 0 0 20px rgba(0, 242, 254, 0.6);
 }
 
+/* CANLI OYUN SIRASINDA MOD DEĞİŞTİRME BUTONU */
+.online-mode-toggle-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-weight: 800;
+  font-size: 0.88rem;
+  padding: 0.55rem 0.95rem;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  animation: pulseModeBtn 2s infinite alternate;
+}
+
+.online-mode-toggle-btn.coop-active {
+  background: linear-gradient(135deg, rgba(0, 255, 136, 0.2), rgba(0, 184, 148, 0.4));
+  border: 2px solid #00ff88;
+  color: #00ff88;
+  box-shadow: 0 0 15px rgba(0, 255, 136, 0.4);
+}
+
+.online-mode-toggle-btn.duel-active {
+  background: linear-gradient(135deg, rgba(0, 242, 254, 0.2), rgba(79, 172, 254, 0.4));
+  border: 2px solid #00f2fe;
+  color: #00f2fe;
+  box-shadow: 0 0 15px rgba(0, 242, 254, 0.4);
+}
+
+.online-mode-toggle-btn:hover {
+  transform: translateY(-2px) scale(1.05);
+  box-shadow: 0 0 25px rgba(0, 255, 136, 0.9);
+}
+
+@keyframes pulseModeBtn {
+  0% { transform: scale(1); filter: brightness(1); }
+  100% { transform: scale(1.02); filter: brightness(1.2); }
+}
+
 /* ORTA: GOL & KUTLAMA DİNAMİK BANNERI */
 .celebration-container {
   align-self: center;
