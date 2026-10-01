@@ -2,11 +2,21 @@
 // TOP FİZİĞİ, FALSO (MAGNUS ETKİSİ) VE ÇARPIŞMALAR (physics.js)
 // ==========================================================
 
+const BALL_STATE = {
+  FREE: 'FREE',
+  CONTROLLED: 'CONTROLLED',
+  PASSING: 'PASSING',
+  SHOOTING: 'SHOOTING',
+  LOOSE: 'LOOSE',
+  OUT_OF_BOUNDS: 'OUT_OF_BOUNDS'
+};
+
 class BallPhysics {
   constructor(scene) {
     this.scene = scene;
     this.radius = 0.22; // FIFA 5 numara top yarıçapı
     this.mass = 0.43;   // kg
+    this.maxSpeed = 38.0; // Maksimum top hızı (m/s)
 
     // Fizik Sabitleri
     this.gravity = -9.81;
@@ -15,6 +25,7 @@ class BallPhysics {
     this.bounceCoeff = 0.65; // Yerden sekme katsayısı
 
     // Durum Değişkenleri
+    this.state = BALL_STATE.FREE;
     this.position = new THREE.Vector3(0, this.radius, 11);
     this.velocity = new THREE.Vector3(0, 0, 0);
     this.spin = new THREE.Vector3(0, 0, 0); // x: topspin/dip, y: side curl (falso), z: roll
@@ -120,8 +131,10 @@ class BallPhysics {
   // Topu Belirli Bir Konuma Sıfırla
   reset(pos = new THREE.Vector3(0, this.radius, 11)) {
     this.position.copy(pos);
+    this.position.y = Math.max(this.radius, this.position.y);
     this.velocity.set(0, 0, 0);
     this.spin.set(0, 0, 0);
+    this.state = BALL_STATE.FREE;
     this.isMoving = false;
     this.hasScored = false;
     this.hasHitPost = false;
@@ -145,6 +158,7 @@ class BallPhysics {
   cushionTrap(receiverPos) {
     this.isMoving = false;
     this.isPass = false;
+    this.state = BALL_STATE.CONTROLLED;
     this.velocity.set(0, 0, 0);
     this.spin.set(0, 0, 0);
     this.position.set(receiverPos.x, this.radius, receiverPos.z);
@@ -156,6 +170,7 @@ class BallPhysics {
 
   // PAS / ORTA ATEŞLEME (Co-op 2 Kişilik Eşli Hücum İçin)
   passTo(targetPos, flightDuration = 1.1, arcHeight = 1.8, curl = 0, onArrival = null) {
+    this.state = BALL_STATE.PASSING;
     this.isPass = true;
     this.onPassArrival = onArrival;
     this.passTargetPos = targetPos.clone();
@@ -177,6 +192,9 @@ class BallPhysics {
     const vz = toTarget.z / flightDuration;
 
     this.velocity.set(vx, vy, vz);
+    if (this.velocity.length() > this.maxSpeed) {
+      this.velocity.setLength(this.maxSpeed);
+    }
     this.flightTime = flightDuration;
     this.elapsedFlight = 0;
 
@@ -196,6 +214,7 @@ class BallPhysics {
 
   // ŞUT ATEŞLEME (Gelişmiş Roberto Carlos / Beckham Falso Fiziği)
   shoot(dirX, dirY, power = 25, curl = 0) {
+    this.state = BALL_STATE.SHOOTING;
     this.isPass = false;
     this.onPassArrival = null;
     // dirX: -1.5 ile +1.5 arası (Kalenin dışına ve köşelere serbestçe nişan)
@@ -214,12 +233,9 @@ class BallPhysics {
     const flightTime = distance / power;
 
     // Falso İvmesi (X ekseninde çekiş):
-    // curl < 0 (Sola Kavis): İvme sola doğru negatif (sol kaleye çeker)
-    // curl > 0 (Sağa Kavis): İvme sağa doğru pozitif (sağ kaleye çeker)
     this.curveAccelX = curl * 10.5;
 
     // Hedefe tam oturması için ilk fırlatma açısı (Offset launch):
-    // Top barajın dışından başlatılır ve falso ile hedefe kıvrılır!
     const vx = (targetX - this.position.x) / flightTime - (0.5 * this.curveAccelX * flightTime);
 
     // Baraj üzerinden aşırtma ve çatala dalış (Dipping Arc):
@@ -231,6 +247,9 @@ class BallPhysics {
     const vz = toTarget.z / flightTime;
 
     this.velocity.set(vx, vy, vz);
+    if (this.velocity.length() > this.maxSpeed) {
+      this.velocity.setLength(this.maxSpeed);
+    }
     this.flightTime = flightTime;
     this.elapsedFlight = 0;
 
@@ -256,11 +275,13 @@ class BallPhysics {
   // FİZİK GÜNCELLEMESİ (Her Kare Çağrılır)
   update(dt, stadium, playerModels, onGoal, onMiss, onSave, onPostHit, onWallHit, onStopped) {
     if (!this.isMoving) return;
+    dt = Math.min(dt, 0.05); // Güvenli delta time
     this.elapsedFlight += dt;
 
     // Co-op Pas Varış / İniş Kontrolü
     if (this.isPass && this.elapsedFlight >= this.flightTime) {
       this.isPass = false;
+      this.state = BALL_STATE.LOOSE;
       if (this.onPassArrival) {
         const cb = this.onPassArrival;
         this.onPassArrival = null;
@@ -268,7 +289,7 @@ class BallPhysics {
       }
     }
 
-    // 1. GERÇEK FALSO İVMESİ (Kullanıcı sola dediyse top sola, sağa dediyse sağa kıvrılır)
+    // 1. GERÇEK FALSO İVMESİ
     this.velocity.x += this.curveAccelX * dt;
 
     // Topspin ile kaleye yaklaşırken aniden aşağı düşüş (Dip)
@@ -279,6 +300,11 @@ class BallPhysics {
     // 2. Yerçekimi ve Hava Sürtünmesi
     this.velocity.y += this.gravity * dt;
     this.velocity.multiplyScalar(1 - this.dragCoeff * dt);
+
+    // Hız Sınırı (Tunneling ve NaN koruması)
+    if (this.velocity.length() > this.maxSpeed) {
+      this.velocity.setLength(this.maxSpeed);
+    }
 
     // 3. Konum Güncellemesi
     this.position.addScaledVector(this.velocity, dt);
@@ -295,11 +321,13 @@ class BallPhysics {
         this.velocity.y = -this.velocity.y * this.bounceCoeff;
         this.velocity.x *= 0.85;
         this.velocity.z *= 0.85;
+        this.state = BALL_STATE.LOOSE;
       } else {
         this.velocity.y = 0;
         this.velocity.multiplyScalar(0.95);
         if (this.velocity.lengthSq() < 0.15) {
           this.isMoving = false;
+          this.state = BALL_STATE.FREE;
           if (!this.hasTriggeredEnd) {
             this.hasTriggeredEnd = true;
             if (onStopped) onStopped();
@@ -308,6 +336,7 @@ class BallPhysics {
         }
       }
     }
+    this.position.y = Math.max(this.radius, this.position.y);
 
     this.mesh.position.copy(this.position);
 

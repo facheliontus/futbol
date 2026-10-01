@@ -44,8 +44,11 @@ class PlatformManager {
     if (viewName === 'game') {
       // 3D Oyun Moduna Geçiş
       if (canvasContainer) canvasContainer.style.display = 'block';
-      if (hudOverlay) hudOverlay.style.display = 'block';
+      if (hudOverlay) hudOverlay.style.display = 'flex';
       document.getElementById('platform-main-container').style.display = 'none';
+      const navbar = document.getElementById('platform-navbar');
+      if (navbar) navbar.style.display = 'none';
+      document.body.style.overflow = 'hidden';
 
       // 3D oyun pencere boyutunu güncelle
       if (window.gameInstance) {
@@ -63,6 +66,9 @@ class PlatformManager {
     if (canvasContainer) canvasContainer.style.display = 'none';
     if (hudOverlay) hudOverlay.style.display = 'none';
     document.getElementById('platform-main-container').style.display = 'block';
+    const navbar = document.getElementById('platform-navbar');
+    if (navbar) navbar.style.display = 'flex';
+    document.body.style.overflow = 'auto';
 
     const targetEl = document.getElementById(`view-${viewName}`);
     if (targetEl) targetEl.classList.add('active');
@@ -877,6 +883,8 @@ class PlatformManager {
   showGameModeSelector() {
     const modal = document.getElementById('game-modes-modal');
     if (modal) {
+      modal.style.display = 'flex';
+      modal.classList.remove('hidden');
       modal.classList.add('active');
       modal.querySelectorAll('.gmode-tab').forEach(tab => {
         tab.onclick = (e) => {
@@ -892,7 +900,14 @@ class PlatformManager {
 
   closeGameModeSelector() {
     const modal = document.getElementById('game-modes-modal');
-    if (modal) modal.classList.remove('active');
+    if (modal) {
+      modal.style.display = 'none';
+      modal.classList.add('hidden');
+      modal.classList.remove('active');
+    }
+    if (!window.matchEngine?.isActive) {
+      this.launchCustomQuickMatch();
+    }
   }
 
   // 1. MAÇ MERKEZİNDEN AKTİF MAÇI OYNA

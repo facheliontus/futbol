@@ -1190,6 +1190,16 @@ class Game {
       }
     });
 
+    const resetGameKeys = () => {
+      for (const k in this.keys) {
+        this.keys[k] = false;
+      }
+    };
+    window.addEventListener('blur', resetGameKeys);
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden) resetGameKeys();
+    });
+
     // MOUSE WHEEL İLE HIZLI FALSO AYARI
     window.addEventListener('wheel', (e) => {
       this.adjustFalso(e.deltaY > 0 ? 0.2 : -0.2);
@@ -1601,7 +1611,7 @@ class Game {
     this.lastTime = now;
 
     // Ani fps düşüşlerinde patlamayı önlemek için dt'yi sınırla
-    dt = Math.min(dt, 0.1) * this.timeScale;
+    dt = Math.min(dt, 0.05) * this.timeScale;
 
     // 3D Takım Maçı Motoru (FIFA/PES modu) veya Tek Oyuncu / Antrenman modu
     if (window.matchEngine && window.matchEngine.isActive) {
