@@ -61,6 +61,20 @@ class MatchEngine {
     this.bannerTimer = null;
     this.restartTimer = null;
 
+    // Kaleciler AI ve Kurtarış Durumu
+    this.awayGKData = {
+      isDiving: false,
+      diveTimer: 0,
+      targetX: 0,
+      targetY: 0
+    };
+    this.homeGKData = {
+      isDiving: false,
+      diveTimer: 0,
+      targetX: 0,
+      targetY: 0
+    };
+
     this.initInputs();
   }
 
@@ -376,13 +390,8 @@ class MatchEngine {
 
     this.showMatchBanner("💣 HARİKA ŞUT KALEYE GİDİYOR!");
 
-    // Rakip kaleci uçuş hamlesi
-    const awayGK = this.awayPlayers[3];
-    if (awayGK && awayGK.group) {
-      setTimeout(() => {
-        awayGK.group.position.x = THREE.MathUtils.clamp(dirX * 3.0, -3.2, 3.2);
-      }, 150);
-    }
+    // Rakip kaleci reaksiyonu ve kurtarış dalışı
+    this.triggerGoalkeeperReaction('away', dirX, dirY, speed);
   }
 
   executePass() {
@@ -674,11 +683,12 @@ class MatchEngine {
   }
 
   // Rakip forvet Home kalesine şut çeker
+  // Rakip forvet Home kalesine şut çeker
   executeOpponentShot(shooter, game) {
     this.playKickSound();
-    const dirX = (Math.random() - 0.5) * 1.2;
-    const dirY = 0.4 + Math.random() * 0.8;
-    const speed = 24.0;
+    const dirX = (Math.random() - 0.5) * 1.3;
+    const dirY = 0.35 + Math.random() * 0.9;
+    const speed = 23.0;
 
     game.ball.shoot(dirX, dirY, speed, 0, 38); // +38 Home kalesine
     this.ballCarrier = null;
@@ -686,36 +696,206 @@ class MatchEngine {
     this.showMatchBanner("🚨 RAKİP KALEMİZE ŞUT ÇEKTİ!");
 
     // Muslera kurtarışa uçar
+    this.triggerGoalkeeperReaction('home', dirX, dirY, speed);
+  }
+
+  // Kaleci şut reaksiyonu ve dalışı tetikle
+  triggerGoalkeeperReaction(team, dirX, dirY, speed) {
+    const gkData = (team === 'away') ? this.awayGKData : this.homeGKData;
+    if (!gkData) return;
+
+    // Şutun hedeflendiği X ve Y koordinatları
+    const targetX = THREE.MathUtils.clamp(dirX * 3.6, -3.4, 3.4);
+    const targetY = THREE.MathUtils.clamp(dirY * 2.0, 0.2, 2.2);
+
+    gkData.isDiving = true;
+    gkData.diveTimer = 0;
+    gkData.targetX = targetX;
+    gkData.targetY = targetY;
+  }
+
+  // KALECİLER AI & KURTARIŞ SİSTEMİ
+  updateGoalkeepers(dt, game) {
+    if (!game.ball) return;
+
+    // 1. Away Kaleci Livakovic (Z = -36.5)
+    const awayGK = this.awayPlayers[3];
+    if (awayGK && awayGK.group) {
+      this.updateSingleGK(dt, 'away', awayGK, this.awayGKData, game);
+    }
+
+    // 2. Home Kaleci Muslera (Z = 36.5)
     const homeGK = this.homePlayers[3];
     if (homeGK && homeGK.group) {
-      setTimeout(() => {
-        homeGK.group.position.x = THREE.MathUtils.clamp(dirX * 2.8, -3.2, 3.2);
-      }, 140);
+      this.updateSingleGK(dt, 'home', homeGK, this.homeGKData, game);
     }
   }
 
-  // KALECİLER AI
-  updateGoalkeepers(dt, game) {
+  updateSingleGK(dt, team, gk, gkData, game) {
+    const ball = game.ball;
+    const bPos = ball.position;
+    const goalZ = (team === 'away') ? -38 : 38;
+    const isBallIncoming = (team === 'away')
+      ? (ball.velocity.z < -4 && bPos.z > -37.5)
+      : (ball.velocity.z > 4 && bPos.z < 37.5);
+
+    if (gkData.isDiving) {
+      gkData.diveTimer += dt;
+      const progress = Math.min(1.0, gkData.diveTimer / 0.65);
+
+      // X ekseninde dalış
+      const targetReachX = THREE.MathUtils.clamp(gkData.targetX, -2.8, 2.8);
+      gk.group.position.x = THREE.MathUtils.lerp(gk.group.position.x, targetReachX, 14.0 * dt);
+
+      // Y ekseninde uçuş zıplaması
+      const jumpHeight = Math.min(1.8, Math.max(0.3, gkData.targetY));
+      gk.group.position.y = 0.11 + Math.sin(progress * Math.PI) * jumpHeight;
+
+      // Z ekseninde yana yatma (Roll)
+      const rollDir = Math.sign(targetReachX - gk.group.position.x) || 1;
+      gk.group.rotation.z = THREE.MathUtils.lerp(gk.group.rotation.z, -rollDir * 1.1, 12.0 * dt);
+
+      // Kolların topa uzanması
+      if (gk.leftArmGroup) {
+        gk.leftArmGroup.rotation.z = (rollDir < 0 ? -1.8 : 0.6);
+        gk.leftArmGroup.rotation.x = -0.4;
+      }
+      if (gk.rightArmGroup) {
+        gk.rightArmGroup.rotation.z = (rollDir > 0 ? 1.8 : -0.6);
+        gk.rightArmGroup.rotation.x = -0.4;
+      }
+
+      if (progress >= 1.0 && gkData.diveTimer > 1.1) {
+        // Dalış bitti, ayağa kalk
+        gkData.isDiving = false;
+        gk.group.position.y = 0.11;
+        gk.group.rotation.z = 0;
+        if (gk.leftArmGroup) { gk.leftArmGroup.rotation.set(0, 0, 0); }
+        if (gk.rightArmGroup) { gk.rightArmGroup.rotation.set(0, 0, 0); }
+      }
+    } else {
+      // Normal pozisyon alma (Topun X açısını kapatma)
+      const targetX = THREE.MathUtils.clamp(bPos.x * 0.65, -2.5, 2.5);
+      gk.group.position.x = THREE.MathUtils.lerp(gk.group.position.x, targetX, 7.0 * dt);
+      gk.group.position.y = 0.11;
+      gk.group.rotation.z = THREE.MathUtils.lerp(gk.group.rotation.z, 0, 10.0 * dt);
+      gk.group.lookAt(bPos.x, 0, bPos.z);
+
+      if (gk.leftArmGroup) gk.leftArmGroup.rotation.z = THREE.MathUtils.lerp(gk.leftArmGroup.rotation.z, 0.2, 8.0 * dt);
+      if (gk.rightArmGroup) gk.rightArmGroup.rotation.z = THREE.MathUtils.lerp(gk.rightArmGroup.rotation.z, -0.2, 8.0 * dt);
+
+      // Eğer top kaleye doğru şut halinde geliyorsa ve henüz dalış başlatılmamışsa otomatik reaksiyon ver
+      if (isBallIncoming && Math.abs(bPos.z - goalZ) < 24 && !ball.hasBeenSaved && !ball.hasScored) {
+        const timeToGoal = Math.abs((goalZ - bPos.z) / (ball.velocity.z || 1));
+        const predX = bPos.x + ball.velocity.x * timeToGoal;
+        const predY = Math.max(0.2, bPos.y + ball.velocity.y * timeToGoal - 4.9 * timeToGoal * timeToGoal);
+        this.triggerGoalkeeperReaction(team, predX / 3.8, predY / 2.2, ball.velocity.length());
+      }
+    }
+
+    // KURTARIŞ / TOP ÇELME / TOP TUTMA ÇARPIŞMA KONTROLÜ
+    if (ball.isMoving && !ball.hasScored && !ball.hasBeenSaved) {
+      const nearGoalZ = (team === 'away')
+        ? (bPos.z <= -34.8 && bPos.z >= -37.8)
+        : (bPos.z >= 34.8 && bPos.z <= 37.8);
+
+      if (nearGoalZ) {
+        const distX = Math.abs(bPos.x - gk.group.position.x);
+        const distY = Math.abs(bPos.y - (gk.group.position.y + 1.05));
+        const reachX = gkData.isDiving ? 1.85 : 1.45;
+        const reachY = gkData.isDiving ? 1.60 : 1.35;
+
+        if (distX < reachX && distY < reachY) {
+          // KURTARIŞ GERÇEKLEŞTİ!
+          this.handleGoalkeeperSave(team, gk, game);
+        }
+      }
+    }
+  }
+
+  // KALECİ KURTARIŞI (TUTMA VEYA KÖŞEDEN ÇELME)
+  handleGoalkeeperSave(team, gk, game) {
+    if (game.ball.hasBeenSaved || game.ball.hasScored) return;
+    game.ball.hasBeenSaved = true;
+
+    if (window.gameSound) window.gameSound.playSave();
+
+    const isSoftShot = game.ball.velocity.length() < 24 && Math.abs(game.ball.position.x - gk.group.position.x) < 0.95;
+
+    if (isSoftShot) {
+      // 1. TOPU YAPIŞTIRIP TUTMA (CATCH)
+      game.ball.isMoving = false;
+      game.ball.velocity.set(0, 0, 0);
+      this.ballCarrier = gk;
+      game.hasBallPossession = (team === 'home');
+
+      const gkName = (team === 'home') ? 'Muslera' : 'Livakovic';
+      this.showMatchBanner(`🧤 ${gkName.toUpperCase()} TOPU KONTROL ETTİ!`);
+
+      // 1.1 saniye sonra degaj yap
+      setTimeout(() => {
+        if (this.ballCarrier === gk && window.gameInstance?.ball) {
+          this.clearBallFromGoalkeeper(team, gk, window.gameInstance);
+        }
+      }, 1100);
+    } else {
+      // 2. KÖŞEDEN ÇIKARMA / ÇELME (PARRY / DEFLECT)
+      const reboundDirZ = (team === 'away') ? 1 : -1;
+      const reboundX = (Math.random() - 0.5) * 8 + Math.sign(game.ball.position.x) * 4;
+      const reboundY = 2.0 + Math.random() * 2.2;
+      const reboundZ = reboundDirZ * (8.0 + Math.random() * 6.0);
+
+      game.ball.velocity.set(reboundX, reboundY, reboundZ);
+      game.ball.isMoving = true;
+      game.ball.state = BALL_STATE.LOOSE;
+      this.ballCarrier = null;
+      game.hasBallPossession = false;
+
+      const gkName = (team === 'home') ? 'Muslera' : 'Livakovic';
+      this.showMatchBanner(`🧤 MÜTHİŞ KURTARIŞ! ${gkName.toUpperCase()} KÖŞEDEN ÇIKARDI!`);
+
+      // 800ms sonra yeni müdahaleye hazır ol
+      setTimeout(() => {
+        if (game.ball) game.ball.hasBeenSaved = false;
+      }, 800);
+    }
+  }
+
+  // KALECİ DEGAJI (TOPU İLERİYE FIRLATMA)
+  clearBallFromGoalkeeper(team, gk, game) {
     if (!game.ball) return;
-    const bPos = game.ball.position;
+    this.playKickSound();
 
-    // Away Kaleci (Z = -36.5)
-    const awayGK = this.awayPlayers[3];
-    if (awayGK && awayGK.group) {
-      const targetX = THREE.MathUtils.clamp(bPos.x * 0.72, -3.2, 3.2);
-      awayGK.group.position.x = THREE.MathUtils.lerp(awayGK.group.position.x, targetX, 0.14);
-      awayGK.group.position.z = -36.5;
-      awayGK.group.lookAt(bPos.x, 0, bPos.z);
+    let targetTeammate = null;
+    const squad = (team === 'home') ? this.homePlayers : this.awayPlayers;
+    for (let i = 0; i < squad.length; i++) {
+      if (squad[i] !== gk && squad[i].group) {
+        targetTeammate = squad[i];
+        break;
+      }
     }
 
-    // Home Kaleci Muslera (Z = 36.5)
-    const homeGK = this.homePlayers[3];
-    if (homeGK && homeGK.group) {
-      const targetX = THREE.MathUtils.clamp(bPos.x * 0.72, -3.2, 3.2);
-      homeGK.group.position.x = THREE.MathUtils.lerp(homeGK.group.position.x, targetX, 0.14);
-      homeGK.group.position.z = 36.5;
-      homeGK.group.lookAt(bPos.x, 0, bPos.z);
-    }
+    const targetPos = targetTeammate
+      ? targetTeammate.group.position.clone()
+      : new THREE.Vector3(0, 0.11, (team === 'home' ? 10 : -10));
+    targetPos.z += (team === 'home' ? -4 : 4);
+
+    this.ballCarrier = null;
+    game.hasBallPossession = false;
+
+    game.ball.passTo(targetPos, 1.1, 3.2, 0, () => {
+      if (targetTeammate) {
+        this.ballCarrier = targetTeammate;
+        game.hasBallPossession = (team === 'home');
+        if (team === 'home') {
+          this.activePlayerIndex = this.homePlayers.indexOf(targetTeammate);
+          this.setupMatchHUD();
+        }
+      }
+    });
+
+    const gkName = (team === 'home') ? 'Muslera' : 'Livakovic';
+    this.showMatchBanner(`🚀 ${gkName.toUpperCase()} DEGAJ YAPTI!`);
   }
 
   // TOP SÜRME (BALL CARRIER)

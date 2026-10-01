@@ -357,7 +357,7 @@ class BallPhysics {
     }
 
     // 7. GOL TESPİTİ (Away & Home Çift Kale)
-    if (!this.hasScored) {
+    if (!this.hasScored && !this.hasBeenSaved) {
       // Away Kale (Z <= -38): Kullanıcı Gol Attı!
       if (this.position.z <= goalAwayZ && this.position.z >= goalAwayZ - 2.4) {
         if (Math.abs(this.position.x) < halfW - 0.05 && this.position.y < goalH - 0.05 && this.position.y > 0) {
