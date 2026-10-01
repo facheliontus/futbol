@@ -428,9 +428,9 @@ class Stadium {
 
       const bullW = ctx.measureText('BULL').width;
 
-      // "K" (Elektrik Sarısı / Altın)
-      ctx.fillStyle = '#ffd700';
-      ctx.shadowColor = '#ffd700';
+      // "K" (Temiz Beyaz / Buz Işıltısı - Sarı Kaldırıldı)
+      ctx.fillStyle = '#ffffff';
+      ctx.shadowColor = 'rgba(0, 242, 254, 0.9)';
       ctx.shadowBlur = 22;
       ctx.fillText('K', offsetX + 255 + fitW + bullW, 138);
 

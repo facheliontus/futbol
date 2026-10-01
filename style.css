@@ -12,10 +12,14 @@
 
 body, html {
   width: 100%;
-  height: 100%;
-  overflow: hidden;
-  background-color: #070d18;
+  min-height: 100%;
+  background-color: #080c18;
   color: #ffffff;
+}
+
+body.platform-body {
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
 }
 
 #game-canvas-container {
@@ -927,3 +931,1053 @@ body, html {
   0% { transform: scale(0.6); opacity: 0.9; }
   100% { transform: scale(2.4); opacity: 0; }
 }
+
+/* ==========================================================
+   FUTBOL PLATFORMU & HUB STİLLERİ (PRO FOOTBALL PLATFORM)
+   ========================================================== */
+
+/* Üst Navigasyon Barı */
+.platform-navbar {
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  height: 68px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 2rem;
+  background: rgba(8, 12, 24, 0.92);
+  backdrop-filter: blur(20px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.45);
+}
+
+.nav-brand {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  font-size: 1.3rem;
+  font-weight: 900;
+  letter-spacing: 0.5px;
+  cursor: pointer;
+}
+
+.brand-highlight {
+  color: #10b981;
+  text-shadow: 0 0 16px rgba(16, 185, 129, 0.5);
+}
+
+.nav-links {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.nav-link {
+  background: transparent;
+  border: none;
+  color: #94a3b8;
+  font-weight: 600;
+  font-size: 0.88rem;
+  padding: 0.5rem 0.85rem;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.nav-link:hover {
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.nav-link.active {
+  color: #10b981;
+  background: rgba(16, 185, 129, 0.12);
+  border: 1px solid rgba(16, 185, 129, 0.25);
+  font-weight: 700;
+}
+
+.nav-right-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.nav-action-btn {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #e2e8f0;
+  padding: 0.5rem 0.9rem;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  transition: all 0.2s;
+}
+
+.nav-action-btn:hover {
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.notif-badge {
+  background: #ef4444;
+  color: #fff;
+  font-size: 0.7rem;
+  padding: 0.1rem 0.4rem;
+  border-radius: 10px;
+  font-weight: 800;
+}
+
+.btn-play-3d {
+  background: linear-gradient(135deg, #10b981, #00f2fe);
+  color: #080c18;
+  font-weight: 800;
+  border: none;
+  padding: 0.55rem 1.15rem;
+  border-radius: 20px;
+  cursor: pointer;
+  box-shadow: 0 0 16px rgba(16, 185, 129, 0.4);
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.btn-play-3d:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 0 24px rgba(0, 242, 254, 0.6);
+}
+
+/* Platform Ana Konteyner */
+.platform-main-container {
+  max-width: 1360px;
+  margin: 0 auto;
+  padding: 2rem 1.5rem 6rem 1.5rem;
+}
+
+.platform-view {
+  display: none;
+}
+
+.platform-view.active {
+  display: block;
+  animation: viewFadeIn 0.25s ease-out;
+}
+
+@keyframes viewFadeIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Glass Kartlar */
+.glass-card {
+  background: rgba(15, 23, 42, 0.78);
+  backdrop-filter: blur(14px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+}
+
+/* Hero Banner */
+.home-hero-banner {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 2.4rem 2.8rem;
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.15), rgba(15, 23, 42, 0.9));
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  margin-bottom: 2rem;
+}
+
+.hero-badge {
+  font-size: 0.8rem;
+  font-weight: 800;
+  color: #10b981;
+  letter-spacing: 1px;
+}
+
+.hero-text-col h2 {
+  font-size: 1.85rem;
+  margin: 0.5rem 0;
+  font-weight: 800;
+}
+
+.hero-text-col p {
+  color: #94a3b8;
+  max-width: 600px;
+  font-size: 0.95rem;
+  line-height: 1.5;
+  margin-bottom: 1.2rem;
+}
+
+.hero-btn-group {
+  display: flex;
+  gap: 0.8rem;
+}
+
+.btn-primary-action {
+  background: linear-gradient(135deg, #10b981, #059669);
+  color: white;
+  border: none;
+  font-weight: 700;
+  padding: 0.75rem 1.4rem;
+  border-radius: 10px;
+  cursor: pointer;
+  box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);
+  transition: transform 0.2s;
+}
+
+.btn-primary-action:hover {
+  transform: translateY(-2px);
+}
+
+.btn-secondary-action {
+  background: rgba(255, 255, 255, 0.08);
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  font-weight: 700;
+  padding: 0.75rem 1.4rem;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-secondary-action:hover {
+  background: rgba(255, 255, 255, 0.14);
+}
+
+.hero-ball-badge {
+  background: rgba(0, 0, 0, 0.4);
+  padding: 1rem 1.6rem;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  font-size: 1.1rem;
+  font-weight: 700;
+}
+
+/* Başlıklar */
+.section-title-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+}
+
+.section-title-wrap h3 {
+  font-size: 1.2rem;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.pulse-indicator-red {
+  width: 10px;
+  height: 10px;
+  background: #ef4444;
+  border-radius: 50%;
+  animation: pulseDot 1.4s infinite;
+}
+
+.sub-counter {
+  font-size: 0.85rem;
+  color: #64748b;
+}
+
+.btn-text-link {
+  background: none;
+  border: none;
+  color: #10b981;
+  font-weight: 700;
+  cursor: pointer;
+  font-size: 0.88rem;
+}
+
+/* Canlı Maçlar Kartları */
+.live-matches-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
+  gap: 1.2rem;
+  margin-bottom: 2rem;
+}
+
+.live-match-card {
+  padding: 1.3rem;
+  cursor: pointer;
+  transition: transform 0.2s, border-color 0.2s;
+}
+
+.live-match-card:hover {
+  transform: translateY(-3px);
+  border-color: rgba(16, 185, 129, 0.4);
+}
+
+.match-card-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.8rem;
+  margin-bottom: 1rem;
+}
+
+.match-league-badge {
+  color: #94a3b8;
+  font-weight: 600;
+}
+
+.live-pulse-indicator {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  color: #ef4444;
+  font-weight: 800;
+}
+
+.pulse-dot {
+  width: 8px;
+  height: 8px;
+  background: #ef4444;
+  border-radius: 50%;
+  animation: pulseDot 1s infinite alternate;
+}
+
+@keyframes pulseDot {
+  0% { opacity: 0.4; }
+  100% { opacity: 1; }
+}
+
+.match-card-teams {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  text-align: center;
+  margin-bottom: 1.2rem;
+}
+
+.team-col {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.team-avatar {
+  font-size: 2rem;
+}
+
+.team-name {
+  font-size: 0.95rem;
+  font-weight: 700;
+}
+
+.score-col {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.big-score {
+  font-size: 1.85rem;
+  font-weight: 900;
+  letter-spacing: 2px;
+  color: #ffffff;
+}
+
+.match-stadium {
+  font-size: 0.75rem;
+  color: #64748b;
+  margin-top: 0.2rem;
+}
+
+.match-card-bottom {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: 0.8rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  font-size: 0.8rem;
+  color: #94a3b8;
+}
+
+.btn-micro-details {
+  background: transparent;
+  border: none;
+  color: #10b981;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+/* İki Kolonlu Grid */
+.home-dual-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+}
+
+.section-header-compact {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.8rem;
+}
+
+.section-header-compact h4 {
+  font-size: 0.95rem;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+}
+
+.today-matches-list {
+  padding: 0.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.today-match-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem 1rem;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.02);
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.today-match-row:hover {
+  background: rgba(255, 255, 255, 0.07);
+}
+
+.is-live-row {
+  border-left: 3px solid #ef4444;
+}
+
+.row-time .live-pill {
+  background: rgba(239, 68, 68, 0.15);
+  color: #ef4444;
+  font-size: 0.75rem;
+  font-weight: 800;
+  padding: 0.2rem 0.5rem;
+  border-radius: 6px;
+}
+
+.row-time .time-pill {
+  font-size: 0.8rem;
+  color: #94a3b8;
+  font-weight: 600;
+}
+
+.row-teams {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+.row-score {
+  background: rgba(0, 0, 0, 0.4);
+  padding: 0.2rem 0.6rem;
+  border-radius: 6px;
+  font-weight: 800;
+  color: #10b981;
+}
+
+.row-meta {
+  font-size: 0.75rem;
+  color: #64748b;
+  display: flex;
+  gap: 0.4rem;
+}
+
+/* Puan Durumu Tablosu */
+.standings-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.88rem;
+}
+
+.standings-table th {
+  text-align: left;
+  padding: 0.8rem 1rem;
+  color: #64748b;
+  font-weight: 700;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.standings-table td {
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.standings-row:hover {
+  background: rgba(255, 255, 255, 0.04);
+  cursor: pointer;
+}
+
+.rank-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  font-weight: 800;
+}
+
+.rank-badge.ucl { background: rgba(0, 242, 254, 0.2); color: #00f2fe; }
+.rank-badge.ucl-qual { background: rgba(59, 130, 246, 0.2); color: #3b82f6; }
+.rank-badge.uel { background: rgba(245, 158, 11, 0.2); color: #f59e0b; }
+.rank-badge.uecl { background: rgba(16, 185, 129, 0.2); color: #10b981; }
+.rank-badge.relegation { background: rgba(239, 68, 68, 0.2); color: #ef4444; }
+
+.form-pills-mini {
+  display: flex;
+  gap: 3px;
+}
+
+.mini-form-pill {
+  width: 18px;
+  height: 18px;
+  border-radius: 4px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.65rem;
+  font-weight: 800;
+}
+
+.mini-form-pill.W { background: #10b981; color: white; }
+.mini-form-pill.D { background: #64748b; color: white; }
+.mini-form-pill.L { background: #ef4444; color: white; }
+
+/* Haber Kartları */
+.news-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 1.2rem;
+}
+
+.news-card {
+  overflow: hidden;
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+
+.news-card:hover {
+  transform: translateY(-3px);
+}
+
+.news-img-box {
+  height: 170px;
+  background-size: cover;
+  background-position: center;
+  padding: 0.8rem;
+}
+
+.news-category-badge {
+  background: rgba(16, 185, 129, 0.9);
+  color: #080c18;
+  font-weight: 800;
+  font-size: 0.75rem;
+  padding: 0.25rem 0.6rem;
+  border-radius: 6px;
+}
+
+.news-body {
+  padding: 1.2rem;
+}
+
+.news-time {
+  font-size: 0.75rem;
+  color: #64748b;
+  display: block;
+  margin-bottom: 0.4rem;
+}
+
+.news-body h4 {
+  font-size: 1rem;
+  margin-bottom: 0.5rem;
+  line-height: 1.4;
+}
+
+.news-body p {
+  color: #94a3b8;
+  font-size: 0.85rem;
+  line-height: 1.5;
+}
+
+/* ==========================================================
+   MAÇ MERKEZİ DETAY STİLLERİ
+   ========================================================== */
+.match-center-hero {
+  padding: 2rem;
+  margin-bottom: 1.5rem;
+  text-align: center;
+}
+
+.mc-scoreboard-main {
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  margin-top: 1.2rem;
+}
+
+.mc-logo {
+  font-size: 3.5rem;
+  display: block;
+  margin-bottom: 0.5rem;
+}
+
+.mc-big-score {
+  font-size: 3.2rem;
+  font-weight: 900;
+  letter-spacing: 4px;
+}
+
+.mc-status-pill {
+  display: inline-block;
+  background: rgba(239, 68, 68, 0.2);
+  color: #ef4444;
+  padding: 0.3rem 0.8rem;
+  border-radius: 20px;
+  font-weight: 800;
+  font-size: 0.85rem;
+  margin-top: 0.4rem;
+}
+
+.mc-tabs-bar {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1.2rem;
+}
+
+.mc-tab-btn {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: #cbd5e1;
+  padding: 0.65rem 1.2rem;
+  border-radius: 10px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.mc-tab-btn.active {
+  background: #10b981;
+  color: #080c18;
+  border-color: #10b981;
+}
+
+.mc-tab-pane {
+  display: none;
+}
+
+.mc-tab-pane.active {
+  display: block;
+}
+
+/* 2D Taktik Futbol Sahası */
+.tactical-pitch-container {
+  display: flex;
+  justify-content: center;
+}
+
+.tactical-pitch {
+  position: relative;
+  width: 100%;
+  max-width: 620px;
+  height: 520px;
+  background: linear-gradient(180deg, #166534 0%, #14532d 100%);
+  border: 3px solid rgba(255, 255, 255, 0.5);
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: inset 0 0 50px rgba(0, 0, 0, 0.5);
+}
+
+.tactical-pitch::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: rgba(255, 255, 255, 0.5);
+}
+
+.tactical-pitch::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 110px;
+  height: 110px;
+  border: 2px solid rgba(255, 255, 255, 0.5);
+  border-radius: 50%;
+}
+
+.pitch-player {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  cursor: pointer;
+  z-index: 5;
+}
+
+.player-num-circle {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  font-weight: 800;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.5);
+}
+
+.home-player .player-num-circle {
+  background: #b81414;
+  color: white;
+  border: 2px solid #f39c12;
+}
+
+.away-player .player-num-circle {
+  background: #0c2461;
+  color: white;
+  border: 2px solid #f1c40f;
+}
+
+.pitch-player-name {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.9);
+  margin-top: 2px;
+}
+
+/* İstatistik Barları */
+.stat-compare-row {
+  margin-bottom: 1rem;
+}
+
+.stat-labels {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.88rem;
+  margin-bottom: 0.35rem;
+}
+
+.stat-title {
+  color: #94a3b8;
+  font-weight: 600;
+}
+
+.stat-progress-track {
+  height: 8px;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
+  display: flex;
+  overflow: hidden;
+}
+
+.home-bar {
+  background: #b81414;
+}
+
+.away-bar {
+  background: #0c2461;
+}
+
+/* Canlı Anlatım */
+.commentary-item {
+  display: flex;
+  gap: 1rem;
+  padding: 0.8rem 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.comm-minute {
+  font-weight: 800;
+  color: #10b981;
+  min-width: 40px;
+}
+
+.comm-text {
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+/* ==========================================================
+   GLOBAL ARAMA MODALI (CTRL+K)
+   ========================================================== */
+.search-modal-box {
+  width: 90%;
+  max-width: 620px;
+  padding: 1.5rem;
+}
+
+.search-input-wrap {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  padding-bottom: 0.8rem;
+}
+
+.search-input-wrap input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  font-size: 1.15rem;
+  color: white;
+  outline: none;
+}
+
+.search-results-container {
+  max-height: 380px;
+  overflow-y: auto;
+  margin-top: 1rem;
+}
+
+.search-section-title {
+  font-size: 0.75rem;
+  font-weight: 800;
+  color: #64748b;
+  margin: 0.8rem 0 0.4rem 0;
+}
+
+.search-item {
+  padding: 0.65rem 0.8rem;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.search-item:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+/* ==========================================================
+   FUTBOL AI ASİSTANI ÇEKMECESİ
+   ========================================================== */
+.ai-drawer {
+  position: fixed;
+  bottom: 1.5rem;
+  right: 1.5rem;
+  width: 380px;
+  height: 520px;
+  background: rgba(15, 23, 42, 0.96);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(16, 185, 129, 0.35);
+  border-radius: 18px;
+  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.65);
+  display: flex;
+  flex-direction: column;
+  z-index: 2000;
+  transform: translateY(120%);
+  opacity: 0;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.ai-drawer.open {
+  transform: translateY(0);
+  opacity: 1;
+}
+
+.ai-drawer-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 1.2rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.ai-header-title {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.ai-header-title h4 {
+  font-size: 0.95rem;
+  font-weight: 800;
+}
+
+.ai-header-title small {
+  color: #10b981;
+  font-size: 0.72rem;
+}
+
+.ai-chat-body {
+  flex: 1;
+  padding: 1rem;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.ai-msg {
+  padding: 0.75rem 1rem;
+  border-radius: 12px;
+  font-size: 0.86rem;
+  line-height: 1.45;
+  max-width: 88%;
+}
+
+.user-msg {
+  align-self: flex-end;
+  background: #10b981;
+  color: #080c18;
+  font-weight: 600;
+}
+
+.bot-msg {
+  align-self: flex-start;
+  background: rgba(255, 255, 255, 0.07);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: #f1f5f9;
+}
+
+.ai-chat-input-bar {
+  display: flex;
+  padding: 0.8rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  gap: 0.5rem;
+}
+
+.ai-chat-input-bar input {
+  flex: 1;
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 0.6rem 0.8rem;
+  border-radius: 8px;
+  color: white;
+  font-size: 0.85rem;
+  outline: none;
+}
+
+.btn-ai-send {
+  background: #10b981;
+  color: #080c18;
+  font-weight: 700;
+  border: none;
+  padding: 0 1rem;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+/* Bildirimler Dropdown */
+.notifications-dropdown {
+  position: absolute;
+  top: 72px;
+  right: 2rem;
+  width: 320px;
+  background: rgba(15, 23, 42, 0.95);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  padding: 1rem;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.5);
+  z-index: 1001;
+  display: none;
+}
+
+.notifications-dropdown.open {
+  display: block;
+}
+
+.notif-item {
+  padding: 0.6rem 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  font-size: 0.82rem;
+}
+
+.notif-type {
+  font-weight: 800;
+  color: #10b981;
+  display: block;
+  margin-bottom: 0.2rem;
+}
+
+/* Mobil Alt Navigasyon */
+.mobile-bottom-nav {
+  display: none;
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 60px;
+  background: rgba(8, 12, 24, 0.96);
+  backdrop-filter: blur(16px);
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  z-index: 1500;
+  justify-content: space-around;
+  align-items: center;
+}
+
+.mobile-nav-item {
+  background: none;
+  border: none;
+  color: #94a3b8;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  font-size: 1.1rem;
+  cursor: pointer;
+}
+
+.mobile-nav-item small {
+  font-size: 0.68rem;
+  font-weight: 600;
+  margin-top: 2px;
+}
+
+/* Form Elemanları & Admin */
+.form-input, .form-textarea, .form-select {
+  width: 100%;
+  background: rgba(0, 0, 0, 0.35);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  color: white;
+  margin-bottom: 0.8rem;
+  outline: none;
+}
+
+.comparison-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.comparison-table th, .comparison-table td {
+  padding: 0.8rem 1rem;
+  text-align: center;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.winner {
+  color: #10b981;
+  font-weight: 900;
+}
+
+/* Mobil Duyarlılık (Responsive) */
+@media (max-width: 900px) {
+  .nav-links { display: none; }
+  .mobile-bottom-nav { display: flex; }
+  .home-dual-grid { grid-template-columns: 1fr; }
+  .platform-navbar { padding: 0 1rem; }
+  .search-btn span, .ai-btn span { display: none; }
+  .ai-drawer { width: 92%; right: 4%; }
+}
+

@@ -43,6 +43,7 @@ class Game {
     this.skillMoveCooldown = false;
     this.lastMouseX = null;
     this.lastMouseY = null;
+    this.isDeadBallSetPiece = false; // Frikik ve penaltılarda hareket ve kamerayı kilitleme bayrağı
 
     // Klavye Hareket Tuşları (WASD & Ok Tuşları & Depar)
     this.keys = {
@@ -178,6 +179,15 @@ class Game {
     this.camera.lookAt(bPos.x, Math.max(1.0, bPos.y), 0);
   }
 
+  // Frikik veya Penaltı gibi duran top anlarında mıyız?
+  isDeadBallSituation() {
+    if (this.isDeadBallSetPiece) return true;
+    if (this.currentScenario && (this.currentScenario.type === 'freekick' || this.currentScenario.type === 'penalty')) {
+      return true;
+    }
+    return false;
+  }
+
   // YENİ POZİSYON / SENARYO YÜKLE
   setupScenario(scenario) {
     this.isCoopMatch = false;
@@ -249,6 +259,7 @@ class Game {
       const isOpenPlay = (scenario.type !== 'freekick' && scenario.type !== 'penalty');
 
       if (scenario.type === 'freekick') {
+        this.isDeadBallSetPiece = true;
         const angleOffset = (Math.random() - 0.5) * 6;
         ballPos.x = angleOffset;
         this.ball.reset(ballPos);
@@ -257,6 +268,7 @@ class Game {
         this.setCameraBehindBall();
         this.playerModels.createKicker(new THREE.Vector3(ballPos.x, 0.11, ballPos.z + 1.8), clubColor, this.career.player.jerseyNumber);
       } else if (scenario.type === 'penalty') {
+        this.isDeadBallSetPiece = true;
         ballPos.set(0, this.ball.radius, 11);
         this.ball.reset(ballPos);
         this.playerModels.clearDefenders();
@@ -265,6 +277,7 @@ class Game {
         this.playerModels.createKicker(new THREE.Vector3(0, 0.11, 13.5), clubColor, this.career.player.jerseyNumber);
       } else {
         // AÇIK OYUN / HIZLI HÜCUM / CEZA SAHASI AKINI:
+        this.isDeadBallSetPiece = false;
         // Top oyuncunun ayağında başlar!
         const startX = (Math.random() - 0.5) * 6;
         const startZ = scenario.distance || 28;
@@ -579,6 +592,12 @@ class Game {
     const kicker = this.playerModels.kicker;
     const pGroup = kicker.group;
 
+    // Frikik veya penaltıda oyuncu hareket edemez, topun başında sabit kilitli kalır
+    if (this.isDeadBallSituation()) {
+      this.playerModels.updateRunningAnimation(kicker, false, false, dt);
+      return;
+    }
+
     let forwardInput = (this.keys.KeyW || this.keys.ArrowUp ? 1 : 0) - (this.keys.KeyS || this.keys.ArrowDown ? 1 : 0);
     let strafeInput = (this.keys.KeyD || this.keys.ArrowRight ? 1 : 0) - (this.keys.KeyA || this.keys.ArrowLeft ? 1 : 0);
 
@@ -672,6 +691,13 @@ class Game {
   // OYUNCUYU TAKİP EDEN SERBEST 360 KAMERA (Fare ile Orbit)
   updateFollowCamera(dt) {
     if (!this.playerModels || !this.playerModels.kicker) return;
+
+    // Frikik veya penaltıda kamera serbestçe döndürülemez, kaleye sabit kilitli kalır
+    if (this.isDeadBallSituation()) {
+      this.setCameraBehindBall();
+      return;
+    }
+
     const pPos = this.playerModels.kicker.group.position;
 
     const dist = this.cameraDistance || 6.8;
@@ -1077,6 +1103,13 @@ class Game {
         return;
       }
 
+      // Frikik veya penaltıda kamera serbestçe döndürülemez, kaleye sabit kilitli kalır
+      if (this.isDeadBallSituation()) {
+        this.lastMouseX = e.clientX;
+        this.lastMouseY = e.clientY;
+        return;
+      }
+
       // Fareyi sağa/sola/yukarı/aşağı hareket ettirince kamera serbestçe 360 döner (FIFA/PES Orbit Kamera)
       if (this.lastMouseX !== null && this.lastMouseY !== null) {
         const dx = e.clientX - this.lastMouseX;
@@ -1232,6 +1265,7 @@ class Game {
     if (this.shotCooldown) return;
     this.shotCooldown = true;
     this.hasBallPossession = false;
+    this.isDeadBallSetPiece = false;
 
     const dragY = Math.abs(dy);
     const dirX = THREE.MathUtils.clamp(dx / 85, -1.6, 1.6);
