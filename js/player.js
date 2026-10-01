@@ -174,10 +174,11 @@ class PlayerModels {
     }
   }
 
-  // ŞUT ÇEKEN FORVET OYUNCUSU (Kicker Rig)
+  // ŞUT ÇEKEN FORVET OYUNCUSU (Kicker Rig - Koşma ve Şut Eklemleri)
   createKicker(ballPos, jerseyColorHex = 0xe74c3c, number = 10) {
     if (this.kicker) {
       this.scene.remove(this.kicker.group);
+      this.kicker = null;
     }
 
     const group = new THREE.Group();
@@ -196,9 +197,8 @@ class PlayerModels {
     nctx.fillText(number.toString(), 64, 64);
     const numTex = new THREE.CanvasTexture(numCanvas);
 
-    const frontMat = new THREE.MeshStandardMaterial({ color: jerseyColorHex });
-    const backMat = new THREE.MeshStandardMaterial({ map: numTex });
-    // Kutu yüzleri: sağ, sol, üst, alt, ön, arka
+    const frontMat = new THREE.MeshStandardMaterial({ color: jerseyColorHex, roughness: 0.6 });
+    const backMat = new THREE.MeshStandardMaterial({ map: numTex, roughness: 0.6 });
     const torsoMats = [frontMat, frontMat, frontMat, frontMat, backMat, backMat];
 
     const torso = new THREE.Mesh(new THREE.BoxGeometry(0.55, 0.65, 0.28), torsoMats);
@@ -206,7 +206,7 @@ class PlayerModels {
     torso.castShadow = true;
     group.add(torso);
 
-    const skinMat = new THREE.MeshStandardMaterial({ color: 0xffdbac });
+    const skinMat = new THREE.MeshStandardMaterial({ color: 0xffdbac, roughness: 0.7 });
     const head = new THREE.Mesh(new THREE.SphereGeometry(0.18, 14, 14), skinMat);
     head.position.y = 1.72;
     head.castShadow = true;
@@ -218,81 +218,271 @@ class PlayerModels {
     group.add(hair);
 
     const shorts = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.35, 0.26),
-      new THREE.MeshStandardMaterial({ color: 0x222222 }));
+      new THREE.MeshStandardMaterial({ color: 0x222222, roughness: 0.8 }));
     shorts.position.y = 0.85;
     group.add(shorts);
 
-    // Sağ Vuruş Bacağı (Şut animasyonu için mafsallı grup)
-    const legMat = new THREE.MeshStandardMaterial({ color: 0xffffff });
-    const leftLeg = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.08, 0.7, 10), legMat);
-    leftLeg.position.set(-0.16, 0.42, 0);
-    group.add(leftLeg);
+    const legMat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.8 });
 
+    // Sol Bacak Eklemi (Kalça Mafsalı y = 0.75)
+    const leftLegGroup = new THREE.Group();
+    leftLegGroup.position.set(-0.16, 0.75, 0);
+    const leftLeg = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.08, 0.7, 10), legMat);
+    leftLeg.position.y = -0.35;
+    leftLeg.castShadow = true;
+    leftLegGroup.add(leftLeg);
+    group.add(leftLegGroup);
+
+    // Sağ Bacak Eklemi (Kalça Mafsalı y = 0.75)
     const rightLegGroup = new THREE.Group();
     rightLegGroup.position.set(0.16, 0.75, 0);
     const rightLeg = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.08, 0.7, 10), legMat);
     rightLeg.position.y = -0.35;
+    rightLeg.castShadow = true;
     rightLegGroup.add(rightLeg);
     group.add(rightLegGroup);
 
-    // Kollar
+    // Kollar (Omuz Mafsalları y = 1.45)
     const armGeo = new THREE.CylinderGeometry(0.07, 0.06, 0.55, 10);
+    
+    const leftArmGroup = new THREE.Group();
+    leftArmGroup.position.set(-0.35, 1.45, 0);
     const lArm = new THREE.Mesh(armGeo, frontMat);
-    lArm.position.set(-0.35, 1.2, 0);
-    lArm.rotation.z = 0.3;
-    group.add(lArm);
+    lArm.position.y = -0.25;
+    leftArmGroup.add(lArm);
+    group.add(leftArmGroup);
 
+    const rightArmGroup = new THREE.Group();
+    rightArmGroup.position.set(0.35, 1.45, 0);
     const rArm = new THREE.Mesh(armGeo, frontMat);
-    rArm.position.set(0.35, 1.2, 0);
-    rArm.rotation.z = -0.3;
-    group.add(rArm);
+    rArm.position.y = -0.25;
+    rightArmGroup.add(rArm);
+    group.add(rightArmGroup);
 
-    // Topun 1.8m gerisinde durur
+    // Baş Üstünde Oyuncu İsim Etiketi
+    const labelCanvas = document.createElement('canvas');
+    labelCanvas.width = 256;
+    labelCanvas.height = 64;
+    const lctx = labelCanvas.getContext('2d');
+    lctx.fillStyle = 'rgba(0, 242, 254, 0.85)';
+    if (lctx.roundRect) lctx.roundRect(4, 4, 248, 56, 12);
+    else lctx.rect(4, 4, 248, 56);
+    lctx.fill();
+    lctx.fillStyle = '#0a1424';
+    lctx.font = 'bold 26px "Segoe UI", sans-serif';
+    lctx.textAlign = 'center';
+    lctx.textBaseline = 'middle';
+    lctx.fillText('SEN (WASD Koş)', 128, 32);
+    const labelTex = new THREE.CanvasTexture(labelCanvas);
+    const labelSprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: labelTex, transparent: true }));
+    labelSprite.position.set(0, 2.3, 0);
+    labelSprite.scale.set(1.4, 0.35, 1);
+    group.add(labelSprite);
+
     group.position.set(ballPos.x - 0.4, 0, ballPos.z + 1.8);
     group.lookAt(0, 0, 0);
 
     this.scene.add(group);
     this.kicker = {
       group: group,
+      torso: torso,
+      head: head,
+      hair: hair,
+      leftLegGroup: leftLegGroup,
       rightLegGroup: rightLegGroup,
-      isKicking: false
+      leftArmGroup: leftArmGroup,
+      rightArmGroup: rightArmGroup,
+      labelSprite: labelSprite,
+      isKicking: false,
+      runCycle: 0
     };
 
+    this.createKickZoneIndicator();
     return this.kicker;
   }
 
+  // AYAK ALTI 3D TOP KONTROL VE VURUŞ ALANI HALKASI
+  createKickZoneIndicator() {
+    if (this.kickZoneRing) {
+      this.scene.remove(this.kickZoneRing);
+      this.scene.remove(this.kickZoneAura);
+    }
+
+    const ringGeo = new THREE.RingGeometry(1.6, 1.85, 32);
+    ringGeo.rotateX(-Math.PI / 2);
+    const ringMat = new THREE.MeshBasicMaterial({
+      color: 0x00f2fe,
+      side: THREE.DoubleSide,
+      transparent: true,
+      opacity: 0.75
+    });
+    this.kickZoneRing = new THREE.Mesh(ringGeo, ringMat);
+    this.kickZoneRing.position.set(0, 0.03, 0);
+    this.scene.add(this.kickZoneRing);
+
+    const auraGeo = new THREE.CircleGeometry(1.6, 32);
+    auraGeo.rotateX(-Math.PI / 2);
+    const auraMat = new THREE.MeshBasicMaterial({
+      color: 0x00ff88,
+      transparent: true,
+      opacity: 0.15,
+      side: THREE.DoubleSide
+    });
+    this.kickZoneAura = new THREE.Mesh(auraGeo, auraMat);
+    this.kickZoneAura.position.set(0, 0.02, 0);
+    this.scene.add(this.kickZoneAura);
+  }
+
+  updateKickZone(pos, canKick, kickType) {
+    if (!this.kickZoneRing) return;
+    this.kickZoneRing.position.set(pos.x, 0.03, pos.z);
+    this.kickZoneAura.position.set(pos.x, 0.02, pos.z);
+
+    if (canKick) {
+      if (kickType === 'volley') {
+        this.kickZoneRing.material.color.setHex(0xff3838); // Vole için alev kırmızı/turuncu
+        this.kickZoneAura.material.color.setHex(0xff3838);
+        this.kickZoneAura.material.opacity = 0.35;
+      } else {
+        this.kickZoneRing.material.color.setHex(0x00ff88); // Top ayaktayken neon yeşil
+        this.kickZoneAura.material.color.setHex(0x00ff88);
+        this.kickZoneAura.material.opacity = 0.25;
+      }
+      this.kickZoneRing.scale.set(1.08, 1.08, 1.08);
+    } else {
+      this.kickZoneRing.material.color.setHex(0x00f2fe); // Koşarken neon mavi
+      this.kickZoneAura.material.color.setHex(0x00f2fe);
+      this.kickZoneAura.material.opacity = 0.08;
+      this.kickZoneRing.scale.set(1.0, 1.0, 1.0);
+    }
+  }
+
+  // KOŞMA ANİMASYONU (Bacak ve kol salınımları)
+  updateRunningAnimation(char, isMoving, isSprinting, dt = 0.016) {
+    if (!char || char.isKicking) return;
+
+    if (isMoving) {
+      const runSpeed = isSprinting ? 16 : 11;
+      const legAmp = isSprinting ? 0.95 : 0.65;
+      const armAmp = isSprinting ? 0.8 : 0.5;
+
+      char.runCycle = (char.runCycle || 0) + dt * runSpeed;
+      const t = char.runCycle;
+
+      // Bacak salınımları (Koşu ritmi)
+      char.leftLegGroup.rotation.x = Math.sin(t) * legAmp;
+      char.rightLegGroup.rotation.x = -Math.sin(t) * legAmp;
+
+      // Kol salınımları (Bacakların tersi)
+      char.leftArmGroup.rotation.x = -Math.sin(t) * armAmp;
+      char.rightArmGroup.rotation.x = Math.sin(t) * armAmp;
+
+      // Gövde sekmesi
+      char.torso.position.y = 1.25 + Math.abs(Math.sin(t * 2)) * 0.05;
+      char.head.position.y = 1.72 + Math.abs(Math.sin(t * 2)) * 0.05;
+      if (char.hair) char.hair.position.y = 1.75 + Math.abs(Math.sin(t * 2)) * 0.05;
+    } else {
+      // Dururken nötr idle pozisyonuna yumuşakça dön
+      char.runCycle = 0;
+      char.leftLegGroup.rotation.x = THREE.MathUtils.lerp(char.leftLegGroup.rotation.x, 0, 0.2);
+      char.rightLegGroup.rotation.x = THREE.MathUtils.lerp(char.rightLegGroup.rotation.x, 0, 0.2);
+      char.leftArmGroup.rotation.x = THREE.MathUtils.lerp(char.leftArmGroup.rotation.x, 0, 0.2);
+      char.rightArmGroup.rotation.x = THREE.MathUtils.lerp(char.rightArmGroup.rotation.x, 0, 0.2);
+      char.torso.position.y = THREE.MathUtils.lerp(char.torso.position.y, 1.25, 0.2);
+      char.head.position.y = THREE.MathUtils.lerp(char.head.position.y, 1.72, 0.2);
+      if (char.hair) char.hair.position.y = THREE.MathUtils.lerp(char.hair.position.y, 1.75, 0.2);
+    }
+  }
+
   // ŞUT ANİMASYONU (Geriye gerilme ve topa sert vuruş)
-  triggerKickAnimation(onImpactCallback) {
-    if (!this.kicker) return;
-    this.kicker.isKicking = true;
+  triggerKickAnimation(onImpactCallback, targetChar = null) {
+    const char = targetChar || this.kicker;
+    if (!char) return;
+    char.isKicking = true;
 
-    const startPos = this.kicker.group.position.clone();
     let t = 0;
-
     const animInterval = setInterval(() => {
       t += 0.08;
 
       if (t < 0.4) {
-        // Geriye açılma (Backswing)
-        this.kicker.rightLegGroup.rotation.x = -Math.sin(t / 0.4 * (Math.PI / 2)) * 1.1;
+        char.rightLegGroup.rotation.x = -Math.sin(t / 0.4 * (Math.PI / 2)) * 1.2;
       } else if (t < 0.7) {
-        // İleriye sert savurma (Follow through & Impact)
         const progress = (t - 0.4) / 0.3;
-        this.kicker.rightLegGroup.rotation.x = -1.1 + (progress * 2.3);
-        
-        // Tam vuruş anı
+        char.rightLegGroup.rotation.x = -1.2 + (progress * 2.5);
         if (progress >= 0.5 && onImpactCallback) {
           onImpactCallback();
           onImpactCallback = null;
         }
       } else if (t < 1.0) {
-        // Normal duruşa geri dönme
         const progress = (t - 0.7) / 0.3;
-        this.kicker.rightLegGroup.rotation.x = 1.2 * (1 - progress);
+        char.rightLegGroup.rotation.x = 1.3 * (1 - progress);
       } else {
         clearInterval(animInterval);
-        this.kicker.rightLegGroup.rotation.x = 0;
-        this.kicker.isKicking = false;
+        char.rightLegGroup.rotation.x = 0;
+        char.isKicking = false;
+      }
+    }, 20);
+  }
+
+  // VOLE ANİMASYONU (Havaya zıplayıp vole savurma)
+  triggerVolleyAnimation(onImpactCallback, targetChar = null) {
+    const char = targetChar || this.kicker;
+    if (!char) return;
+    char.isKicking = true;
+
+    let t = 0;
+    const interval = setInterval(() => {
+      t += 0.07;
+      if (t < 0.4) {
+        char.group.position.y = Math.sin(t / 0.4 * (Math.PI / 2)) * 0.65;
+        char.rightLegGroup.rotation.x = -1.4;
+      } else if (t < 0.75) {
+        const p = (t - 0.4) / 0.35;
+        char.rightLegGroup.rotation.x = -1.4 + (p * 2.8);
+        if (p >= 0.5 && onImpactCallback) {
+          onImpactCallback();
+          onImpactCallback = null;
+        }
+      } else if (t < 1.05) {
+        const p = (t - 0.75) / 0.3;
+        char.group.position.y = 0.65 * (1 - p);
+        char.rightLegGroup.rotation.x = 1.4 * (1 - p);
+      } else {
+        clearInterval(interval);
+        char.group.position.y = 0;
+        char.rightLegGroup.rotation.x = 0;
+        char.isKicking = false;
+      }
+    }, 20);
+  }
+
+  // KAFA VURUŞU ANİMASYONU (Havaya yükselme ve kafa atma)
+  triggerHeaderAnimation(onImpactCallback, targetChar = null) {
+    const char = targetChar || this.kicker;
+    if (!char) return;
+    char.isKicking = true;
+
+    let t = 0;
+    const interval = setInterval(() => {
+      t += 0.08;
+      if (t < 0.5) {
+        char.group.position.y = Math.sin(t / 0.5 * (Math.PI / 2)) * 0.75;
+        char.head.rotation.x = -0.35;
+      } else if (t < 0.75) {
+        char.head.rotation.x = 0.55;
+        if (onImpactCallback) {
+          onImpactCallback();
+          onImpactCallback = null;
+        }
+      } else if (t < 1.05) {
+        const p = (t - 0.75) / 0.3;
+        char.group.position.y = 0.75 * (1 - p);
+        char.head.rotation.x = 0.55 * (1 - p);
+      } else {
+        clearInterval(interval);
+        char.group.position.y = 0;
+        char.head.rotation.x = 0;
+        char.isKicking = false;
       }
     }, 20);
   }
@@ -320,8 +510,8 @@ class PlayerModels {
     nctx.fillText(number.toString(), 64, 64);
     const numTex = new THREE.CanvasTexture(numCanvas);
 
-    const frontMat = new THREE.MeshStandardMaterial({ color: jerseyColorHex });
-    const backMat = new THREE.MeshStandardMaterial({ map: numTex });
+    const frontMat = new THREE.MeshStandardMaterial({ color: jerseyColorHex, roughness: 0.6 });
+    const backMat = new THREE.MeshStandardMaterial({ map: numTex, roughness: 0.6 });
     const torsoMats = [frontMat, frontMat, frontMat, frontMat, backMat, backMat];
 
     const torso = new THREE.Mesh(new THREE.BoxGeometry(0.55, 0.65, 0.28), torsoMats);
@@ -329,7 +519,7 @@ class PlayerModels {
     torso.castShadow = true;
     group.add(torso);
 
-    const skinMat = new THREE.MeshStandardMaterial({ color: 0xffdbac });
+    const skinMat = new THREE.MeshStandardMaterial({ color: 0xffdbac, roughness: 0.7 });
     const head = new THREE.Mesh(new THREE.SphereGeometry(0.18, 14, 14), skinMat);
     head.position.y = 1.72;
     head.castShadow = true;
@@ -341,53 +531,64 @@ class PlayerModels {
     group.add(hair);
 
     const shorts = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.35, 0.26),
-      new THREE.MeshStandardMaterial({ color: 0x111111 }));
+      new THREE.MeshStandardMaterial({ color: 0x111111, roughness: 0.8 }));
     shorts.position.y = 0.85;
     group.add(shorts);
 
-    // Bacaklar
-    const legMat = new THREE.MeshStandardMaterial({ color: 0xffffff });
-    const leftLeg = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.08, 0.7, 10), legMat);
-    leftLeg.position.set(-0.16, 0.42, 0);
-    group.add(leftLeg);
+    const legMat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.8 });
 
+    // Sol Bacak Eklemi (y = 0.75)
+    const leftLegGroup = new THREE.Group();
+    leftLegGroup.position.set(-0.16, 0.75, 0);
+    const leftLeg = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.08, 0.7, 10), legMat);
+    leftLeg.position.y = -0.35;
+    leftLeg.castShadow = true;
+    leftLegGroup.add(leftLeg);
+    group.add(leftLegGroup);
+
+    // Sağ Bacak Eklemi (y = 0.75)
     const rightLegGroup = new THREE.Group();
     rightLegGroup.position.set(0.16, 0.75, 0);
     const rightLeg = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.08, 0.7, 10), legMat);
     rightLeg.position.y = -0.35;
+    rightLeg.castShadow = true;
     rightLegGroup.add(rightLeg);
     group.add(rightLegGroup);
 
-    // Kollar (Voleye hazır açık duruş)
+    // Kollar (y = 1.45)
     const armGeo = new THREE.CylinderGeometry(0.07, 0.06, 0.55, 10);
+    const leftArmGroup = new THREE.Group();
+    leftArmGroup.position.set(-0.35, 1.45, 0);
     const lArm = new THREE.Mesh(armGeo, frontMat);
-    lArm.position.set(-0.35, 1.2, 0);
-    lArm.rotation.z = 0.45;
-    group.add(lArm);
+    lArm.position.y = -0.25;
+    leftArmGroup.add(lArm);
+    group.add(leftArmGroup);
 
+    const rightArmGroup = new THREE.Group();
+    rightArmGroup.position.set(0.35, 1.45, 0);
     const rArm = new THREE.Mesh(armGeo, frontMat);
-    rArm.position.set(0.35, 1.2, 0);
-    rArm.rotation.z = -0.45;
-    group.add(rArm);
+    rArm.position.y = -0.25;
+    rightArmGroup.add(rArm);
+    group.add(rightArmGroup);
 
     // Baş Üstünde 3D İsim/Rol Bilgisi
     const labelCanvas = document.createElement('canvas');
     labelCanvas.width = 256;
     labelCanvas.height = 64;
     const lctx = labelCanvas.getContext('2d');
-    lctx.fillStyle = 'rgba(0, 242, 254, 0.9)';
+    lctx.fillStyle = 'rgba(0, 255, 136, 0.9)';
     if (lctx.roundRect) lctx.roundRect(4, 4, 248, 56, 12);
     else lctx.rect(4, 4, 248, 56);
     lctx.fill();
     lctx.fillStyle = '#0a1424';
-    lctx.font = 'bold 28px "Segoe UI", sans-serif';
+    lctx.font = 'bold 26px "Segoe UI", sans-serif';
     lctx.textAlign = 'center';
     lctx.textBaseline = 'middle';
     lctx.fillText(labelText, 128, 32);
     const labelTex = new THREE.CanvasTexture(labelCanvas);
     const labelSprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: labelTex, transparent: true }));
     labelSprite.position.set(0, 2.3, 0);
-    labelSprite.scale.set(1.5, 0.4, 1);
+    labelSprite.scale.set(1.4, 0.35, 1);
     group.add(labelSprite);
 
     group.position.copy(pos);
@@ -396,43 +597,24 @@ class PlayerModels {
     this.scene.add(group);
     this.teammate = {
       group: group,
+      torso: torso,
+      head: head,
+      hair: hair,
+      leftLegGroup: leftLegGroup,
       rightLegGroup: rightLegGroup,
+      leftArmGroup: leftArmGroup,
+      rightArmGroup: rightArmGroup,
       labelSprite: labelSprite,
-      isKicking: false
+      isKicking: false,
+      runCycle: 0
     };
 
     return this.teammate;
   }
 
-  // TAKIM ARKADAŞI VOLE / KAFA / ŞUT ANİMASYONU
+  // TAKIM ARKADAŞI VURUŞ ANİMASYONU
   triggerTeammateKickAnimation(onImpactCallback) {
-    if (!this.teammate) return;
-    this.teammate.isKicking = true;
-
-    let t = 0;
-    const animInterval = setInterval(() => {
-      t += 0.08;
-      if (t < 0.4) {
-        this.teammate.rightLegGroup.rotation.x = -Math.sin(t / 0.4 * (Math.PI / 2)) * 1.3;
-        this.teammate.group.position.y += 0.06; // Vole için havaya sıçrama
-      } else if (t < 0.7) {
-        const progress = (t - 0.4) / 0.3;
-        this.teammate.rightLegGroup.rotation.x = -1.3 + (progress * 2.7);
-        if (progress >= 0.5 && onImpactCallback) {
-          onImpactCallback();
-          onImpactCallback = null;
-        }
-      } else if (t < 1.0) {
-        const progress = (t - 0.7) / 0.3;
-        this.teammate.rightLegGroup.rotation.x = 1.4 * (1 - progress);
-        this.teammate.group.position.y = Math.max(0, this.teammate.group.position.y - 0.06);
-      } else {
-        clearInterval(animInterval);
-        this.teammate.rightLegGroup.rotation.x = 0;
-        this.teammate.group.position.y = 0;
-        this.teammate.isKicking = false;
-      }
-    }, 20);
+    this.triggerKickAnimation(onImpactCallback, this.teammate);
   }
 
   // BARAJIN ZIPLAMA ANİMASYONU
@@ -586,10 +768,21 @@ class PlayerModels {
 
   clearAll() {
     if (this.goalkeeper) this.scene.remove(this.goalkeeper.group);
-    if (this.kicker) this.scene.remove(this.kicker.group);
+    if (this.kicker) {
+      this.scene.remove(this.kicker.group);
+      this.kicker = null;
+    }
     if (this.teammate) {
       this.scene.remove(this.teammate.group);
       this.teammate = null;
+    }
+    if (this.kickZoneRing) {
+      this.scene.remove(this.kickZoneRing);
+      this.kickZoneRing = null;
+    }
+    if (this.kickZoneAura) {
+      this.scene.remove(this.kickZoneAura);
+      this.kickZoneAura = null;
     }
     this.wall.forEach(def => this.scene.remove(def.group));
     this.wall = [];

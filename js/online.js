@@ -320,6 +320,26 @@ class OnlineManager {
         break;
 
       // CO-OP 2 KİŞİLİK EŞLİ HÜCUM VERİLERİ
+      case 'coop_player_pos':
+        if (this.game && this.game.playerModels && this.game.playerModels.teammate) {
+          const tm = this.game.playerModels.teammate;
+          tm.group.position.x = THREE.MathUtils.lerp(tm.group.position.x, data.x, 0.45);
+          tm.group.position.z = THREE.MathUtils.lerp(tm.group.position.z, data.z, 0.45);
+          tm.group.rotation.y = data.rotY;
+          this.game.playerModels.updateRunningAnimation(tm, data.isMoving, data.isSprinting, 0.035);
+
+          if (data.hasBall && this.game.ball && !this.game.ball.isMoving) {
+            const fX = Math.sin(data.rotY);
+            const fZ = Math.cos(data.rotY);
+            this.game.ball.position.x = data.x + fX * 0.48;
+            this.game.ball.position.z = data.z + fZ * 0.48;
+            this.game.ball.position.y = this.game.ball.radius;
+            this.game.ball.mesh.position.copy(this.game.ball.position);
+            this.game.ball.shadow.position.set(this.game.ball.position.x, 0.015, this.game.ball.position.z);
+          }
+        }
+        break;
+
       case 'coop_pass':
         if (this.game) {
           this.game.receiveCoopPass(data);
@@ -440,6 +460,23 @@ class OnlineManager {
   }
 
   // Co-op Veri Gönderimleri
+  throttleSendPlayerPos(pos, rotY, isMoving, isSprinting, hasBall) {
+    if (!this.isOnlineMatch || !this.connected) return;
+    const now = performance.now();
+    if (this._lastPosSend && (now - this._lastPosSend) < 40) return;
+    this._lastPosSend = now;
+
+    this.send({
+      type: 'coop_player_pos',
+      x: Math.round(pos.x * 100) / 100,
+      z: Math.round(pos.z * 100) / 100,
+      rotY: Math.round(rotY * 100) / 100,
+      isMoving: isMoving,
+      isSprinting: isSprinting,
+      hasBall: hasBall
+    });
+  }
+
   sendCoopPass(targetPos, power, curl, arcHeight, flightDuration) {
     if (this.isOnlineMatch && this.gameMode === 'coop') {
       this.send({
@@ -453,14 +490,15 @@ class OnlineManager {
     }
   }
 
-  sendCoopShot(dirX, dirY, power, curl) {
+  sendCoopShot(dirX, dirY, power, curl, shotType = 'ground') {
     if (this.isOnlineMatch && this.gameMode === 'coop') {
       this.send({
         type: 'coop_shot',
         dirX: dirX,
         dirY: dirY,
         power: power,
-        curl: curl
+        curl: curl,
+        shotType: shotType
       });
     }
   }
