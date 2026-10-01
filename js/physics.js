@@ -279,16 +279,21 @@ class BallPhysics {
       }
     }
 
-    // 8. KALECİ ELDİVENİ / KURTARIŞ ÇARPIŞMASI (Adil ve Gerçekçi Boyut)
+    // 8. KALECİ ELDİVENİ / KURTARIŞ ÇARPIŞMASI (Adil ve Tatmin Edici Boyut)
     if (playerModels && !this.hasBeenSaved && !this.hasScored) {
       const gkBounds = playerModels.getGoalkeeperGlovesBounds();
       if (gkBounds) {
         const dLeft = this.position.distanceTo(gkBounds.leftGlove);
         const dRight = this.position.distanceTo(gkBounds.rightGlove);
+        const dMid = gkBounds.glovesMid ? this.position.distanceTo(gkBounds.glovesMid) : 999;
         const dBody = this.position.distanceTo(gkBounds.bodyCenter);
 
-        // Adil temas yarıçapı: eldiven 0.28m, gövde 0.42m
-        if (dLeft < 0.28 || dRight < 0.28 || (dBody < 0.42 && this.position.z < 1.0)) {
+        // İnsan kaleci kontrol ederken refleksler ve fare etkileşimi için adil ve tatmin edici kurtarış penceresi
+        const isHuman = !!gkBounds.isPlayerGK;
+        const gloveThreshold = isHuman ? 0.65 : 0.30;
+        const bodyThreshold = isHuman ? 0.75 : 0.42;
+
+        if (dLeft < gloveThreshold || dRight < gloveThreshold || dMid < gloveThreshold || (dBody < bodyThreshold && this.position.z < 1.0)) {
           this.hasBeenSaved = true;
           this.hasTriggeredEnd = true;
           this.velocity.x += (Math.random() - 0.5) * 7;

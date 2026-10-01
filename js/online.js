@@ -188,9 +188,9 @@ class OnlineManager {
         break;
 
       case 'gk_position':
-        // Kaleci fare hareketini gerçek zamanlı senkronize et
+        // Kaleci fare hareketini gerçek zamanlı senkronize et (2D X ve Y)
         if (this.myRole === 'striker' && this.game && this.game.playerModels) {
-          this.game.playerModels.setGoalkeeperManualPosition(data.xRatio, data.isDiving);
+          this.game.playerModels.setGoalkeeperManualPosition(data.xRatio, data.yRatio !== undefined ? data.yRatio : 0.5, data.isDiving);
         }
         break;
 
@@ -257,12 +257,13 @@ class OnlineManager {
     this.game.setupScenario(scenario);
   }
 
-  // Kaleci fare pozisyonunu rakibe canlı akıt (60 FPS)
-  sendGoalkeeperMove(xRatio, isDiving = false) {
+  // Kaleci fare pozisyonunu rakibe canlı akıt (2D X ve Y - 60 FPS)
+  sendGoalkeeperMove(xRatio, yRatio = 0.5, isDiving = false) {
     if (this.isOnlineMatch && this.myRole === 'goalkeeper') {
       this.send({
         type: 'gk_position',
         xRatio: xRatio,
+        yRatio: yRatio,
         isDiving: isDiving
       });
     }

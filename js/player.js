@@ -361,19 +361,49 @@ class PlayerModels {
     requestAnimationFrame(diveLoop);
   }
 
-  // OYUNCUNUN KONTROL ETTİĞİ KALECİ (Kaleci Mevkisinde Oynarken)
-  setGoalkeeperManualPosition(xRatio, isDivingAction = false) {
+  // OYUNCUNUN KONTROL ETTİĞİ KALECİ (Kaleci Mevkisinde Oynarken - 2D X ve Y Kontrolü)
+  setGoalkeeperManualPosition(xRatio, yRatio = 0.5, isDivingAction = false) {
     if (!this.goalkeeper) return;
-    // xRatio: -1 (Sol köşe) ile +1 (Sağ köşe) arası
-    const targetX = xRatio * 3.3;
-    this.goalkeeper.group.position.x = THREE.MathUtils.lerp(this.goalkeeper.group.position.x, targetX, 0.25);
+    this.isPlayerGK = true;
+
+    // xRatio: -1.0 (Sol direk) ile +1.0 (Sağ direk)
+    // yRatio: 0.0 (Zemin) ile 1.0 (Üst direk / 90)
+    const targetX = xRatio * 3.4;
+    this.goalkeeper.group.position.x = THREE.MathUtils.lerp(this.goalkeeper.group.position.x, targetX, 0.35);
+
+    // Kolların ve eldivenlerin fareye göre 3D uzanması:
+    if (this.goalkeeper.leftArm && this.goalkeeper.rightArm) {
+      if (yRatio > 0.6) {
+        // Yüksek toplarda kollar yukarı ve 90 köşelerine açılır
+        this.goalkeeper.leftArm.rotation.z = Math.PI - 0.4 + (xRatio * 0.3);
+        this.goalkeeper.rightArm.rotation.z = -Math.PI + 0.4 + (xRatio * 0.3);
+        this.goalkeeper.leftArm.rotation.x = -0.3;
+        this.goalkeeper.rightArm.rotation.x = -0.3;
+      } else if (yRatio < 0.35) {
+        // Alçak ve yerden gelen şutlarda kollar aşağı uzanır
+        this.goalkeeper.leftArm.rotation.z = 0.2 + (xRatio * 0.4);
+        this.goalkeeper.rightArm.rotation.z = -0.2 + (xRatio * 0.4);
+        this.goalkeeper.leftArm.rotation.x = 0.5;
+        this.goalkeeper.rightArm.rotation.x = 0.5;
+      } else {
+        // Orta seviye dengeli kurtarış duruşu
+        this.goalkeeper.leftArm.rotation.z = 0.8 + (xRatio * 0.5);
+        this.goalkeeper.rightArm.rotation.z = -0.8 + (xRatio * 0.5);
+        this.goalkeeper.leftArm.rotation.x = 0;
+        this.goalkeeper.rightArm.rotation.x = 0;
+      }
+    }
 
     if (isDivingAction) {
-      this.goalkeeper.group.position.y = THREE.MathUtils.lerp(this.goalkeeper.group.position.y, 1.4, 0.3);
-      this.goalkeeper.group.rotation.z = -xRatio * 0.9;
+      // Uçuş hamlesi: Vücut açıyla havaya fırlar ve yana eğilir
+      const jumpHeight = Math.max(0.7, yRatio * 1.8);
+      this.goalkeeper.group.position.y = THREE.MathUtils.lerp(this.goalkeeper.group.position.y, jumpHeight, 0.4);
+      this.goalkeeper.group.rotation.z = THREE.MathUtils.lerp(this.goalkeeper.group.rotation.z, -xRatio * 1.1, 0.35);
     } else {
-      this.goalkeeper.group.position.y = 0;
-      this.goalkeeper.group.rotation.z = 0;
+      // Ayakta duruş (Hafif yaylanma ve hazır bekleme)
+      const baseHeight = (yRatio > 0.65) ? (yRatio - 0.65) * 0.8 : 0;
+      this.goalkeeper.group.position.y = THREE.MathUtils.lerp(this.goalkeeper.group.position.y, baseHeight, 0.25);
+      this.goalkeeper.group.rotation.z = THREE.MathUtils.lerp(this.goalkeeper.group.rotation.z, -xRatio * 0.2, 0.2);
     }
   }
 
@@ -396,11 +426,15 @@ class PlayerModels {
     this.goalkeeper.leftGlove.getWorldPosition(leftPos);
     this.goalkeeper.rightGlove.getWorldPosition(rightPos);
 
+    // İki eldivenin orta noktası
+    const glovesMid = leftPos.clone().add(rightPos).multiplyScalar(0.5);
+
     return {
       leftGlove: leftPos,
       rightGlove: rightPos,
+      glovesMid: glovesMid,
       bodyCenter: this.goalkeeper.group.position.clone().add(new THREE.Vector3(0, 1.1, 0)),
-      radius: 0.75 // Kalecinin uzanma & kurtarma etki alanı yarıçapı (m)
+      isPlayerGK: this.isPlayerGK
     };
   }
 
