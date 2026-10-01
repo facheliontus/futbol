@@ -891,6 +891,7 @@ class PlayerModels {
     return {
       group: group,
       torso: torso,
+      bodyGroup: torso,
       head: head,
       hair: hair,
       leftLegGroup: leftLegGroup,
@@ -902,7 +903,8 @@ class PlayerModels {
       state: 'idle',
       beatenTimer: 0,
       tackleCooldown: 0,
-      runCycle: 0
+      runCycle: 0,
+      hasYellowCard: false
     };
   }
 

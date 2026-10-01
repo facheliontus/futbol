@@ -241,13 +241,18 @@ class CareerManager {
         { type: 'penalty', title: 'Kupa Maçı Penaltı Düellosu', distance: 11, desc: 'Soğukkanlı kal, topa doğru hamle yap!' }
       ];
     } else {
-      // Forvet ve Orta Saha Senaryoları
-      scenarios = [
+      // Forvet ve Orta Saha Senaryoları (Dinamik Açık Oyun, Pres Yapan Stoperler & Frikikler)
+      const pool = [
+        { type: 'open_play', title: 'Hızlı Kontratak & Defansı Çalımla', distance: 29, desc: 'Stoperler üstüne koşuyor! [E/V] ile çalım at veya sıyrıl, golü yaz!' },
+        { type: 'box_attack', title: 'Ceza Sahasına Akın & 1v2 Hücum', distance: 24, desc: 'Defanslar sert pres yapıyor! Çalım at veya faul alıp serbest vuruş kazan!' },
+        { type: 'dribble_shoot', title: 'Birebir Çalımlama & 90\'a Füze', distance: 22, desc: 'Rakip stoperi terse yatırıp sıyrıl, kalecinin uzanamayacağı köşeye vur!' },
         { type: 'freekick', title: '24 Metre Serbest Vuruş', distance: 24, desc: 'Barajın üstünden kalenin 90\'ına falsolu şut çek!' },
+        { type: 'counter_attack', title: 'Akan Oyunda Şık Plase', distance: 27, desc: 'Pres yapan defansları ekarte et, kaleciyle karşı karşıya bitir!' },
         { type: 'penalty', title: 'Hakem Penaltı Noktasını Gösterdi!', distance: 11, desc: 'Kaleciyi ters köşeye yatır veya çatala gönder!' },
-        { type: 'pass_shoot', title: 'Kanattan Pas & Ceza Sahası Dışı Şut', distance: 21, desc: 'Arkadaşından gelen pası tek vuruşla filelere yolla!' },
         { type: 'freekick', title: '90+3 Son Dakika Frikik', distance: 27, desc: 'Şampiyonluk bu vuruşa bağlı! Kalecinin uzanamayacağı köşeye falsola!' }
       ];
+      // Karışık 4 senaryo seç (Açık oyun ağırlıklı)
+      scenarios = pool.sort(() => 0.5 - Math.random()).slice(0, 4);
     }
 
     this.currentMatch = {
