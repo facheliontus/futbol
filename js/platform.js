@@ -55,8 +55,12 @@ class PlatformManager {
         window.gameInstance.onResize();
       }
 
-      // Eğer aktif bir maç devam etmiyorsa veya kullanıcı mod seçmek istiyorsa mod modalını aç
-      if (!window.matchEngine?.isActive || param === 'selector') {
+      // Aktif maç yoksa Galatasaray vs Fenerbahçe derbi maçını anında sahada başlat!
+      if (!window.matchEngine?.isActive) {
+        this.launchQuickDerbyMatch();
+      }
+
+      if (param === 'selector') {
         this.showGameModeSelector();
       }
       return;
@@ -1002,6 +1006,33 @@ class PlatformManager {
         window.matchEngine.homePlayers[window.matchEngine.activePlayerIndex].name = player.name;
         window.matchEngine.homePlayers[window.matchEngine.activePlayerIndex].num = player.num;
       }
+    }
+  }
+
+  // Hızlı Derbi Maçı Başlat (Galatasaray vs Fenerbahçe)
+  launchQuickDerbyMatch() {
+    const homeTeam = window.dataService.getTeamById('galatasaray') || { name: 'Galatasaray', logo: '🦁', colors: ['#b81414'] };
+    const awayTeam = window.dataService.getTeamById('fenerbahce') || { name: 'Fenerbahçe', logo: '🐦', colors: ['#0c2461'] };
+
+    const homeData = {
+      name: homeTeam.name,
+      short: 'GS',
+      logo: homeTeam.logo,
+      color: 0xb81414
+    };
+    const awayData = {
+      name: awayTeam.name,
+      short: 'FB',
+      logo: awayTeam.logo,
+      color: 0x0c2461
+    };
+
+    if (window.gameInstance && window.gameInstance.stadium && window.gameInstance.stadium.setWeather) {
+      window.gameInstance.stadium.setWeather('night');
+    }
+
+    if (window.matchEngine) {
+      window.matchEngine.launchMatch(homeData, awayData, 'quick', { duration: 180, difficulty: 'normal' });
     }
   }
 

@@ -226,9 +226,24 @@ class MatchEngine {
       hintEl.innerHTML = `🎮 <b>KONTROLLER:</b> [WASD] Koş | [Shift] Depar | [E] Pas | [R] Ara Pas | [F] Orta | [Space] Şut | [Q] Adam Değiştir | [C] Çalım/Kayma | [ESC] Duraklat`;
     }
 
+    // Frikik falso ve senaryo öğelerini gizle, maç modunu öne çıkar
+    const scenarioBadge = document.querySelector('.scenario-badge');
+    if (scenarioBadge) scenarioBadge.style.display = 'none';
+    const falsoBar = document.querySelector('.falso-control-bar');
+    if (falsoBar) falsoBar.style.display = 'none';
+
     const p = this.homePlayers[this.activePlayerIndex];
     const nameEl = document.getElementById('hud-player-name');
-    if (nameEl && p) nameEl.innerText = `${p.name} (#${p.num})`;
+    const posEl = document.getElementById('hud-player-pos');
+    const numBadge = document.getElementById('hud-jersey-badge');
+    const clubEl = document.getElementById('hud-club-name');
+
+    if (p) {
+      if (nameEl) nameEl.innerText = `${p.name}`;
+      if (posEl) posEl.innerText = `⚡ ${p.role} (${p.team === 'home' ? 'Ev Sahibi' : 'Deplasman'})`;
+      if (numBadge) numBadge.innerText = `#${p.num}`;
+      if (clubEl) clubEl.innerText = `${this.homeTeam.logo} ${this.homeTeam.name}`;
+    }
   }
 
   // 3. SAHAYA TAKIMLARI VE OYUNCULARI DİZ (6v6 Yüksek Tempolu Maç)

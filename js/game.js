@@ -75,7 +75,7 @@ class Game {
     // 1. Sahne
     this.scene = new THREE.Scene();
     this.scene.background = new THREE.Color(0x0a1424);
-    this.scene.fog = new THREE.FogExp2(0x0a1424, 0.012);
+    this.scene.fog = new THREE.FogExp2(0x0a1424, 0.002);
 
     // 2. Kamera
     this.camera = new THREE.PerspectiveCamera(55, this.width / this.height, 0.1, 200);

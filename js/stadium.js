@@ -22,22 +22,22 @@ class Stadium {
 
   // Çim Sahayı ve Saha Çizgilerini Oluştur
   createPitch() {
-    // Prosedürel Çizgili Çim Dokusu
+    // Prosedürel Çizgili Çim Dokusu (Canlı Stadyum Çimi)
     const canvas = document.createElement('canvas');
     canvas.width = 512;
     canvas.height = 512;
     const ctx = canvas.getContext('2d');
 
-    // Koyu ve açık yeşil şeritler
+    // Koyu ve açık canlı stadyum yeşili şeritler
     const stripeCount = 16;
     const stripeHeight = 512 / stripeCount;
     for (let i = 0; i < stripeCount; i++) {
-      ctx.fillStyle = (i % 2 === 0) ? '#2e7d32' : '#388e3c';
+      ctx.fillStyle = (i % 2 === 0) ? '#2e7d32' : '#3da342';
       ctx.fillRect(0, i * stripeHeight, 512, stripeHeight);
     }
     // İnce çim gürültüsü
     for (let i = 0; i < 4000; i++) {
-      ctx.fillStyle = Math.random() > 0.5 ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.04)';
+      ctx.fillStyle = Math.random() > 0.5 ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.03)';
       ctx.fillRect(Math.random() * 512, Math.random() * 512, 2, 2);
     }
 
@@ -49,8 +49,9 @@ class Stadium {
     const pitchGeo = new THREE.PlaneGeometry(70, 110);
     const pitchMat = new THREE.MeshStandardMaterial({
       map: grassTexture,
-      roughness: 0.85,
-      metalness: 0.1
+      color: 0x55bb59,
+      roughness: 0.6,
+      metalness: 0.05
     });
 
     const pitch = new THREE.Mesh(pitchGeo, pitchMat);
@@ -455,25 +456,38 @@ class Stadium {
   // IŞIKLANDIRMA (Stadyum Projektörleri)
   createLights() {
     // Genel stadyum ortam ışığı
-    this.ambientLight = new THREE.AmbientLight(0xffffff, 0.7);
+    this.ambientLight = new THREE.AmbientLight(0xffffff, 1.15);
     this.scene.add(this.ambientLight);
 
     // Ana projektör ışığı (Gölge üreten sert ışık)
-    this.mainLight = new THREE.DirectionalLight(0xffffff, 0.9);
+    this.mainLight = new THREE.DirectionalLight(0xffffff, 1.25);
     this.mainLight.position.set(15, 35, 30);
     this.mainLight.castShadow = true;
     this.mainLight.shadow.mapSize.width = 2048;
     this.mainLight.shadow.mapSize.height = 2048;
     this.mainLight.shadow.camera.near = 0.5;
-    this.mainLight.shadow.camera.far = 100;
-    this.mainLight.shadow.camera.left = -25;
-    this.mainLight.shadow.camera.right = 25;
-    this.mainLight.shadow.camera.top = 25;
-    this.mainLight.shadow.camera.bottom = -25;
+    this.mainLight.shadow.camera.far = 120;
+    this.mainLight.shadow.camera.left = -35;
+    this.mainLight.shadow.camera.right = 35;
+    this.mainLight.shadow.camera.top = 35;
+    this.mainLight.shadow.camera.bottom = -35;
     this.scene.add(this.mainLight);
 
+    // 4 Köşe Stadyum Projektör Kuleleri (Gerçek Maç Aydınlatması)
+    const floodlightPositions = [
+      [-30, 26, -6],
+      [30, 26, -6],
+      [-30, 26, 55],
+      [30, 26, 55]
+    ];
+    floodlightPositions.forEach(([x, y, z]) => {
+      const flood = new THREE.DirectionalLight(0xffffff, 0.65);
+      flood.position.set(x, y, z);
+      this.scene.add(flood);
+    });
+
     // Kale aydınlatması için dolgu ışığı
-    const goalFillLight = new THREE.PointLight(0xe0f7fa, 0.6, 30);
+    const goalFillLight = new THREE.PointLight(0xe0f7fa, 0.8, 35);
     goalFillLight.position.set(0, 8, 4);
     this.scene.add(goalFillLight);
   }
@@ -484,24 +498,24 @@ class Stadium {
     if (weather === 'day') {
       if (this.scene) this.scene.background = new THREE.Color(0x5ca0f2);
       if (this.scene && this.scene.fog) this.scene.fog.color = new THREE.Color(0x5ca0f2);
-      if (this.mainLight) this.mainLight.intensity = 1.35;
-      if (this.ambientLight) this.ambientLight.intensity = 0.85;
+      if (this.mainLight) this.mainLight.intensity = 1.4;
+      if (this.ambientLight) this.ambientLight.intensity = 1.2;
     } else if (weather === 'rain') {
       if (this.scene) this.scene.background = new THREE.Color(0x1e272e);
       if (this.scene && this.scene.fog) this.scene.fog.color = new THREE.Color(0x1e272e);
-      if (this.mainLight) this.mainLight.intensity = 0.7;
-      if (this.ambientLight) this.ambientLight.intensity = 0.5;
+      if (this.mainLight) this.mainLight.intensity = 0.95;
+      if (this.ambientLight) this.ambientLight.intensity = 0.85;
     } else if (weather === 'snow') {
       if (this.scene) this.scene.background = new THREE.Color(0xd2dae2);
       if (this.scene && this.scene.fog) this.scene.fog.color = new THREE.Color(0xd2dae2);
-      if (this.mainLight) this.mainLight.intensity = 1.1;
-      if (this.ambientLight) this.ambientLight.intensity = 0.9;
+      if (this.mainLight) this.mainLight.intensity = 1.25;
+      if (this.ambientLight) this.ambientLight.intensity = 1.1;
     } else {
       // Gece (Projektörler)
       if (this.scene) this.scene.background = new THREE.Color(0x060913);
       if (this.scene && this.scene.fog) this.scene.fog.color = new THREE.Color(0x060913);
-      if (this.mainLight) this.mainLight.intensity = 0.9;
-      if (this.ambientLight) this.ambientLight.intensity = 0.7;
+      if (this.mainLight) this.mainLight.intensity = 1.25;
+      if (this.ambientLight) this.ambientLight.intensity = 1.15;
     }
   }
 
