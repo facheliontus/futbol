@@ -1,0 +1,22 @@
+{
+  "name": "pro-football-3d",
+  "version": "1.0.0",
+  "description": "3D Futbol Kariyer, Transfer ve Online 1v1 Düello Oyunu",
+  "main": "index.html",
+  "scripts": {
+    "start": "npx serve -p 3000 .",
+    "build": "echo 'Build tamamlandı.'"
+  },
+  "keywords": [
+    "threejs",
+    "football",
+    "game",
+    "freekick",
+    "penalty",
+    "webrtc",
+    "multiplayer",
+    "vercel"
+  ],
+  "author": "Antigravity",
+  "license": "MIT"
+}

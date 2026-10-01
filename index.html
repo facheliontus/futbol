@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PRO FOOTBALL 3D - Kariyer & Transfer Efsanesi</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>⚽</text></svg>">
+  <link rel="stylesheet" href="style.css">
+
+  <!-- Three.js 3D Motoru (r128) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
+  <!-- PeerJS (WebRTC P2P Online Çok Oyunculu Motoru) -->
+  <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
+</head>
+<body>
+
+  <!-- 3D Three.js Sahnesi -->
+  <div id="game-canvas-container"></div>
+
+  <!-- Canlı Yayın Arayüzü (HUD) -->
+  <div id="hud-overlay">
+    <!-- Üst Bar: Skorboard & Ayarlar -->
+    <header class="top-broadcast-bar">
+      <div class="scoreboard">
+        <span id="hud-team-home" class="team-pill">GALATASARAY</span>
+        <div id="hud-score-display" class="score-badge">0 - 0</div>
+        <span id="hud-team-away" class="team-pill">FENERBAHÇE</span>
+        <span id="hud-match-distance" class="match-clock">24 Metre</span>
+      </div>
+
+      <div class="hud-actions">
+        <button id="btn-sound-toggle" class="hud-btn" title="Sesi Aç / Kapat">🔊</button>
+        <button id="btn-retry-shot" class="hud-btn" title="Pozisyonu Tekrar Dene (R)">🔄 TEKRAR VUR (R)</button>
+        <button id="btn-open-online" class="hud-btn online-pulse-btn" title="Arkadaşınla 1v1 Oyna">🌐 ONLINE OYNA</button>
+        <button id="btn-new-career" class="hud-btn" title="Yeni Kariyer Başlat">⭐ KARİYER</button>
+        <button id="btn-fullscreen" class="hud-btn" title="Tam Ekran (F)">⛶ TAM EKRAN</button>
+      </div>
+    </header>
+
+    <!-- Orta Dinamik Kutlama / Uyarı Yazısı -->
+    <div class="celebration-container">
+      <div id="goal-celebration-banner" class="celebration-banner">GOOOOOL!</div>
+    </div>
+
+    <!-- Alt Bar: Oyuncu Kartı, Senaryo ve Şut Bilgileri -->
+    <footer class="bottom-hud-bar">
+      <!-- Sol Alt: Oyuncu Kartı -->
+      <div class="player-card-hud">
+        <div id="hud-jersey-badge" class="jersey-badge">#10</div>
+        <div class="player-details">
+          <h3 id="hud-player-name">Yıldız Oyuncu</h3>
+          <div id="hud-player-pos" class="pos-sub">⚡ FORVET (ST)</div>
+          <div id="hud-club-name" class="club-sub">🐅 Anadolu Kaplanları FK</div>
+        </div>
+        <div class="player-ovr-box">
+          <span class="ovr-label">OVR</span>
+          <span id="hud-player-ovr" class="ovr-val">75</span>
+        </div>
+      </div>
+
+      <!-- Orta Alt: Pozisyon, Falso Kontrolü & İpucu -->
+      <div class="center-hud-info">
+        <div class="scenario-badge">
+          <h4 id="hud-scenario-title">24 Metre Serbest Vuruş</h4>
+          <p id="hud-scenario-desc">Barajın üstünden kalenin 90'ına falsolu şut çek!</p>
+        </div>
+
+        <!-- İnteraktif Kavis & Falso Kontrolü -->
+        <div class="falso-control-bar">
+          <button id="btn-falso-left" class="falso-btn" title="Sola Falso Ver (Q / Mouse Scroll)">⟲ SOLA KAVİS (Q)</button>
+          <div id="falso-meter" class="falso-meter">
+            <span id="falso-value-text" class="falso-badge">DÜZ (FALSO YOK)</span>
+          </div>
+          <button id="btn-falso-reset" class="falso-btn" title="Falsoyu Sıfırla">SIFIRLA</button>
+          <button id="btn-falso-right" class="falso-btn" title="Sağa Falso Ver (E / Mouse Scroll)">SAĞA KAVİS (E) ⟳</button>
+        </div>
+
+        <div id="hud-control-hint" class="control-hint">
+          🎯 <b>NİŞAN & ŞUT:</b> Fareyle basılı tutup sürükle, bırak! | [Q / E / Tekerlek] ile Kavis ver | [R] Tekrar Vur
+        </div>
+      </div>
+
+      <!-- Sağ Alt: Şut Hızı & Sezon Bilgisi -->
+      <div class="shot-stats-hud">
+        <div class="stat-item">
+          <span class="stat-label">ŞUT HIZI</span>
+          <span id="hud-shot-speed" class="stat-val">0 km/h</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-label">LİG / SEZON</span>
+          <span id="hud-season-badge" class="stat-val">SEZON 1</span>
+        </div>
+      </div>
+    </footer>
+  </div>
+
+  <!-- MODAL 1: KARİYER BAŞLANGICI VE MEVKİ SEÇİMİ -->
+  <div id="setup-modal" class="modal-overlay">
+    <div class="modal-container">
+      <h2 class="modal-title">⚽ PRO FUTBOL 3D</h2>
+      <p class="modal-subtitle">Kendi efsaneni yarat, sezona başla ve dünya devlerine transfer ol!</p>
+
+      <div class="form-group">
+        <label class="form-label" for="input-player-name">OYUNCU ADINIZ</label>
+        <input type="text" id="input-player-name" class="form-input" value="Arda Güler" placeholder="Adınızı yazın...">
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">MEVKİNİZİ SEÇİN</label>
+        <div class="position-grid">
+          <!-- Forvet -->
+          <div class="pos-card selected" data-pos="ST">
+            <div class="pos-icon">⚡</div>
+            <div class="pos-name">FORVET (ST)</div>
+            <div class="pos-desc">Bitirici şutlar, 90'a falsolu frikikler ve penaltı ustası!</div>
+          </div>
+          <!-- Kaleci -->
+          <div class="pos-card" data-pos="GK">
+            <div class="pos-icon">🧤</div>
+            <div class="pos-name">KALECİ (GK)</div>
+            <div class="pos-desc">Kaleyi savun! Fare ile uçarak penaltı ve serbest vuruşları kurtar!</div>
+          </div>
+          <!-- 10 Numara -->
+          <div class="pos-card" data-pos="CAM">
+            <div class="pos-icon">🎯</div>
+            <div class="pos-name">ORTA SAHA (CAM)</div>
+            <div class="pos-desc">Oyun kurucu, pas & şut kombinasyonları, uzaktan füze!</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-group" style="display: flex; gap: 1rem;">
+        <div style="flex: 1;">
+          <label class="form-label" for="input-jersey-num">FORMA NUMARASI (1 - 99)</label>
+          <input type="number" id="input-jersey-num" class="form-input" value="10" min="1" max="99">
+        </div>
+        <div style="flex: 2;">
+          <label class="form-label" for="select-starting-club">BAŞLANGIÇ KULÜBÜ</label>
+          <select id="select-starting-club" class="form-select">
+            <option value="anadolu">🐅 Anadolu Kaplanları FK (1. Lig)</option>
+            <option value="marmara">⚡ Marmara Fırtınası SK (1. Lig)</option>
+            <option value="ege">⭐ Ege Yıldızları (1. Lig)</option>
+          </select>
+        </div>
+      </div>
+
+      <button id="btn-start-career" class="btn-primary">
+        🚀 KARİYERİ BAŞLAT & SAHAYA ÇIK
+      </button>
+    </div>
+  </div>
+
+  <!-- MODAL 2: MAÇ SONU RAPORU -->
+  <div id="match-summary-modal" class="modal-overlay hidden">
+    <div class="modal-container" style="max-width: 520px;">
+      <h2 class="modal-title">MAÇ SONUCU</h2>
+      <p class="modal-subtitle">Hakem son düdüğü çaldı!</p>
+
+      <div class="match-score-summary">
+        <span id="sum-home-team">GALATASARAY</span>
+        <div id="sum-score" style="font-size: 3rem; margin: 0.5rem 0;">2 - 1</div>
+        <span id="sum-away-team">FENERBAHÇE</span>
+      </div>
+
+      <div class="match-stats-table">
+        <div class="table-row">
+          <span id="sum-stat-title">Attığın Goller:</span>
+          <span id="sum-stat-val" style="font-weight: 800; color: #00ff88;">2</span>
+        </div>
+        <div class="table-row">
+          <span>Maç Performans Puanı:</span>
+          <span id="sum-rating" style="font-weight: 800; color: #00f2fe;">9.2 / 10</span>
+        </div>
+        <div class="table-row">
+          <span>Ödül:</span>
+          <span id="sum-motm-badge" class="motm-badge">⭐ MAÇIN ADAMI (MOTM)</span>
+        </div>
+      </div>
+
+      <button id="btn-next-match" class="btn-primary">
+        SONRAKİ MAÇA GEÇ ➔
+      </button>
+    </div>
+  </div>
+
+  <!-- MODAL 3: SEZON SONU TRANSFER PAZARI -->
+  <div id="transfer-modal" class="modal-overlay hidden">
+    <div class="modal-container transfer-container">
+      <h2 class="modal-title">🏆 SEZON TAMAMLANDI: TRANSFER DÖNEMİ!</h2>
+      <p class="modal-subtitle">Sezon performansına göre dev kulüpler senin için masaya oturdu!</p>
+
+      <div class="season-recap-banner">
+        <div class="recap-item">
+          <span class="recap-label">SEZON BAŞARISI</span>
+          <span id="tr-season-goals" class="recap-val">12 Gol</span>
+        </div>
+        <div class="recap-item">
+          <span class="recap-label">ORTALAMA REYTİNG</span>
+          <span id="tr-season-rating" class="recap-val">8.6</span>
+        </div>
+        <div class="recap-item">
+          <span class="recap-label">YENİ PİYASA DEĞERİN</span>
+          <span id="tr-market-value" class="recap-val">€18.5M</span>
+        </div>
+      </div>
+
+      <h3 style="font-size: 1.15rem; margin-bottom: 0.8rem; color: #f1c40f;">GELEN RESMİ TRANSFER TEKLİFLERİ:</h3>
+      <div id="transfer-cards-list" class="transfer-cards-grid">
+        <!-- Javascript dinamik olarak teklifleri buraya ekler -->
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL 4: RESMİ TRANSFER İMZA TÖRENİ -->
+  <div id="signing-modal" class="modal-overlay hidden">
+    <div class="modal-container signing-card">
+      <h2 id="sign-title" class="modal-title">👑 REAL MADRID İLE SÖZLEŞME İMZALANDI!</h2>
+      
+      <div class="signing-shirt">
+        <div id="sign-jersey-num" class="shirt-num">#10</div>
+        <div id="sign-player-name" class="shirt-name">ARDA</div>
+      </div>
+
+      <div id="sign-wage-text" class="signing-wage">Haftalık €180.000 ile anlaşıldı!</div>
+      <p style="color: #cbd5e1; margin-bottom: 1.5rem;">
+        Basın toplantısında formanı gururla giydin! Yeni sezonda Şampiyonlar Ligi kupasını kaldırmak için sahaya çıkacaksın!
+      </p>
+
+      <button id="btn-start-new-season" class="btn-primary">
+        ⚽ YENİ SEZONA YENİ KULÜBÜNLE BAŞLA!
+      </button>
+    </div>
+  </div>
+
+  <!-- MODAL 5: ONLINE ÇOK OYUNCULU ODA SİSTEMİ -->
+  <div id="online-modal" class="modal-overlay hidden">
+    <div class="modal-container" style="max-width: 580px;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+        <h2 class="modal-title" style="margin-bottom: 0;">🌐 ONLINE 1v1 DÜELLO</h2>
+        <button id="btn-close-online-modal" class="hud-btn" style="padding: 0.2rem 0.6rem;">✕</button>
+      </div>
+      <p class="modal-subtitle">Arkadaşınla gerçek zamanlı frikik & penaltı kapışması! (Vercel & P2P Uyumlu)</p>
+
+      <div class="form-group">
+        <label class="form-label" for="input-online-player-name">OYUNCU ADINIZ</label>
+        <input type="text" id="input-online-player-name" class="form-input" value="Yıldız Golcü" placeholder="Adınızı yazın...">
+      </div>
+
+      <!-- Online Seçenek Sekmeleri -->
+      <div class="online-tabs">
+        <button id="tab-btn-create" class="online-tab-btn active">👑 ODA OLUŞTUR (KOD AL)</button>
+        <button id="tab-btn-join" class="online-tab-btn">🚀 ODAYA KATIL (KOD GİR)</button>
+      </div>
+
+      <!-- Sekme 1: Oda Oluştur (Host) -->
+      <div id="tab-content-create" class="online-tab-content active">
+        <div id="host-init-box">
+          <p style="color: #cbd5e1; font-size: 0.9rem; margin-bottom: 1rem;">
+            Bir oda açarak arkadaşına göndereceğin 4 haneli oda kodunu veya doğrudan maç linkini alırsın!
+          </p>
+          <button id="btn-create-room-action" class="btn-primary" style="margin-top: 0.5rem;">
+            ⚡ ODA OLUŞTUR & KOD AL
+          </button>
+        </div>
+
+        <div id="host-waiting-box" class="hidden" style="text-align: center; padding: 1rem 0;">
+          <span style="font-size: 0.85rem; color: #94a3b8; font-weight: 700;">PAYLAŞILACAK ODA KODUN:</span>
+          <div id="host-room-code-display" class="online-room-code-badge">----</div>
+          
+          <button id="btn-copy-room-link" class="btn-primary" style="background: linear-gradient(135deg, #00ff88, #00b894); margin-bottom: 1rem;">
+            📋 ODA LİNKİNİ KOPYALA
+          </button>
+
+          <div class="radar-pulse-box">
+            <div class="pulse-circle"></div>
+            <p style="font-size: 0.85rem; color: #cbd5e1;">Arkadaşının bu kodla odaya katılması bekleniyor...</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Sekme 2: Odaya Katıl (Guest) -->
+      <div id="tab-content-join" class="online-tab-content">
+        <p style="color: #cbd5e1; font-size: 0.9rem; margin-bottom: 0.8rem;">
+          Arkadaşının kurduğu odanın 4 haneli kodunu girerek hemen maça bağlan:
+        </p>
+        <div class="form-group">
+          <input type="text" id="input-join-room-code" class="form-input" placeholder="Örn: 7492" maxlength="4" style="text-align: center; font-size: 1.8rem; font-weight: 900; letter-spacing: 6px; text-transform: uppercase;">
+        </div>
+        <button id="btn-join-room-action" class="btn-primary">
+          🎮 ODAYA BAĞLAN & MAÇA BAŞLA
+        </button>
+      </div>
+
+      <!-- Bağlantı Durumu Rozeti -->
+      <div id="online-connection-status" class="online-status-badge status-normal" style="margin-top: 1.2rem;">
+        Hazır. Oda kurabilir veya katılabilirsiniz.
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL 6: ONLINE MAÇ SONUÇ EKRANI -->
+  <div id="online-result-modal" class="modal-overlay hidden">
+    <div class="modal-container" style="max-width: 500px; text-align: center;">
+      <h2 id="online-result-title" class="modal-title">🏆 ŞAMPİYON!</h2>
+      <div id="online-result-score" style="font-size: 3.5rem; font-weight: 900; color: #f1c40f; margin: 1rem 0;">0 - 0</div>
+      <p id="online-result-text" style="color: #cbd5e1; font-size: 1.05rem; margin-bottom: 1.5rem;">Maç tamamlandı!</p>
+
+      <button id="btn-online-rematch" class="btn-primary">
+        🔄 YENİDEN OYNA (RÖVANŞ)
+      </button>
+    </div>
+  </div>
+
+  <!-- Oyun Modülleri -->
+  <script src="js/audio.js"></script>
+  <script src="js/career.js"></script>
+  <script src="js/stadium.js"></script>
+  <script src="js/player.js"></script>
+  <script src="js/physics.js"></script>
+  <script src="js/online.js"></script>
+  <script src="js/game.js"></script>
+  <script src="js/ui.js"></script>
+
+  <!-- Başlatıcı -->
+  <script>
+    window.addEventListener('DOMContentLoaded', () => {
+      const game = new Game();
+      window.gameInstance = game;
+      window.uiManager.setGame(game);
+      if (window.onlineManager) {
+        window.onlineManager.setGame(game);
+      }
+    });
+  </script>
+</body>
+</html>
