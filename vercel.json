@@ -1,6 +1,7 @@
 {
   "version": 2,
   "name": "pro-football-3d",
+  "outputDirectory": ".",
   "cleanUrls": true,
   "trailingSlash": false,
   "headers": [
