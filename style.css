@@ -23,6 +23,7 @@ body.platform-body {
 }
 
 #game-canvas-container {
+  display: none;
   position: fixed !important;
   top: 0 !important;
   left: 0 !important;
@@ -43,6 +44,7 @@ body.platform-body {
    HUD ARAYÜZ KATMANI (YAYIN & SKORBOARD)
    ========================================================== */
 #hud-overlay {
+  display: none;
   position: fixed !important;
   top: 0 !important;
   left: 0 !important;
@@ -50,7 +52,6 @@ body.platform-body {
   height: 100vh !important;
   z-index: 60 !important;
   pointer-events: none;
-  display: flex;
   flex-direction: column;
   justify-content: space-between;
   padding: 1.2rem;

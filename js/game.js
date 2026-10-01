@@ -1438,9 +1438,9 @@ class Game {
   }
 
   // GOL OLDUĞUNDA
-  onGoalScored() {
+  onGoalScored(scoringTeam = 'home') {
     if (window.matchEngine && window.matchEngine.isActive) {
-      window.matchEngine.onGoalScored('home');
+      window.matchEngine.onGoalScored(scoringTeam);
       return;
     }
 
@@ -1501,6 +1501,11 @@ class Game {
 
   // TOP ZEMİNDE DURDUĞUNDA
   onBallStopped() {
+    if (window.matchEngine && window.matchEngine.isActive) {
+      // Arcade maçta top durduğunda serbest kalır, oyuncular gelip alabilir
+      return;
+    }
+
     if (window.onlineManager && window.onlineManager.isOnlineMatch) {
       this.showGoalBanner("POZİSYON TAMAMLANDI!");
       if (this.isCoopMatch) {
@@ -1517,6 +1522,16 @@ class Game {
 
   // AUT / KAÇTIĞINDA
   onBallMissed() {
+    if (window.matchEngine && window.matchEngine.isActive) {
+      window.matchEngine.showMatchBanner("TOP AUTTA!");
+      setTimeout(() => {
+        if (window.matchEngine?.isActive) {
+          window.matchEngine.resetToKickoff(this);
+        }
+      }, 1400);
+      return;
+    }
+
     if (window.onlineManager && window.onlineManager.isOnlineMatch) {
       this.showGoalBanner("TOP DIŞARIDA! AUT!");
       if (this.isCoopMatch) {
