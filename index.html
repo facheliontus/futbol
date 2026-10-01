@@ -609,12 +609,12 @@
   </div>
 
   <!-- 🎮 3D OYUN MODU VE AYARLARI SEÇİM MODALI -->
-  <div id="game-modes-modal" class="modal-overlay">
+  <div id="game-modes-modal" class="modal-overlay hidden" style="display: none;">
     <div class="modal-card glass-card game-modes-card">
       <div class="modal-header">
         <h2>🎮 3D PRO FOOTBALL ARENA</h2>
         <p>Oynamak istediğin modu ve maç ayarlarını seç!</p>
-        <button class="btn-icon modal-close-btn" onclick="document.getElementById('game-modes-modal').classList.remove('active')">✖</button>
+        <button class="btn-icon modal-close-btn" onclick="document.getElementById('game-modes-modal').classList.add('hidden'); document.getElementById('game-modes-modal').classList.remove('active'); document.getElementById('game-modes-modal').style.display='none';">✖</button>
       </div>
       
       <div class="game-mode-tabs">
@@ -760,12 +760,12 @@
   </div>
 
   <!-- GLOBAL ARAMA MODALI (CTRL+K) -->
-  <div id="search-modal" class="modal-overlay">
+  <div id="search-modal" class="modal-overlay hidden" style="display: none;">
     <div class="search-modal-box glass-card">
       <div class="search-input-wrap">
         <span class="search-icon">🔍</span>
         <input type="text" id="global-search-input" placeholder="Takım, futbolcu, maç veya lig ara... (ESC ile çık)" autocomplete="off">
-        <button id="btn-close-search" class="btn-icon">✖</button>
+        <button id="btn-close-search" class="btn-icon" onclick="document.getElementById('search-modal').classList.add('hidden'); document.getElementById('search-modal').style.display='none';">✖</button>
       </div>
       <div id="search-results-box" class="search-results-container">
         <div class="search-empty">Aramak için kulüp veya futbolcu adı yazın...</div>
@@ -804,11 +804,12 @@
   </nav>
 
   <!-- 3D KARİYER VE ONLİNE MODALLARI -->
-  <div id="setup-modal" class="modal-overlay">
+  <div id="setup-modal" class="modal-overlay hidden" style="display: none;">
     <div class="modal-card glass-card">
       <div class="modal-header">
         <h2>⚽ YENİ KARİYER OLUŞTUR</h2>
         <p>Kendi futbolcunu yarat, pozisyonunu seç ve Türk futbol tarihine geç!</p>
+        <button class="btn-icon modal-close-btn" onclick="document.getElementById('setup-modal').classList.add('hidden'); document.getElementById('setup-modal').style.display='none';">✖</button>
       </div>
       <div class="modal-body">
         <div class="form-group">
@@ -834,15 +835,17 @@
       </div>
       <div class="modal-footer">
         <button id="btn-start-career" class="btn-primary-action">EFSANE OLMAYA BAŞLA! 🚀</button>
+        <button class="hud-btn" onclick="document.getElementById('setup-modal').classList.add('hidden'); document.getElementById('setup-modal').style.display='none';">KAPAT</button>
       </div>
     </div>
   </div>
 
-  <div id="online-modal" class="modal-overlay">
+  <div id="online-modal" class="modal-overlay hidden" style="display: none;">
     <div class="modal-card glass-card">
       <div class="modal-header">
         <h2>🌐 ARKADAŞINLA BİREBİR ŞUT DÜELLOSU</h2>
         <p>Oda kur veya arkadaşının koduna bağlan!</p>
+        <button class="btn-icon modal-close-btn" onclick="document.getElementById('online-modal').classList.add('hidden'); document.getElementById('online-modal').style.display='none';">✖</button>
       </div>
       <div class="modal-body">
         <div class="online-box">
@@ -862,16 +865,17 @@
         </div>
       </div>
       <div class="modal-footer">
-        <button id="btn-close-online-modal" class="hud-btn">KAPAT</button>
+        <button id="btn-close-online-modal" class="hud-btn" onclick="document.getElementById('online-modal').classList.add('hidden'); document.getElementById('online-modal').style.display='none';">KAPAT</button>
       </div>
     </div>
   </div>
 
-  <div id="match-summary-modal" class="modal-overlay">
+  <div id="match-summary-modal" class="modal-overlay hidden" style="display: none;">
     <div class="modal-card glass-card">
       <div class="modal-header">
         <h2 id="summary-title">MAÇ SONUCU</h2>
         <p id="summary-score" class="big-score">0 - 0</p>
+        <button class="btn-icon modal-close-btn" onclick="document.getElementById('match-summary-modal').classList.add('hidden'); document.getElementById('match-summary-modal').style.display='none';">✖</button>
       </div>
       <div class="modal-body">
         <div class="summary-stats-grid">
@@ -884,17 +888,22 @@
       </div>
       <div class="modal-footer">
         <button id="btn-next-match" class="btn-primary-action">SIRADAKİ MAÇA GEÇ ⏩</button>
+        <button class="hud-btn" onclick="document.getElementById('match-summary-modal').classList.add('hidden'); document.getElementById('match-summary-modal').style.display='none';">KAPAT</button>
       </div>
     </div>
   </div>
 
-  <div id="transfer-offer-modal" class="modal-overlay">
+  <div id="transfer-offer-modal" class="modal-overlay hidden" style="display: none;">
     <div class="modal-card glass-card transfer-modal">
       <div class="modal-header">
         <h2>🔥 SEZON SONU TRANSFER TEKLİFLERİ!</h2>
         <p>Menajerin masasına dev teklifler geldi. Kariyerine nerede devam etmek istersin?</p>
+        <button class="btn-icon modal-close-btn" onclick="document.getElementById('transfer-offer-modal').classList.add('hidden'); document.getElementById('transfer-offer-modal').style.display='none';">✖</button>
       </div>
       <div id="transfer-offers-container" class="transfer-offers-grid modal-body"></div>
+      <div class="modal-footer">
+        <button class="hud-btn" onclick="document.getElementById('transfer-offer-modal').classList.add('hidden'); document.getElementById('transfer-offer-modal').style.display='none';">KAPAT</button>
+      </div>
     </div>
   </div>
 
