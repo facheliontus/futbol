@@ -35,6 +35,15 @@ class Game {
     this.coopState = 'waiting_pass'; // 'waiting_pass', 'passing', 'ready_to_shoot', 'shot_taken'
     this.hasBallPossession = false;
 
+    // 360 Serbest Kamera ve Çalım (FIFA / PES Tarzı)
+    this.cameraYaw = 0; // Yatay kamera açısı
+    this.cameraPitch = 0.22; // Dikey açı
+    this.cameraDistance = 6.8;
+    this.isSkillMoving = false;
+    this.skillMoveCooldown = false;
+    this.lastMouseX = null;
+    this.lastMouseY = null;
+
     // Klavye Hareket Tuşları (WASD & Ok Tuşları & Depar)
     this.keys = {
       KeyW: false,
@@ -146,6 +155,8 @@ class Game {
   // KAMERA KONUMLARI
   setCameraBehindBall() {
     if (!this.ball) return;
+    this.cameraYaw = 0;
+    this.cameraPitch = 0.22;
     const bPos = this.ball.position;
     this.camera.position.set(bPos.x, bPos.y + 1.8, bPos.z + 4.2);
     this.camera.lookAt(0, 1.2, 0);
@@ -252,7 +263,7 @@ class Game {
 
       const hintEl = document.getElementById('hud-control-hint');
       if (hintEl) {
-        hintEl.innerHTML = `🎯 <b>NİŞAN & ŞUT:</b> Fareyle basılı tutup sürükle, bırak! | [Q / E / Tekerlek] ile Kavis ver | [R] Tekrar Vur`;
+        hintEl.innerHTML = `🎯 <b>KONTROLLER:</b> [WASD] Serbest Koş | [Shift] Depar | ⚡ [E / V] Çalım | 🔄 [Fare] Kamerayı Çevir | 💣 [Sol Tık] Şut Çek | [Q / Tekerlek] Falso`;
       }
       const fBar = document.querySelector('.falso-control-bar');
       if (fBar) fBar.style.display = 'flex';
@@ -303,6 +314,11 @@ class Game {
       this.showGoalBanner("🏃 ARKADAŞIN PAS AÇIYOR! WASD İLE CEZA SAHASINDA BOŞA KAÇ!");
     }
 
+    // Rakip AI Defans Oyuncuları (2 Adet Stoper)
+    const def1Pos = new THREE.Vector3(-3.4, 0.11, 14.5);
+    const def2Pos = new THREE.Vector3(3.4, 0.11, 16.5);
+    this.playerModels.createDefenders([def1Pos, def2Pos], 0x1e3a8a);
+
     if (this.gkReticleGroup) this.gkReticleGroup.visible = false;
 
     const fBar = document.querySelector('.falso-control-bar');
@@ -310,7 +326,7 @@ class Game {
 
     const hintEl = document.getElementById('hud-control-hint');
     if (hintEl) {
-      hintEl.innerHTML = `🏃 <b>WASD / Ok Tuşları:</b> Sahada Koş | [Shift] Depar | [Boşluk / F] Pas At | 🎯 <b>Fare:</b> Şut Çek (Top Ayaktayken)`;
+      hintEl.innerHTML = `🏃 <b>WASD:</b> Koş | [Shift] Depar | ⚡ <b>[E/V]:</b> Çalım At | 🎯 <b>[Boşluk/X]:</b> Pas Ver | 💣 <b>Fare:</b> Şut Çek | 🔄 <b>Fare:</b> Kamerayı Çevir`;
     }
   }
 
@@ -525,29 +541,39 @@ class Game {
     const kicker = this.playerModels.kicker;
     const pGroup = kicker.group;
 
-    let inputX = (this.keys.KeyD || this.keys.ArrowRight ? 1 : 0) - (this.keys.KeyA || this.keys.ArrowLeft ? 1 : 0);
-    let inputZ = (this.keys.KeyS || this.keys.ArrowDown ? 1 : 0) - (this.keys.KeyW || this.keys.ArrowUp ? 1 : 0);
+    let forwardInput = (this.keys.KeyW || this.keys.ArrowUp ? 1 : 0) - (this.keys.KeyS || this.keys.ArrowDown ? 1 : 0);
+    let strafeInput = (this.keys.KeyD || this.keys.ArrowRight ? 1 : 0) - (this.keys.KeyA || this.keys.ArrowLeft ? 1 : 0);
 
-    const isMoving = (inputX !== 0 || inputZ !== 0);
+    const isMoving = (forwardInput !== 0 || strafeInput !== 0);
     const isSprinting = (this.keys.ShiftLeft || this.keys.ShiftRight);
-    const moveSpeed = isSprinting ? 9.6 : 6.2; // m/s
+    const moveSpeed = isSprinting ? 9.8 : 6.4; // m/s
 
-    if (isMoving && !kicker.isKicking) {
-      const len = Math.hypot(inputX, inputZ);
-      inputX /= len;
-      inputZ /= len;
+    if (isMoving && !kicker.isKicking && !this.isSkillMoving) {
+      const len = Math.hypot(strafeInput, forwardInput);
+      const normStrafe = strafeInput / len;
+      const normForward = forwardInput / len;
 
-      pGroup.position.x += inputX * moveSpeed * dt;
-      pGroup.position.z += inputZ * moveSpeed * dt;
+      // Kameranın baktığı açıya (cameraYaw) göre yön hesaplama (FIFA / PES Tarzı 3D Kontrol)
+      const camYaw = this.cameraYaw || 0;
+      const camForwardX = -Math.sin(camYaw);
+      const camForwardZ = -Math.cos(camYaw);
+      const camRightX = Math.cos(camYaw);
+      const camRightZ = -Math.sin(camYaw);
+
+      const moveX = camRightX * normStrafe + camForwardX * normForward;
+      const moveZ = camRightZ * normStrafe + camForwardZ * normForward;
+
+      pGroup.position.x += moveX * moveSpeed * dt;
+      pGroup.position.z += moveZ * moveSpeed * dt;
 
       // Sınırlar (Ceza sahası ve çevresi)
       pGroup.position.x = THREE.MathUtils.clamp(pGroup.position.x, -26, 26);
       pGroup.position.z = THREE.MathUtils.clamp(pGroup.position.z, 2.0, 42);
 
       // Hareket yönüne doğru yumuşak dönüş
-      const targetAngle = Math.atan2(inputX, inputZ);
+      const targetAngle = Math.atan2(moveX, moveZ);
       pGroup.rotation.y = THREE.MathUtils.lerp(pGroup.rotation.y, targetAngle, 0.25);
-    } else if (!kicker.isKicking) {
+    } else if (!kicker.isKicking && !this.isSkillMoving) {
       if (this.ball) {
         const angleToGoal = Math.atan2(-pGroup.position.x, -pGroup.position.z);
         pGroup.rotation.y = THREE.MathUtils.lerp(pGroup.rotation.y, angleToGoal, 0.08);
@@ -557,10 +583,26 @@ class Game {
     // Bacak & kol koşu animasyonu
     this.playerModels.updateRunningAnimation(kicker, isMoving, isSprinting, dt);
 
-    // Top kontrolü & Dribling
-    const kickCheck = this.isBallInKickRange();
+    // TOP KONTROLÜ & İLK DOKUNUŞLA STOP ETME (FIRST TOUCH CUSHION TRAP)
+    if (!this.hasBallPossession && this.ball) {
+      const bPos = this.ball.position;
+      const hDist = Math.hypot(pGroup.position.x - bPos.x, pGroup.position.z - bPos.z);
+      const vDist = bPos.y;
 
-    if (this.hasBallPossession && this.ball && !this.ball.isMoving) {
+      // Top oyuncuya 2.2 metre yaklaştıysa ve havada çok yüksekte değilse (2.2m altı) stop et ve ayağa al!
+      if (hDist < 2.2 && vDist < 2.2) {
+        const ballSpeed = this.ball.velocity ? this.ball.velocity.length() : 0;
+        if (ballSpeed < 32) { // 32 m/s altındaki pasları ve gelen topları yumuşakça kontrol et
+          this.ball.cushionTrap(pGroup.position);
+          this.hasBallPossession = true;
+          this.coopState = 'ready_to_shoot';
+          this.showGoalBanner("⚽ HARİKA STOP! TOP AYAKTA! [ŞUT VEYA PAS AT]");
+        }
+      }
+    }
+
+    // Top ayaktaysa oyuncunun önünde taşı (Dribling)
+    if (this.hasBallPossession && this.ball && !this.ball.isMoving && !this.isSkillMoving) {
       const forwardX = Math.sin(pGroup.rotation.y);
       const forwardZ = Math.cos(pGroup.rotation.y);
       this.ball.position.x = pGroup.position.x + forwardX * 0.48;
@@ -571,14 +613,10 @@ class Game {
       if (isMoving) {
         this.ball.mesh.rotation.x += dt * moveSpeed * 3;
       }
-    } else if (!this.hasBallPossession && this.ball && !this.ball.isMoving) {
-      if (kickCheck.canKick && kickCheck.dist < 1.3) {
-        this.hasBallPossession = true;
-        this.showGoalBanner("⚽ TOP KONTROLÜNDE! [PAS VEYA ŞUT AT]");
-      }
     }
 
-    // Ayak altındaki 3D halkayı güncelle
+    // Vuruş alanı halkasını güncelle
+    const kickCheck = this.isBallInKickRange();
     this.playerModels.updateKickZone(pGroup.position, kickCheck.canKick, kickCheck.type);
 
     // Online senkronizasyon (Konumu arkadaşına ilet)
@@ -593,23 +631,179 @@ class Game {
     }
   }
 
-  // OYUNCUYU TAKİP EDEN KAMERA
+  // OYUNCUYU TAKİP EDEN SERBEST 360 KAMERA (Fare ile Orbit)
   updateFollowCamera(dt) {
     if (!this.playerModels || !this.playerModels.kicker) return;
     const pPos = this.playerModels.kicker.group.position;
-    
-    const targetCamX = pPos.x * 0.55;
-    const targetCamY = Math.max(3.2, pPos.y + 3.2);
-    const targetCamZ = pPos.z + 5.2;
 
-    this.camera.position.x = THREE.MathUtils.lerp(this.camera.position.x, targetCamX, 0.1);
-    this.camera.position.y = THREE.MathUtils.lerp(this.camera.position.y, targetCamY, 0.1);
-    this.camera.position.z = THREE.MathUtils.lerp(this.camera.position.z, targetCamZ, 0.1);
+    const dist = this.cameraDistance || 6.8;
+    const yaw = this.cameraYaw || 0;
+    const pitch = this.cameraPitch || 0.22;
 
-    const lookX = pPos.x * 0.25;
-    const lookY = 1.3;
-    const lookZ = Math.max(0, pPos.z - 12);
-    this.camera.lookAt(lookX, lookY, lookZ);
+    const horizontalDist = dist * Math.cos(pitch);
+    const camY = pPos.y + 1.8 + dist * Math.sin(pitch);
+    const camX = pPos.x + Math.sin(yaw) * horizontalDist;
+    const camZ = pPos.z + Math.cos(yaw) * horizontalDist;
+
+    this.camera.position.lerp(new THREE.Vector3(camX, Math.max(1.2, camY), camZ), 0.14);
+
+    const lookTarget = new THREE.Vector3(
+      pPos.x - Math.sin(yaw) * 1.5,
+      pPos.y + 1.25,
+      pPos.z - Math.cos(yaw) * 1.5
+    );
+    this.camera.lookAt(lookTarget);
+  }
+
+  // ÇALIM ATMA / MAKAS / VÜCUT ÇALIMI (E / V Tuşu)
+  executeSkillMove() {
+    if (this.isSkillMoving || this.skillMoveCooldown) return;
+    if (!this.playerModels || !this.playerModels.kicker) return;
+
+    this.isSkillMoving = true;
+    this.skillMoveCooldown = true;
+
+    const kicker = this.playerModels.kicker;
+    const pGroup = kicker.group;
+
+    this.showGoalBanner("⚡ BİLEK ÇALIMI! (Step-Over Feint)");
+
+    const forwardX = Math.sin(pGroup.rotation.y);
+    const forwardZ = Math.cos(pGroup.rotation.y);
+    const rightX = Math.cos(pGroup.rotation.y);
+    const rightZ = -Math.sin(pGroup.rotation.y);
+
+    let step = 0;
+    const skillInterval = setInterval(() => {
+      step++;
+      const sideOffset = Math.sin(step * 0.8) * 0.22;
+      pGroup.position.x += (forwardX * 0.42 + rightX * sideOffset);
+      pGroup.position.z += (forwardZ * 0.42 + rightZ * sideOffset);
+
+      if (kicker.bodyGroup) {
+        kicker.bodyGroup.rotation.z = Math.sin(step * 0.8) * 0.28;
+      }
+      if (kicker.rightLegGroup && kicker.leftLegGroup) {
+        kicker.rightLegGroup.rotation.x = Math.sin(step) * 0.6;
+        kicker.leftLegGroup.rotation.x = -Math.sin(step) * 0.6;
+      }
+
+      if (this.hasBallPossession && this.ball) {
+        this.ball.position.x = pGroup.position.x + forwardX * 0.5 + rightX * (sideOffset * 0.5);
+        this.ball.position.z = pGroup.position.z + forwardZ * 0.5 + rightZ * (sideOffset * 0.5);
+        this.ball.mesh.position.copy(this.ball.position);
+        this.ball.shadow.position.set(this.ball.position.x, 0.015, this.ball.position.z);
+      }
+
+      if (step >= 8) {
+        clearInterval(skillInterval);
+        this.isSkillMoving = false;
+        if (kicker.bodyGroup) kicker.bodyGroup.rotation.z = 0;
+
+        // Yakındaki AI defansları sersemlet (stun)
+        if (this.playerModels && this.playerModels.defenders) {
+          this.playerModels.defenders.forEach(def => {
+            const dist = pGroup.position.distanceTo(def.group.position);
+            if (dist < 3.5) {
+              def.stunTimer = 1.6;
+              def.isTackling = false;
+              if (def.bodyGroup) def.bodyGroup.rotation.z = 0.35;
+            }
+          });
+        }
+      }
+    }, 40);
+
+    setTimeout(() => {
+      this.skillMoveCooldown = false;
+    }, 1100);
+  }
+
+  // AI DEFANS OYUNCULARI (Pres & Müdahale)
+  updateDefenders(dt) {
+    if (!this.playerModels || !this.playerModels.defenders || this.playerModels.defenders.length === 0) return;
+    if (!this.ball) return;
+
+    const ballPos = this.ball.position;
+    const kicker = this.playerModels.kicker;
+
+    let targetPos = ballPos;
+    let ballCarrier = null;
+
+    if (this.hasBallPossession && kicker) {
+      targetPos = kicker.group.position;
+      ballCarrier = kicker;
+    }
+
+    this.playerModels.defenders.forEach((def, index) => {
+      if (!def.group) return;
+
+      // Sersemleme (çalım yeme durumu)
+      if (def.stunTimer && def.stunTimer > 0) {
+        def.stunTimer -= dt;
+        if (def.stunTimer <= 0 && def.bodyGroup) {
+          def.bodyGroup.rotation.z = 0;
+        }
+        return;
+      }
+
+      const dPos = def.group.position;
+      let desiredTarget = targetPos.clone();
+      if (index === 1) {
+        desiredTarget.x = THREE.MathUtils.lerp(targetPos.x, 0, 0.45);
+        desiredTarget.z = THREE.MathUtils.clamp(targetPos.z - 2.5, 6, 25);
+      }
+
+      const dx = desiredTarget.x - dPos.x;
+      const dz = desiredTarget.z - dPos.z;
+      const dist = Math.hypot(dx, dz);
+
+      const defSpeed = 4.2; // m/s
+
+      if (dist > 1.15) {
+        const moveDirX = dx / dist;
+        const moveDirZ = dz / dist;
+        dPos.x += moveDirX * defSpeed * dt;
+        dPos.z += moveDirZ * defSpeed * dt;
+
+        dPos.x = THREE.MathUtils.clamp(dPos.x, -22, 22);
+        dPos.z = THREE.MathUtils.clamp(dPos.z, 2.5, 34);
+
+        const angle = Math.atan2(moveDirX, moveDirZ);
+        def.group.rotation.y = THREE.MathUtils.lerp(def.group.rotation.y, angle, 0.15);
+
+        this.playerModels.updateRunningAnimation(def, true, false, dt);
+      } else {
+        this.playerModels.updateRunningAnimation(def, false, false, dt);
+        if (this.hasBallPossession && !this.isSkillMoving && !def.isTackling && ballCarrier) {
+          this.handleDefenderTackle(def, ballCarrier);
+        }
+      }
+    });
+  }
+
+  // DEFANS MÜDAHALESİ (Ayak Uzatma / Top Kapma)
+  handleDefenderTackle(def, ballCarrier) {
+    def.isTackling = true;
+    if (def.rightLegGroup) {
+      def.rightLegGroup.rotation.x = -1.1;
+    }
+
+    setTimeout(() => {
+      if (def.rightLegGroup) def.rightLegGroup.rotation.x = 0;
+      def.isTackling = false;
+    }, 600);
+
+    const dist = def.group.position.distanceTo(ballCarrier.group.position);
+    if (dist < 1.4 && this.hasBallPossession && !this.isSkillMoving) {
+      this.hasBallPossession = false;
+      this.showGoalBanner("⚠️ DEFANS ARAYA GİRDİ! TOPU KAPTIRDIN! (Çalım At [E/V] veya Pas Ver)");
+
+      const tackleDirX = (Math.random() - 0.5) * 4;
+      const tackleDirZ = 5 + Math.random() * 4;
+      this.ball.velocity.set(tackleDirX, 1.2, tackleDirZ);
+      this.ball.isMoving = true;
+    }
   }
 
   // FARE KONTROLLERİ VE NİŞAN ALMA
@@ -660,14 +854,38 @@ class Game {
         return;
       }
 
-      if (!this.isAiming) return;
-      this.aimCurrent.x = e.clientX;
-      this.aimCurrent.y = e.clientY;
-      this.updateAimTrajectory();
+      if (this.isAiming) {
+        this.aimCurrent.x = e.clientX;
+        this.aimCurrent.y = e.clientY;
+        this.updateAimTrajectory();
+        this.lastMouseX = e.clientX;
+        this.lastMouseY = e.clientY;
+        return;
+      }
+
+      // Fareyi sağa/sola/yukarı/aşağı hareket ettirince kamera serbestçe 360 döner (FIFA/PES Orbit Kamera)
+      if (this.lastMouseX !== null && this.lastMouseY !== null) {
+        const dx = e.clientX - this.lastMouseX;
+        const dy = e.clientY - this.lastMouseY;
+        if (Math.abs(dx) < 150 && Math.abs(dy) < 150) {
+          this.cameraYaw -= dx * 0.0038;
+          this.cameraPitch = THREE.MathUtils.clamp(this.cameraPitch + dy * 0.0024, -0.15, 0.65);
+        }
+      }
+      this.lastMouseX = e.clientX;
+      this.lastMouseY = e.clientY;
+    });
+
+    window.addEventListener('mouseleave', () => {
+      this.lastMouseX = null;
+      this.lastMouseY = null;
     });
 
     // MOUSE UP: Şutu Gönder!
     window.addEventListener('mouseup', (e) => {
+      this.lastMouseX = null;
+      this.lastMouseY = null;
+
       if (!this.isAiming) return;
       this.isAiming = false;
       this.clearAimLine();
@@ -690,7 +908,7 @@ class Game {
       this.executePlayerShot(dx, dy);
     });
 
-    // KLAVYE KONTROLLERİ (WASD Koşma, Shift Depar, Boşluk Pas, Q/E Falso, R Tekrar, F Tam Ekran)
+    // KLAVYE KONTROLLERİ (WASD Koşma, Shift Depar, Boşluk Pas, E/V Çalım, Q Falso, R Tekrar, F Tam Ekran)
     window.addEventListener('keydown', (e) => {
       if (this.keys.hasOwnProperty(e.code)) {
         this.keys[e.code] = true;
@@ -705,7 +923,9 @@ class Game {
       if (e.code === 'KeyQ') {
         this.adjustFalso(-0.25);
       }
-      if (e.code === 'KeyE') {
+      if (e.code === 'KeyV' || (e.code === 'KeyE' && (this.hasBallPossession || this.keys.KeyW || this.keys.KeyA || this.keys.KeyS || this.keys.KeyD))) {
+        this.executeSkillMove();
+      } else if (e.code === 'KeyE') {
         this.adjustFalso(0.25);
       }
       if (e.code === 'Space' || e.code === 'KeyX' || e.code === 'KeyC') {
@@ -1132,6 +1352,9 @@ class Game {
 
     // WASD ile Oyuncu Koşma & Top Kontrolü (Dribling)
     this.updatePlayerMovement(dt);
+
+    // AI Defans Oyuncuları (Pres & Müdahale)
+    this.updateDefenders(dt);
 
     // Top Fiziğini Güncelle
     if (this.ball && this.ball.isMoving) {

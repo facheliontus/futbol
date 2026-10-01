@@ -9,6 +9,7 @@ class PlayerModels {
     this.wall = [];
     this.kicker = null;
     this.passer = null;
+    this.defenders = [];
 
     this.gkDefaultPos = new THREE.Vector3(0, 0, 0.4);
     this.isDiving = false;
@@ -766,6 +767,145 @@ class PlayerModels {
     }
   }
 
+  // ==========================================================
+  // RAKİP DEFANS OYUNCULARI (AI Stoperler & Pres Sistemi)
+  // ==========================================================
+  createDefenders(positions, colorHex = 0x1e3a8a) {
+    this.clearDefenders();
+    positions.forEach((pos, idx) => {
+      const def = this.createSingleDefender(pos, colorHex, idx + 4, `RAKİP STOPER #${idx + 4}`);
+      this.defenders.push(def);
+    });
+  }
+
+  clearDefenders() {
+    if (this.defenders) {
+      this.defenders.forEach(d => {
+        if (d.group) this.scene.remove(d.group);
+      });
+    }
+    this.defenders = [];
+  }
+
+  createSingleDefender(pos, jerseyColorHex = 0x1e3a8a, number = 4, labelText = 'RAKİP DEFANS') {
+    const group = new THREE.Group();
+
+    const numCanvas = document.createElement('canvas');
+    numCanvas.width = 128;
+    numCanvas.height = 128;
+    const nctx = numCanvas.getContext('2d');
+    nctx.fillStyle = '#' + new THREE.Color(jerseyColorHex).getHexString();
+    nctx.fillRect(0, 0, 128, 128);
+    nctx.fillStyle = '#ffffff';
+    nctx.font = 'bold 64px "Segoe UI", sans-serif';
+    nctx.textAlign = 'center';
+    nctx.textBaseline = 'middle';
+    nctx.fillText(number.toString(), 64, 64);
+    const numTex = new THREE.CanvasTexture(numCanvas);
+
+    const frontMat = new THREE.MeshStandardMaterial({ color: jerseyColorHex, roughness: 0.6 });
+    const backMat = new THREE.MeshStandardMaterial({ map: numTex, roughness: 0.6 });
+    const torsoMats = [frontMat, frontMat, frontMat, frontMat, backMat, backMat];
+
+    const torso = new THREE.Mesh(new THREE.BoxGeometry(0.56, 0.66, 0.28), torsoMats);
+    torso.position.y = 1.25;
+    torso.castShadow = true;
+    group.add(torso);
+
+    const skinMat = new THREE.MeshStandardMaterial({ color: 0xe0ac69, roughness: 0.7 });
+    const head = new THREE.Mesh(new THREE.SphereGeometry(0.18, 14, 14), skinMat);
+    head.position.y = 1.72;
+    head.castShadow = true;
+    group.add(head);
+
+    const hair = new THREE.Mesh(new THREE.SphereGeometry(0.19, 14, 8, 0, Math.PI * 2, 0, Math.PI * 0.45),
+      new THREE.MeshStandardMaterial({ color: 0x111111 }));
+    hair.position.y = 1.75;
+    group.add(hair);
+
+    const shorts = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.35, 0.26),
+      new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.8 }));
+    shorts.position.y = 0.85;
+    group.add(shorts);
+
+    const legMat = new THREE.MeshStandardMaterial({ color: 0x1e3a8a, roughness: 0.8 });
+
+    // Sol Bacak Eklemi
+    const leftLegGroup = new THREE.Group();
+    leftLegGroup.position.set(-0.16, 0.75, 0);
+    const leftLeg = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.08, 0.7, 10), legMat);
+    leftLeg.position.y = -0.35;
+    leftLeg.castShadow = true;
+    leftLegGroup.add(leftLeg);
+    group.add(leftLegGroup);
+
+    // Sağ Bacak Eklemi
+    const rightLegGroup = new THREE.Group();
+    rightLegGroup.position.set(0.16, 0.75, 0);
+    const rightLeg = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.08, 0.7, 10), legMat);
+    rightLeg.position.y = -0.35;
+    rightLeg.castShadow = true;
+    rightLegGroup.add(rightLeg);
+    group.add(rightLegGroup);
+
+    // Kollar
+    const armGeo = new THREE.CylinderGeometry(0.07, 0.06, 0.55, 10);
+    const leftArmGroup = new THREE.Group();
+    leftArmGroup.position.set(-0.35, 1.45, 0);
+    const lArm = new THREE.Mesh(armGeo, frontMat);
+    lArm.position.y = -0.25;
+    leftArmGroup.add(lArm);
+    group.add(leftArmGroup);
+
+    const rightArmGroup = new THREE.Group();
+    rightArmGroup.position.set(0.35, 1.45, 0);
+    const rArm = new THREE.Mesh(armGeo, frontMat);
+    rArm.position.y = -0.25;
+    rightArmGroup.add(rArm);
+    group.add(rightArmGroup);
+
+    // Baş Üstünde Kırmızı Defans Rozeti
+    const labelCanvas = document.createElement('canvas');
+    labelCanvas.width = 256;
+    labelCanvas.height = 64;
+    const lctx = labelCanvas.getContext('2d');
+    lctx.fillStyle = 'rgba(231, 76, 60, 0.9)';
+    if (lctx.roundRect) lctx.roundRect(4, 4, 248, 56, 12);
+    else lctx.rect(4, 4, 248, 56);
+    lctx.fill();
+    lctx.fillStyle = '#ffffff';
+    lctx.font = 'bold 24px "Segoe UI", sans-serif';
+    lctx.textAlign = 'center';
+    lctx.textBaseline = 'middle';
+    lctx.fillText(labelText, 128, 32);
+    const labelTex = new THREE.CanvasTexture(labelCanvas);
+    const labelSprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: labelTex, transparent: true }));
+    labelSprite.position.set(0, 2.3, 0);
+    labelSprite.scale.set(1.4, 0.35, 1);
+    group.add(labelSprite);
+
+    group.position.copy(pos);
+    group.lookAt(pos.x, 0, pos.z + 10);
+
+    this.scene.add(group);
+    return {
+      group: group,
+      torso: torso,
+      head: head,
+      hair: hair,
+      leftLegGroup: leftLegGroup,
+      rightLegGroup: rightLegGroup,
+      leftArmGroup: leftArmGroup,
+      rightArmGroup: rightArmGroup,
+      labelSprite: labelSprite,
+      basePos: pos.clone(),
+      state: 'idle',
+      beatenTimer: 0,
+      tackleCooldown: 0,
+      runCycle: 0
+    };
+  }
+
   clearAll() {
     if (this.goalkeeper) this.scene.remove(this.goalkeeper.group);
     if (this.kicker) {
@@ -784,6 +924,7 @@ class PlayerModels {
       this.scene.remove(this.kickZoneAura);
       this.kickZoneAura = null;
     }
+    this.clearDefenders();
     this.wall.forEach(def => this.scene.remove(def.group));
     this.wall = [];
   }

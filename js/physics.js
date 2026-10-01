@@ -141,6 +141,19 @@ class BallPhysics {
     this.trailMeshes.forEach(m => m.material.opacity = 0);
   }
 
+  // TOPU YUMUŞATARAK STOP ETME (First Touch / Top Tutma)
+  cushionTrap(receiverPos) {
+    this.isMoving = false;
+    this.isPass = false;
+    this.velocity.set(0, 0, 0);
+    this.spin.set(0, 0, 0);
+    this.position.set(receiverPos.x, this.radius, receiverPos.z);
+    if (this.mesh) this.mesh.position.copy(this.position);
+    if (this.shadow) this.shadow.position.set(this.position.x, 0.015, this.position.z);
+    this.trail = [];
+    this.trailMeshes.forEach(m => m.material.opacity = 0);
+  }
+
   // PAS / ORTA ATEŞLEME (Co-op 2 Kişilik Eşli Hücum İçin)
   passTo(targetPos, flightDuration = 1.1, arcHeight = 1.8, curl = 0, onArrival = null) {
     this.isPass = true;
