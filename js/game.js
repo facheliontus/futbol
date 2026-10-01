@@ -1429,6 +1429,11 @@ class Game {
 
   // GOL OLDUĞUNDA
   onGoalScored() {
+    if (window.matchEngine && window.matchEngine.isActive) {
+      window.matchEngine.onGoalScored('home');
+      return;
+    }
+
     this.showGoalBanner("GOOOOOL! HARİKA VURUŞ!");
     this.timeScale = 0.45; // Çatala girdiğinde slow-mo
 
@@ -1598,11 +1603,16 @@ class Game {
     // Ani fps düşüşlerinde patlamayı önlemek için dt'yi sınırla
     dt = Math.min(dt, 0.1) * this.timeScale;
 
-    // WASD ile Oyuncu Koşma & Top Kontrolü (Dribling)
-    this.updatePlayerMovement(dt);
+    // 3D Takım Maçı Motoru (FIFA/PES modu) veya Tek Oyuncu / Antrenman modu
+    if (window.matchEngine && window.matchEngine.isActive) {
+      window.matchEngine.update(dt, this);
+    } else {
+      // WASD ile Oyuncu Koşma & Top Kontrolü (Dribling)
+      this.updatePlayerMovement(dt);
 
-    // AI Defans Oyuncuları (Pres & Müdahale)
-    this.updateDefenders(dt);
+      // AI Defans Oyuncuları (Pres & Müdahale)
+      this.updateDefenders(dt);
+    }
 
     // Top Fiziğini Güncelle
     if (this.ball && this.ball.isMoving) {
@@ -1618,13 +1628,13 @@ class Game {
         () => this.onBallStopped()
       );
 
-      // Şut atıldıktan sonra topu takip et
-      if (this.career.player && this.career.player.position !== 'GK') {
+      // Şut atıldıktan sonra topu takip et (Tek oyuncu modunda)
+      if (!window.matchEngine?.isActive && this.career.player && this.career.player.position !== 'GK') {
         this.setCameraFollowBall();
       }
     } else {
       // Top serbest veya ayaktayken oyuncuyu takip eden dinamik 3. şahıs kamera
-      if (this.career.player && this.career.player.position !== 'GK') {
+      if (!window.matchEngine?.isActive && this.career.player && this.career.player.position !== 'GK') {
         this.updateFollowCamera(dt);
       }
     }

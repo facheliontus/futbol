@@ -51,6 +51,11 @@ class PlatformManager {
       if (window.gameInstance) {
         window.gameInstance.onResize();
       }
+
+      // Eğer aktif bir maç devam etmiyorsa veya kullanıcı mod seçmek istiyorsa mod modalını aç
+      if (!window.matchEngine?.isActive || param === 'selector') {
+        this.showGameModeSelector();
+      }
       return;
     }
 
@@ -68,6 +73,9 @@ class PlatformManager {
     switch (viewName) {
       case 'home':
         this.renderHome();
+        break;
+      case 'live':
+        this.renderLiveMatches();
         break;
       case 'match-center':
         if (param) this.activeMatchId = param;
@@ -93,6 +101,9 @@ class PlatformManager {
         break;
       case 'stats':
         this.renderStatsComparison();
+        break;
+      case 'profile':
+        this.renderProfile();
         break;
       case 'admin':
         this.renderAdminPanel();
@@ -809,6 +820,305 @@ class PlatformManager {
 
   renderAdminPanel() {
     document.getElementById('admin-current-role-badge').innerText = `Yetki: ${this.adminRole.toUpperCase()}`;
+  }
+
+  // CANLI MAÇLAR DİJİTAL TABLOSU
+  renderLiveMatches() {
+    const liveMatches = window.dataService.getLiveMatches();
+    const container = document.getElementById('live-matches-full-grid');
+    if (!container) return;
+
+    if (liveMatches.length === 0) {
+      container.innerHTML = '<div class="glass-card p-4 text-center">Şu an devam eden canlı maç bulunmuyor.</div>';
+      return;
+    }
+
+    container.innerHTML = liveMatches.map(m => `
+      <div class="live-match-card glass-card">
+        <div class="match-card-top">
+          <span class="match-league-badge">${m.leagueName}</span>
+          <span class="live-pulse-indicator"><span class="pulse-dot"></span> CANLI ${m.minute}</span>
+        </div>
+        <div class="match-card-teams">
+          <div class="team-col home">
+            <span class="team-avatar">${m.homeTeam.logo}</span>
+            <span class="team-name">${m.homeTeam.name}</span>
+          </div>
+          <div class="score-col">
+            <span class="big-score">${m.homeScore} - ${m.awayScore}</span>
+            <span class="match-stadium">${m.broadcaster || 'Canlı Yayın'}</span>
+          </div>
+          <div class="team-col away">
+            <span class="team-avatar">${m.awayTeam.logo}</span>
+            <span class="team-name">${m.awayTeam.name}</span>
+          </div>
+        </div>
+        <div class="match-card-bottom" style="display:flex; justify-content:space-between; align-items:center;">
+          <span>🏟️ ${m.stadium}</span>
+          <div style="display:flex; gap:8px;">
+            <button class="btn-micro-details" onclick="window.platformManager.showView('match-center', '${m.id}')">Detay ➡️</button>
+            <button class="btn-primary-action" style="padding: 6px 14px; font-size: 0.85rem;" onclick="window.platformManager.playMatchById('${m.id}')">🎮 OYNA</button>
+          </div>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  // PROFİL SAYFASI
+  renderProfile() {
+    const favTeamEl = document.getElementById('profile-fav-team');
+    if (favTeamEl) {
+      const favTeam = window.dataService.getTeamById('galatasaray');
+      favTeamEl.innerText = `${favTeam ? favTeam.name : 'Galatasaray'} ${favTeam ? favTeam.logo : '🦁'}`;
+    }
+  }
+
+  // OYUN MODLARI SEÇİCİ MODALI
+  showGameModeSelector() {
+    const modal = document.getElementById('game-modes-modal');
+    if (modal) {
+      modal.classList.add('active');
+      modal.querySelectorAll('.gmode-tab').forEach(tab => {
+        tab.onclick = (e) => {
+          modal.querySelectorAll('.gmode-tab').forEach(t => t.classList.remove('active'));
+          modal.querySelectorAll('.gmode-pane').forEach(p => p.classList.remove('active'));
+          e.currentTarget.classList.add('active');
+          const targetPane = document.getElementById(`gmode-pane-${e.currentTarget.dataset.gmode}`);
+          if (targetPane) targetPane.classList.add('active');
+        };
+      });
+    }
+  }
+
+  closeGameModeSelector() {
+    const modal = document.getElementById('game-modes-modal');
+    if (modal) modal.classList.remove('active');
+  }
+
+  // 1. MAÇ MERKEZİNDEN AKTİF MAÇI OYNA
+  playActiveMatch() {
+    this.playMatchById(this.activeMatchId);
+  }
+
+  playMatchById(matchId) {
+    const match = window.dataService.getMatchById(matchId);
+    if (!match) return;
+
+    const homeColor = match.homeTeam.name.includes('Galatasaray') ? 0xb81414 : 
+                      match.homeTeam.name.includes('Fenerbahçe') ? 0x0c2461 : 
+                      match.homeTeam.name.includes('Beşiktaş') ? 0x111111 : 0x27ae60;
+    const awayColor = match.awayTeam.name.includes('Fenerbahçe') ? 0x0c2461 : 
+                      match.awayTeam.name.includes('Galatasaray') ? 0xb81414 : 
+                      match.awayTeam.name.includes('Beşiktaş') ? 0x111111 : 0xffffff;
+
+    const homeData = {
+      name: match.homeTeam.name,
+      short: match.homeTeam.name.substring(0, 3).toUpperCase(),
+      logo: match.homeTeam.logo,
+      color: homeColor
+    };
+    const awayData = {
+      name: match.awayTeam.name,
+      short: match.awayTeam.name.substring(0, 3).toUpperCase(),
+      logo: match.awayTeam.logo,
+      color: awayColor
+    };
+
+    this.showView('game');
+    this.closeGameModeSelector();
+    if (window.matchEngine) {
+      window.matchEngine.launchMatch(homeData, awayData, 'quick', { duration: 180, difficulty: 'normal' });
+    }
+  }
+
+  // 2. TAKIMLA OYNA
+  playWithTeam(teamId) {
+    const team = window.dataService.getTeamById(teamId);
+    if (!team) return;
+
+    const otherTeam = window.dataService.teams.find(t => t.id !== team.id) || { name: 'Fenerbahçe', logo: '🐦', colors: ['#0c2461'] };
+
+    const homeData = {
+      name: team.name,
+      short: team.name.substring(0, 3).toUpperCase(),
+      logo: team.logo,
+      color: parseInt(team.colors[0].replace('#', '0x')) || 0xb81414
+    };
+    const awayData = {
+      name: otherTeam.name,
+      short: otherTeam.name.substring(0, 3).toUpperCase(),
+      logo: otherTeam.logo,
+      color: parseInt(otherTeam.colors[0].replace('#', '0x')) || 0x0c2461
+    };
+
+    this.showView('game');
+    this.closeGameModeSelector();
+    if (window.matchEngine) {
+      window.matchEngine.launchMatch(homeData, awayData, 'quick', { duration: 180, difficulty: 'normal' });
+    }
+  }
+
+  // 3. OYUNCUYLA OYNA (Tek Oyuncu / Kariyer Odaklı)
+  playWithPlayer(playerId) {
+    const player = window.dataService.getPlayerById(playerId);
+    if (!player) return;
+
+    const team = window.dataService.getTeamById(player.teamId) || { name: player.teamName, logo: '⚽', colors: ['#b81414'] };
+    const otherTeam = window.dataService.teams.find(t => t.id !== player.teamId) || { name: 'Fenerbahçe', logo: '🐦', colors: ['#0c2461'] };
+
+    const homeData = {
+      name: team.name,
+      short: team.name.substring(0, 3).toUpperCase(),
+      logo: team.logo,
+      color: parseInt(team.colors[0].replace('#', '0x')) || 0xb81414
+    };
+    const awayData = {
+      name: otherTeam.name,
+      short: otherTeam.name.substring(0, 3).toUpperCase(),
+      logo: otherTeam.logo,
+      color: parseInt(otherTeam.colors[0].replace('#', '0x')) || 0x0c2461
+    };
+
+    this.showView('game');
+    this.closeGameModeSelector();
+    if (window.matchEngine) {
+      window.matchEngine.launchMatch(homeData, awayData, 'quick', { duration: 180, difficulty: 'normal' });
+      if (window.matchEngine.homePlayers && window.matchEngine.homePlayers[window.matchEngine.activePlayerIndex]) {
+        window.matchEngine.homePlayers[window.matchEngine.activePlayerIndex].name = player.name;
+        window.matchEngine.homePlayers[window.matchEngine.activePlayerIndex].num = player.num;
+      }
+    }
+  }
+
+  // 4. KULLANICI ÖZEL HIZLI MAÇ BAŞLATMA
+  launchCustomQuickMatch() {
+    const homeSelect = document.getElementById('select-home-team');
+    const awaySelect = document.getElementById('select-away-team');
+    const durationSelect = document.getElementById('select-match-duration');
+    const diffSelect = document.getElementById('select-match-difficulty');
+    const weatherSelect = document.getElementById('select-match-weather');
+
+    const homeId = homeSelect ? homeSelect.value : 'galatasaray';
+    const awayId = awaySelect ? awaySelect.value : 'fenerbahce';
+    const duration = durationSelect ? parseInt(durationSelect.value) : 180;
+    const difficulty = diffSelect ? diffSelect.value : 'normal';
+    const weather = weatherSelect ? weatherSelect.value : 'night';
+
+    const homeTeam = window.dataService.getTeamById(homeId) || { name: 'Galatasaray', logo: '🦁', colors: ['#b81414'] };
+    const awayTeam = window.dataService.getTeamById(awayId) || { name: 'Fenerbahçe', logo: '🐦', colors: ['#0c2461'] };
+
+    const homeData = {
+      name: homeTeam.name,
+      short: homeTeam.name.substring(0, 3).toUpperCase(),
+      logo: homeTeam.logo,
+      color: parseInt(homeTeam.colors[0].replace('#', '0x')) || 0xb81414
+    };
+    const awayData = {
+      name: awayTeam.name,
+      short: awayTeam.name.substring(0, 3).toUpperCase(),
+      logo: awayTeam.logo,
+      color: parseInt(awayTeam.colors[0].replace('#', '0x')) || 0x0c2461
+    };
+
+    this.showView('game');
+    this.closeGameModeSelector();
+
+    // Hava durumunu stadyuma uygula
+    if (window.gameInstance && window.gameInstance.stadium && window.gameInstance.stadium.setWeather) {
+      window.gameInstance.stadium.setWeather(weather);
+    }
+
+    if (window.matchEngine) {
+      window.matchEngine.launchMatch(homeData, awayData, 'quick', { duration, difficulty, weather });
+    }
+  }
+
+  // 5. TURNUVA MODU MAÇI
+  launchTournamentMatch() {
+    const homeData = {
+      name: 'Galatasaray SK',
+      short: 'GS',
+      logo: '🦁',
+      color: 0xb81414
+    };
+    const awayData = {
+      name: 'Fenerbahçe SK',
+      short: 'FB',
+      logo: '🐦',
+      color: 0x0c2461
+    };
+
+    this.showView('game');
+    this.closeGameModeSelector();
+
+    if (window.matchEngine) {
+      window.matchEngine.launchMatch(homeData, awayData, 'tournament', { duration: 180, difficulty: 'hard' });
+      window.matchEngine.showMatchBanner("🏆 ÇEYREK FİNAL: GALATASARAY vs FENERBAHÇE");
+    }
+  }
+
+  // 6. KARİYER MODU AKIŞI
+  launchCareerFlow(isNew = false) {
+    this.closeGameModeSelector();
+    this.showView('game');
+    if (window.matchEngine) {
+      window.matchEngine.isActive = false;
+    }
+    const careerModal = document.getElementById('career-creation-modal');
+    if (isNew && careerModal) {
+      careerModal.classList.add('active');
+    } else {
+      if (window.gameInstance) {
+        window.gameInstance.isDeadBallSetPiece = false;
+        window.gameInstance.setupScenario({
+          type: 'open_play',
+          distance: 22,
+          defenders: 2,
+          title: 'Akıcı Hücum & Şut Pozisyonu',
+          desc: 'Ceza sahasına sokul, stoperleri çalımla ve fileleri havalandır!'
+        });
+      }
+    }
+  }
+
+  // 7. ANTRENMAN VE FRİKİK DRİLLLERİ
+  launchTrainingDrill(drillType = 'freekick') {
+    this.closeGameModeSelector();
+    this.showView('game');
+    if (window.matchEngine) {
+      window.matchEngine.isActive = false;
+    }
+    if (window.gameInstance) {
+      const g = window.gameInstance;
+      if (drillType === 'freekick') {
+        g.isDeadBallSetPiece = true;
+        g.setupScenario({
+          type: 'freekick',
+          distance: 25,
+          wall: 4,
+          title: '25 Metre Serbest Vuruş (Frikik)',
+          desc: 'Barajın üzerinden 90\'a falsolu şut çek! Falso için [Q] veya [E] tuşlarını kullan.'
+        });
+      } else if (drillType === 'penalty') {
+        g.isDeadBallSetPiece = true;
+        g.setupScenario({
+          type: 'penalty',
+          distance: 11,
+          wall: 0,
+          title: 'Penaltı Noktası (11 Metre)',
+          desc: 'Köşelere sert ve net vuruş yap!'
+        });
+      } else {
+        g.isDeadBallSetPiece = false;
+        g.setupScenario({
+          type: 'open_play',
+          distance: 28,
+          defenders: 2,
+          title: 'Uzaktan Sert Şut Antrenmanı',
+          desc: 'Ceza sahası dışından kaleciyi avla!'
+        });
+      }
+    }
   }
 }
 

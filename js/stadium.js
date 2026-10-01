@@ -455,27 +455,54 @@ class Stadium {
   // IŞIKLANDIRMA (Stadyum Projektörleri)
   createLights() {
     // Genel stadyum ortam ışığı
-    const ambientLight = new THREE.AmbientLight(0xffffff, 0.7);
-    this.scene.add(ambientLight);
+    this.ambientLight = new THREE.AmbientLight(0xffffff, 0.7);
+    this.scene.add(this.ambientLight);
 
     // Ana projektör ışığı (Gölge üreten sert ışık)
-    const mainLight = new THREE.DirectionalLight(0xffffff, 0.9);
-    mainLight.position.set(15, 35, 30);
-    mainLight.castShadow = true;
-    mainLight.shadow.mapSize.width = 2048;
-    mainLight.shadow.mapSize.height = 2048;
-    mainLight.shadow.camera.near = 0.5;
-    mainLight.shadow.camera.far = 100;
-    mainLight.shadow.camera.left = -25;
-    mainLight.shadow.camera.right = 25;
-    mainLight.shadow.camera.top = 25;
-    mainLight.shadow.camera.bottom = -25;
-    this.scene.add(mainLight);
+    this.mainLight = new THREE.DirectionalLight(0xffffff, 0.9);
+    this.mainLight.position.set(15, 35, 30);
+    this.mainLight.castShadow = true;
+    this.mainLight.shadow.mapSize.width = 2048;
+    this.mainLight.shadow.mapSize.height = 2048;
+    this.mainLight.shadow.camera.near = 0.5;
+    this.mainLight.shadow.camera.far = 100;
+    this.mainLight.shadow.camera.left = -25;
+    this.mainLight.shadow.camera.right = 25;
+    this.mainLight.shadow.camera.top = 25;
+    this.mainLight.shadow.camera.bottom = -25;
+    this.scene.add(this.mainLight);
 
     // Kale aydınlatması için dolgu ışığı
     const goalFillLight = new THREE.PointLight(0xe0f7fa, 0.6, 30);
     goalFillLight.position.set(0, 8, 4);
     this.scene.add(goalFillLight);
+  }
+
+  // SAHA & HAVA DURUMU SİSTEMİ (Gündüz, Gece, Yağmurlu, Karlı)
+  setWeather(weather = 'night') {
+    this.weather = weather;
+    if (weather === 'day') {
+      if (this.scene) this.scene.background = new THREE.Color(0x5ca0f2);
+      if (this.scene && this.scene.fog) this.scene.fog.color = new THREE.Color(0x5ca0f2);
+      if (this.mainLight) this.mainLight.intensity = 1.35;
+      if (this.ambientLight) this.ambientLight.intensity = 0.85;
+    } else if (weather === 'rain') {
+      if (this.scene) this.scene.background = new THREE.Color(0x1e272e);
+      if (this.scene && this.scene.fog) this.scene.fog.color = new THREE.Color(0x1e272e);
+      if (this.mainLight) this.mainLight.intensity = 0.7;
+      if (this.ambientLight) this.ambientLight.intensity = 0.5;
+    } else if (weather === 'snow') {
+      if (this.scene) this.scene.background = new THREE.Color(0xd2dae2);
+      if (this.scene && this.scene.fog) this.scene.fog.color = new THREE.Color(0xd2dae2);
+      if (this.mainLight) this.mainLight.intensity = 1.1;
+      if (this.ambientLight) this.ambientLight.intensity = 0.9;
+    } else {
+      // Gece (Projektörler)
+      if (this.scene) this.scene.background = new THREE.Color(0x060913);
+      if (this.scene && this.scene.fog) this.scene.fog.color = new THREE.Color(0x060913);
+      if (this.mainLight) this.mainLight.intensity = 0.9;
+      if (this.ambientLight) this.ambientLight.intensity = 0.7;
+    }
   }
 
   // Ağ Sarsılma Efekti (Gol olduğunda ağ arkaya doğru esner)

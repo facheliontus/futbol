@@ -27,14 +27,16 @@
 
     <nav class="nav-links">
       <button class="nav-link active" data-view="home">🏠 Ana Sayfa</button>
-      <button class="nav-link" data-view="match-center">⚡ Maç Merkezi</button>
-      <button class="nav-link" data-view="leagues">🏆 Ligler & Puan Durumu</button>
+      <button class="nav-link" data-view="live">⚡ Canlı Maçlar</button>
+      <button class="nav-link" data-view="match-center">📅 Maçlar</button>
+      <button class="nav-link" data-view="leagues">🏆 Ligler</button>
       <button class="nav-link" data-view="teams">🛡️ Takımlar</button>
       <button class="nav-link" data-view="players">👤 Oyuncular</button>
-      <button class="nav-link" data-view="transfers">🔄 Transferler</button>
       <button class="nav-link" data-view="news">📰 Haberler</button>
-      <button class="nav-link" data-view="stats">📊 İstatistik & Kıyasla</button>
-      <button class="nav-link" data-view="admin">⚙️ Admin</button>
+      <button class="nav-link" data-view="stats">📊 İstatistikler</button>
+      <button class="nav-link" data-view="transfers">🔄 TRANSFER</button>
+      <button class="nav-link nav-play-highlight" data-view="game">🎮 OYNA</button>
+      <button class="nav-link" data-view="profile">👤 Profil</button>
     </nav>
 
     <div class="nav-right-actions">
@@ -48,7 +50,7 @@
         🔔 <span class="notif-badge">3</span>
       </button>
       <button class="btn-play-3d" onclick="window.platformManager.showView('game')">
-        🎮 3D Sahaya Gir
+        🎮 OYUNA BAŞLA
       </button>
     </div>
   </header>
@@ -86,7 +88,7 @@
           <h2>Sahaya Çık, Stoperleri Çalımla ve 90'a As!</h2>
           <p>Kendi kariyerini yönet, faul alıp serbest vuruşları 360° kamerayla kullan veya arkadaşınla eşli hücum yap.</p>
           <div class="hero-btn-group">
-            <button class="btn-primary-action" onclick="window.platformManager.showView('game')">🎮 3D Maça Başla</button>
+            <button class="btn-primary-action" onclick="window.platformManager.showView('game')">🎮 OYUNA BAŞLA</button>
             <button class="btn-secondary-action" onclick="window.platformManager.showView('match-center')">⚡ Canlı Maç Merkezi</button>
           </div>
         </div>
@@ -151,6 +153,20 @@
       </div>
     </section>
 
+    <!-- 1.5 VIEW: CANLI MAÇLAR DİJİTAL MERKEZİ -->
+    <section id="view-live" class="platform-view">
+      <div class="section-title-wrap">
+        <h2>⚡ CANLI MAÇLAR & ANLIK SKORLAR</h2>
+        <span class="sub-counter"><span class="pulse-indicator-red"></span> Anlık Olarak Güncelleniyor</span>
+      </div>
+      <div class="live-matches-header-card glass-card mb-4">
+        <p>Süper Lig ve Avrupa'dan devam eden maçlar. Dilersen herhangi bir maça anında girip 3D sahada kendin oynayabilirsin!</p>
+      </div>
+      <div id="live-matches-full-grid" class="live-matches-grid">
+        <!-- Canlı Maç Kartları Dinamik Dolacak -->
+      </div>
+    </section>
+
     <!-- 2. VIEW: GELİŞMİŞ MAÇ MERKEZİ -->
     <section id="view-match-center" class="platform-view">
       <div class="match-center-hero glass-card">
@@ -171,6 +187,11 @@
             <span id="mc-away-logo" class="mc-logo">🐦</span>
             <h2 id="mc-away-name">Fenerbahçe</h2>
           </div>
+        </div>
+        <div class="mc-play-action-wrap text-center mt-3">
+          <button id="btn-mc-play-now" class="btn-primary-action mc-play-btn" onclick="window.platformManager.playActiveMatch()">
+            🎮 BU MAÇI OYNA (3D SAHA)
+          </button>
         </div>
       </div>
 
@@ -279,6 +300,9 @@
         <div class="tp-info">
           <h2 id="team-profile-name">Galatasaray SK</h2>
           <p id="team-profile-meta">Trendyol Süper Lig • RAMS Park</p>
+          <button id="btn-play-with-team" class="btn-primary-action mt-2" onclick="window.platformManager.playWithTeam(window.platformManager.activeTeamId)">
+            🎮 BU TAKIMLA OYNA (3D SAHA)
+          </button>
         </div>
       </div>
 
@@ -298,9 +322,12 @@
     <section id="view-players" class="platform-view">
       <div class="player-profile-header glass-card">
         <span id="player-profile-avatar" class="pp-avatar">⚡</span>
-        <div class="pp-info">
+        <div class="tp-info">
           <h2 id="player-profile-name">Victor Osimhen</h2>
           <p id="player-profile-meta">Galatasaray • #45 • Santrfor (ST)</p>
+          <button id="btn-play-with-player" class="btn-primary-action mt-2" onclick="window.platformManager.playWithPlayer(window.platformManager.activePlayerId)">
+            🎮 BU OYUNCUYLA OYNA (3D SAHA)
+          </button>
         </div>
       </div>
 
@@ -401,6 +428,87 @@
       </div>
     </section>
 
+    <!-- 10. VIEW: KULLANICI PROFİLİ & KARİYER İSTATİSTİKLERİ -->
+    <section id="view-profile" class="platform-view">
+      <div class="profile-hero-card glass-card">
+        <div class="profile-avatar-wrap">
+          <div class="profile-avatar-circle">⚽</div>
+          <span class="profile-level-badge">LVL 14</span>
+        </div>
+        <div class="profile-main-meta">
+          <h2 id="profile-user-name">Kaptan Demirhan</h2>
+          <p id="profile-meta-subtitle">⭐ Pro Oyuncu • Favori Takım: <b id="profile-fav-team">Galatasaray SK 🦁</b></p>
+          <div class="profile-xp-track mt-2">
+            <div class="xp-info">
+              <span>Seviye İlerlemesi</span>
+              <span id="profile-xp-text">7.420 / 10.000 XP</span>
+            </div>
+            <div class="xp-bar-bg">
+              <div class="xp-bar-fill" style="width: 74%;"></div>
+            </div>
+          </div>
+        </div>
+        <div class="profile-actions-col">
+          <button class="btn-primary-action" onclick="window.platformManager.showGameModeSelector()">🎮 OYUNA BAŞLA</button>
+        </div>
+      </div>
+
+      <!-- Profil İstatistikleri Kartları -->
+      <div class="profile-stats-grid mt-4">
+        <div class="profile-stat-box glass-card">
+          <span class="ps-num">48</span>
+          <span class="ps-label">Oynanan Maç</span>
+        </div>
+        <div class="profile-stat-box glass-card">
+          <span class="ps-num" style="color: #00f2fe;">35</span>
+          <span class="ps-label">Galibiyet (%73)</span>
+        </div>
+        <div class="profile-stat-box glass-card">
+          <span class="ps-num" style="color: #2ecc71;">94</span>
+          <span class="ps-label">Atılan Gol</span>
+        </div>
+        <div class="profile-stat-box glass-card">
+          <span class="ps-num" style="color: #ffd700;">31</span>
+          <span class="ps-label">Asist</span>
+        </div>
+        <div class="profile-stat-box glass-card">
+          <span class="ps-num">8.4</span>
+          <span class="ps-label">Ortalama Maç Puanı</span>
+        </div>
+        <div class="profile-stat-box glass-card">
+          <span class="ps-num" style="color: #e74c3c;">6</span>
+          <span class="ps-label">Kazanılan Kupa</span>
+        </div>
+      </div>
+
+      <!-- Kupalar & Rozetler -->
+      <div class="section-title-wrap mt-5">
+        <h3>🏆 KAZANILAN KUPALAR & BAŞARIMLAR</h3>
+      </div>
+      <div class="trophies-grid">
+        <div class="trophy-card glass-card">
+          <span class="trophy-icon">🏆</span>
+          <h4>Süper Lig Şampiyonu</h4>
+          <p>2025/2026 Sezonu Şampiyonluğu</p>
+        </div>
+        <div class="trophy-card glass-card">
+          <span class="trophy-icon">⭐</span>
+          <h4>Şampiyonlar Ligi Yarı Finali</h4>
+          <p>Avrupa'nın En İyileri Arasında</p>
+        </div>
+        <div class="trophy-card glass-card">
+          <span class="trophy-icon">👟</span>
+          <h4>Altın Ayakkabı</h4>
+          <p>Sezonun Gol Kralı (28 Gol)</p>
+        </div>
+        <div class="trophy-card glass-card">
+          <span class="trophy-icon">🎯</span>
+          <h4>90'a Asan Usta</h4>
+          <p>30+ Metreden 10 Frikik Golü</p>
+        </div>
+      </div>
+    </section>
+
   </main>
 
   <!-- 3D OYUN & THREE.JS ALANI (Mevcut 3D Motor) -->
@@ -419,6 +527,8 @@
 
       <div class="hud-actions">
         <button id="btn-return-platform" class="hud-btn btn-gold" onclick="window.platformManager.showView('home')">🏠 PLATFORMA DÖN</button>
+        <button id="btn-open-game-modes" class="hud-btn btn-primary-action" onclick="window.platformManager.showGameModeSelector()">🎮 MOD SEÇ</button>
+        <button id="btn-camera-toggle" class="hud-btn" onclick="window.matchEngine?.toggleCamera()" title="Kamera Değiştir">🎥 KAMERA</button>
         <button id="btn-online-mode-toggle" class="hud-btn online-mode-toggle-btn" style="display: none;" title="Oyun Modunu Değiştir">🔄 MOD DEĞİŞTİR: 🤝 2 KİŞİLİK EŞLİ HÜCUM</button>
         <button id="btn-sound-toggle" class="hud-btn" title="Sesi Aç / Kapat">🔊</button>
         <button id="btn-retry-shot" class="hud-btn" title="Pozisyonu Tekrar Dene (R)">🔄 TEKRAR VUR (R)</button>
@@ -478,7 +588,175 @@
           <span id="hud-season-badge" class="stat-val">SEZON 1</span>
         </div>
       </div>
+
+      <!-- 2D Mini Saha Radarı -->
+      <div id="hud-radar-wrap" class="hud-radar-wrap">
+        <canvas id="match-radar-canvas" width="130" height="75"></canvas>
+      </div>
     </footer>
+
+    <!-- Mobil Dokunmatik Kontroller -->
+    <div id="mobile-touch-controls" class="mobile-touch-controls">
+      <div id="touch-joystick-zone" class="touch-joystick-zone">
+        <div id="touch-joystick-thumb" class="touch-joystick-thumb"></div>
+      </div>
+      <div class="touch-action-buttons">
+        <button id="touch-btn-sprint" class="touch-btn touch-btn-sprint">DEPAR</button>
+        <button id="touch-btn-pass" class="touch-btn touch-btn-pass">PAS (E)</button>
+        <button id="touch-btn-shoot" class="touch-btn touch-btn-shoot">ŞUT</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 🎮 3D OYUN MODU VE AYARLARI SEÇİM MODALI -->
+  <div id="game-modes-modal" class="modal-overlay">
+    <div class="modal-card glass-card game-modes-card">
+      <div class="modal-header">
+        <h2>🎮 3D PRO FOOTBALL ARENA</h2>
+        <p>Oynamak istediğin modu ve maç ayarlarını seç!</p>
+        <button class="btn-icon modal-close-btn" onclick="document.getElementById('game-modes-modal').classList.remove('active')">✖</button>
+      </div>
+      
+      <div class="game-mode-tabs">
+        <button class="gmode-tab active" data-gmode="quick">⚡ HIZLI MAÇ</button>
+        <button class="gmode-tab" data-gmode="tournament">🏆 TURNUVA (8 TAKIM)</button>
+        <button class="gmode-tab" data-gmode="career">⭐ KARİYER MODU</button>
+        <button class="gmode-tab" data-gmode="training">🎯 ANTRENMAN & FRİKİK</button>
+      </div>
+
+      <div class="modal-body">
+        <!-- Panel 1: Hızlı Maç Ayarları -->
+        <div id="gmode-pane-quick" class="gmode-pane active">
+          <div class="dual-select-grid">
+            <div class="form-group">
+              <label>🦁 Ev Sahibi Takım:</label>
+              <select id="select-home-team" class="form-select">
+                <option value="galatasaray" selected>Galatasaray SK (🦁)</option>
+                <option value="fenerbahce">Fenerbahçe SK (🐦)</option>
+                <option value="besiktas">Beşiktaş JK (🦅)</option>
+                <option value="realmadrid">Real Madrid CF (👑)</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>🐦 Deplasman Takımı (Rakip AI):</label>
+              <select id="select-away-team" class="form-select">
+                <option value="fenerbahce" selected>Fenerbahçe SK (🐦)</option>
+                <option value="galatasaray">Galatasaray SK (🦁)</option>
+                <option value="besiktas">Beşiktaş JK (🦅)</option>
+                <option value="realmadrid">Real Madrid CF (👑)</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="triple-settings-grid mt-3">
+            <div class="form-group">
+              <label>⏱️ Maç Süresi:</label>
+              <select id="select-match-duration" class="form-select">
+                <option value="180" selected>3 Dakika (Yüksek Hız)</option>
+                <option value="300">5 Dakika (Dengeli)</option>
+                <option value="600">10 Dakika (Tam Simülasyon)</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>🔥 Zorluk Seviyesi:</label>
+              <select id="select-match-difficulty" class="form-select">
+                <option value="easy">Kolay</option>
+                <option value="normal" selected>Orta (Gerçekçi)</option>
+                <option value="hard">Zor</option>
+                <option value="legend">Efsane</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>🌤️ Saha & Hava Durumu:</label>
+              <select id="select-match-weather" class="form-select">
+                <option value="day">Gündüz (Güneşli)</option>
+                <option value="night" selected>Gece (Projektörler)</option>
+                <option value="rain">Yağmurlu (Kaygan Saha)</option>
+                <option value="snow">Karlı (Kış Atmosferi)</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="mt-4 text-center">
+            <button class="btn-primary-action btn-large w-full" onclick="window.platformManager.launchCustomQuickMatch()">
+              ⚽ MAÇI BAŞLAT VE SAHAYA ÇIK!
+            </button>
+          </div>
+        </div>
+
+        <!-- Panel 2: Turnuva Modu -->
+        <div id="gmode-pane-tournament" class="gmode-pane">
+          <div class="tournament-info-banner">
+            <h4>🏆 AVRUPA ŞAMPİYONLAR KUPASI</h4>
+            <p>8 Dev Takım, Tek Eleme Sistemi, Kupa Yolunda Zirve Mücadelesi!</p>
+          </div>
+          <div class="tournament-bracket-preview mt-3">
+            <div class="bracket-round">
+              <div class="round-title">ÇEYREK FİNAL</div>
+              <div class="bracket-match highlight">🦁 GS vs 🐦 FB</div>
+              <div class="bracket-match">🦅 BJK vs 👑 RM</div>
+              <div class="bracket-match">🔵 MCI vs 🔴 ARS</div>
+              <div class="bracket-match">⚪ JUV vs 🔴 BAY</div>
+            </div>
+            <div class="bracket-arrow">➡️</div>
+            <div class="bracket-round">
+              <div class="round-title">YARI FİNAL</div>
+              <div class="bracket-match">TBD vs TBD</div>
+              <div class="bracket-match">TBD vs TBD</div>
+            </div>
+            <div class="bracket-arrow">➡️</div>
+            <div class="bracket-round">
+              <div class="round-title">🏆 FİNAL</div>
+              <div class="bracket-match">ŞAMPİYONLUK MAÇI</div>
+            </div>
+          </div>
+          <div class="mt-4 text-center">
+            <button class="btn-primary-action btn-large w-full" onclick="window.platformManager.launchTournamentMatch()">
+              🏆 TURNUVANIN İLK MAÇINA BAŞLA!
+            </button>
+          </div>
+        </div>
+
+        <!-- Panel 3: Kariyer Modu -->
+        <div id="gmode-pane-career" class="gmode-pane">
+          <div class="career-info-card">
+            <h4>⭐ KENDİ EFSANENİ YAZ</h4>
+            <p>Kendi futbolcunu yarat veya mevcut kariyerine devam et. Maç maç kendini kanıtla, dünya devlerinden transfer teklifleri al!</p>
+            <div class="career-btn-group mt-3">
+              <button class="btn-primary-action" onclick="window.platformManager.launchCareerFlow(false)">🚀 DEVAM ET</button>
+              <button class="btn-secondary-action" onclick="window.platformManager.launchCareerFlow(true)">⭐ YENİ KARİYER OLUŞTUR</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Panel 4: Antrenman & Frikik Modu -->
+        <div id="gmode-pane-training" class="gmode-pane">
+          <div class="training-drills-grid">
+            <div class="drill-card" onclick="window.platformManager.launchTrainingDrill('freekick')">
+              <span class="drill-icon">🎯</span>
+              <h4>360° Frikik Ustası</h4>
+              <p>Barajın üzerinden 90'a falsolu vuruşlar çalış.</p>
+            </div>
+            <div class="drill-card" onclick="window.platformManager.launchTrainingDrill('penalty')">
+              <span class="drill-icon">⚽</span>
+              <h4>Penaltı Noktası</h4>
+              <p>Kaleciyle birebir soğukkanlı penaltı atışları.</p>
+            </div>
+            <div class="drill-card" onclick="window.platformManager.launchTrainingDrill('longshot')">
+              <span class="drill-icon">🚀</span>
+              <h4>Uzaktan Sert Şut</h4>
+              <p>30 metreden kaleciyi avla.</p>
+            </div>
+            <div class="drill-card" onclick="window.platformManager.launchTrainingDrill('dribble')">
+              <span class="drill-icon">🏃</span>
+              <h4>Çalım & Slalom</h4>
+              <p>Stoperleri birer birer geçerek kaleye in.</p>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
   </div>
 
   <!-- GLOBAL ARAMA MODALI (CTRL+K) -->
@@ -621,12 +899,14 @@
   </div>
 
   <!-- JAVASCRIPT MODÜLLERİ -->
+  <script src="js/audio.js"></script>
   <script src="js/dataService.js"></script>
   <script src="js/career.js"></script>
   <script src="js/stadium.js"></script>
   <script src="js/player.js"></script>
   <script src="js/physics.js"></script>
-  <script src="js/network.js"></script>
+  <script src="js/online.js"></script>
+  <script src="js/matchEngine.js"></script>
   <script src="js/game.js"></script>
   <script src="js/platform.js"></script>
 

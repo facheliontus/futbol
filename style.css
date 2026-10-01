@@ -1979,5 +1979,340 @@ body.platform-body {
   .platform-navbar { padding: 0 1rem; }
   .search-btn span, .ai-btn span { display: none; }
   .ai-drawer { width: 92%; right: 4%; }
+  .mobile-touch-controls { display: flex !important; }
+}
+
+/* 🎮 OYNA Vurgulu Butonu */
+.nav-play-highlight {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important;
+  color: #ffffff !important;
+  font-weight: 800 !important;
+  box-shadow: 0 0 14px rgba(16, 185, 129, 0.45);
+  animation: pulse-glow 2.5s infinite;
+}
+
+@keyframes pulse-glow {
+  0%, 100% { box-shadow: 0 0 10px rgba(16, 185, 129, 0.4); }
+  50% { box-shadow: 0 0 20px rgba(16, 185, 129, 0.8); }
+}
+
+/* 2D Mini Saha Radarı */
+.hud-radar-wrap {
+  position: absolute;
+  bottom: 12px;
+  right: 18px;
+  background: rgba(8, 14, 28, 0.85);
+  border: 1px solid rgba(0, 242, 254, 0.35);
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.6);
+  z-index: 100;
+}
+
+#match-radar-canvas {
+  display: block;
+}
+
+/* Mobil Sanal Dokunmatik Kontroller */
+.mobile-touch-controls {
+  position: absolute;
+  bottom: 20px;
+  left: 0;
+  right: 0;
+  display: none;
+  justify-content: space-between;
+  padding: 0 25px;
+  pointer-events: none;
+  z-index: 250;
+}
+
+.touch-joystick-zone {
+  width: 110px;
+  height: 110px;
+  background: rgba(255, 255, 255, 0.12);
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+  position: relative;
+  pointer-events: auto;
+  backdrop-filter: blur(10px);
+}
+
+.touch-joystick-thumb {
+  width: 44px;
+  height: 44px;
+  background: #10b981;
+  border-radius: 50%;
+  position: absolute;
+  top: 33px;
+  left: 33px;
+  box-shadow: 0 0 12px rgba(16, 185, 129, 0.6);
+}
+
+.touch-action-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  pointer-events: auto;
+}
+
+.touch-btn {
+  width: 65px;
+  height: 65px;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.25);
+  font-weight: 800;
+  font-size: 0.82rem;
+  color: white;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+}
+
+.touch-btn-sprint { background: #3b82f6; }
+.touch-btn-pass { background: #10b981; }
+.touch-btn-shoot { background: #ef4444; }
+
+/* 🎮 Oyun Modları Seçim Modalı */
+.game-modes-card {
+  max-width: 820px !important;
+  width: 95%;
+}
+
+.game-mode-tabs {
+  display: flex;
+  gap: 8px;
+  padding: 0.5rem 1.5rem;
+  background: rgba(0, 0, 0, 0.25);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  overflow-x: auto;
+}
+
+.gmode-tab {
+  background: transparent;
+  border: none;
+  color: #94a3b8;
+  font-weight: 700;
+  font-size: 0.88rem;
+  padding: 0.6rem 1rem;
+  border-radius: 8px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s ease;
+}
+
+.gmode-tab.active {
+  color: #ffffff;
+  background: #10b981;
+  box-shadow: 0 2px 10px rgba(16, 185, 129, 0.4);
+}
+
+.gmode-pane {
+  display: none;
+  padding: 1.5rem;
+}
+
+.gmode-pane.active {
+  display: block;
+}
+
+.dual-select-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.2rem;
+}
+
+.triple-settings-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1rem;
+}
+
+/* Turnuva Braketi Görünümü */
+.tournament-info-banner {
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.15) 0%, rgba(6, 78, 59, 0.25) 100%);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  padding: 1rem;
+  border-radius: 10px;
+  text-align: center;
+}
+
+.tournament-bracket-preview {
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  gap: 12px;
+  padding: 1rem;
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 12px;
+}
+
+.bracket-round {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.round-title {
+  font-size: 0.78rem;
+  font-weight: 800;
+  color: #10b981;
+  text-align: center;
+  letter-spacing: 0.5px;
+}
+
+.bracket-match {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 0.5rem 0.8rem;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  text-align: center;
+}
+
+.bracket-match.highlight {
+  border-color: #10b981;
+  background: rgba(16, 185, 129, 0.15);
+  font-weight: 700;
+}
+
+.bracket-arrow {
+  font-size: 1.2rem;
+  color: #94a3b8;
+}
+
+/* Antrenman Drill Kartları */
+.training-drills-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1rem;
+}
+
+.drill-card {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 1.2rem;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.25s ease;
+}
+
+.drill-card:hover {
+  background: rgba(16, 185, 129, 0.12);
+  border-color: #10b981;
+  transform: translateY(-3px);
+}
+
+.drill-icon {
+  font-size: 2rem;
+  margin-bottom: 0.5rem;
+  display: inline-block;
+}
+
+/* Profil Sayfası Stilleri */
+.profile-hero-card {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  padding: 1.8rem;
+}
+
+.profile-avatar-wrap {
+  position: relative;
+}
+
+.profile-avatar-circle {
+  width: 80px;
+  height: 80px;
+  background: linear-gradient(135deg, #10b981 0%, #047857 100%);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2.4rem;
+  box-shadow: 0 0 20px rgba(16, 185, 129, 0.4);
+}
+
+.profile-level-badge {
+  position: absolute;
+  bottom: -4px;
+  right: -4px;
+  background: #f59e0b;
+  color: black;
+  font-weight: 900;
+  font-size: 0.72rem;
+  padding: 2px 7px;
+  border-radius: 12px;
+  border: 2px solid #080c18;
+}
+
+.profile-main-meta {
+  flex: 1;
+}
+
+.profile-xp-track {
+  width: 100%;
+  max-width: 420px;
+}
+
+.xp-info {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.78rem;
+  color: #94a3b8;
+  margin-bottom: 4px;
+}
+
+.xp-bar-bg {
+  width: 100%;
+  height: 8px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.xp-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #10b981, #00f2fe);
+  border-radius: 6px;
+}
+
+.profile-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 1rem;
+}
+
+.profile-stat-box {
+  padding: 1.2rem;
+  text-align: center;
+}
+
+.ps-num {
+  display: block;
+  font-size: 1.8rem;
+  font-weight: 900;
+  color: #ffffff;
+}
+
+.ps-label {
+  font-size: 0.8rem;
+  color: #94a3b8;
+  font-weight: 600;
+}
+
+.trophies-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+}
+
+.trophy-card {
+  padding: 1.2rem;
+  text-align: center;
+}
+
+.trophy-icon {
+  font-size: 2.2rem;
+  margin-bottom: 0.4rem;
+  display: inline-block;
 }
 
