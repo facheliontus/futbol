@@ -131,6 +131,19 @@ class UIManager {
       });
     }
 
+    // 7.5 Online Oyun Modu Seçimi (1v1 vs 2 Kişilik Eşli Hücum)
+    const modeCards = document.querySelectorAll('.online-mode-card');
+    modeCards.forEach(card => {
+      card.addEventListener('click', () => {
+        modeCards.forEach(c => c.classList.remove('selected'));
+        card.classList.add('selected');
+        const mode = card.getAttribute('data-mode');
+        if (window.onlineManager) {
+          window.onlineManager.gameMode = mode;
+        }
+      });
+    });
+
     // 8. Online Oda Kur Butonu
     const btnCreateRoom = document.getElementById('btn-create-room-action');
     if (btnCreateRoom) {

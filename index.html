@@ -235,16 +235,33 @@
 
   <!-- MODAL 5: ONLINE ÇOK OYUNCULU ODA SİSTEMİ -->
   <div id="online-modal" class="modal-overlay hidden">
-    <div class="modal-container" style="max-width: 580px;">
+    <div class="modal-container" style="max-width: 600px;">
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
-        <h2 class="modal-title" style="margin-bottom: 0;">🌐 ONLINE 1v1 DÜELLO</h2>
+        <h2 class="modal-title" style="margin-bottom: 0;">🌐 ONLINE ÇOK OYUNCULU</h2>
         <button id="btn-close-online-modal" class="hud-btn" style="padding: 0.2rem 0.6rem;">✕</button>
       </div>
-      <p class="modal-subtitle">Arkadaşınla gerçek zamanlı frikik & penaltı kapışması! (Vercel & P2P Uyumlu)</p>
+      <p class="modal-subtitle">Arkadaşınla 1v1 kapış veya aynı takımda bot kaleciye karşı paslaşıp voleyle 90'a yapıştırın!</p>
 
       <div class="form-group">
         <label class="form-label" for="input-online-player-name">OYUNCU ADINIZ</label>
         <input type="text" id="input-online-player-name" class="form-input" value="Yıldız Golcü" placeholder="Adınızı yazın...">
+      </div>
+
+      <!-- Online Oyun Modu Seçimi -->
+      <div class="form-group">
+        <label class="form-label">OYUN MODUNU SEÇİN</label>
+        <div class="online-mode-grid">
+          <div class="online-mode-card selected" data-mode="duel">
+            <div class="mode-icon">🧤</div>
+            <div class="mode-title">1v1 DÜELLO</div>
+            <div class="mode-desc">Biri şut çeker, diğeri kaleyi korur! Her tur roller değişir.</div>
+          </div>
+          <div class="online-mode-card" data-mode="coop">
+            <div class="mode-icon">🤝</div>
+            <div class="mode-title">2 KİŞİLİK EŞLİ HÜCUM</div>
+            <div class="mode-desc">Bot Kaleciye Karşı! Biri orta/pas açar, diğeri voleyle 90'a yapıştırır!</div>
+          </div>
+        </div>
       </div>
 
       <!-- Online Seçenek Sekmeleri -->

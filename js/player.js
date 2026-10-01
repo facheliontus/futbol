@@ -297,6 +297,144 @@ class PlayerModels {
     }, 20);
   }
 
+  // TAKIM ARKADAŞI MODELİ (Co-op 2 Kişilik Hücum Modu İçin)
+  createTeammate(pos, jerseyColorHex = 0x3498db, number = 9, labelText = 'PARTNER') {
+    if (this.teammate) {
+      this.scene.remove(this.teammate.group);
+      this.teammate = null;
+    }
+
+    const group = new THREE.Group();
+
+    // Özel forma numaralı gövde
+    const numCanvas = document.createElement('canvas');
+    numCanvas.width = 128;
+    numCanvas.height = 128;
+    const nctx = numCanvas.getContext('2d');
+    nctx.fillStyle = '#' + new THREE.Color(jerseyColorHex).getHexString();
+    nctx.fillRect(0, 0, 128, 128);
+    nctx.fillStyle = '#ffffff';
+    nctx.font = 'bold 64px "Segoe UI", sans-serif';
+    nctx.textAlign = 'center';
+    nctx.textBaseline = 'middle';
+    nctx.fillText(number.toString(), 64, 64);
+    const numTex = new THREE.CanvasTexture(numCanvas);
+
+    const frontMat = new THREE.MeshStandardMaterial({ color: jerseyColorHex });
+    const backMat = new THREE.MeshStandardMaterial({ map: numTex });
+    const torsoMats = [frontMat, frontMat, frontMat, frontMat, backMat, backMat];
+
+    const torso = new THREE.Mesh(new THREE.BoxGeometry(0.55, 0.65, 0.28), torsoMats);
+    torso.position.y = 1.25;
+    torso.castShadow = true;
+    group.add(torso);
+
+    const skinMat = new THREE.MeshStandardMaterial({ color: 0xffdbac });
+    const head = new THREE.Mesh(new THREE.SphereGeometry(0.18, 14, 14), skinMat);
+    head.position.y = 1.72;
+    head.castShadow = true;
+    group.add(head);
+
+    const hair = new THREE.Mesh(new THREE.SphereGeometry(0.19, 14, 8, 0, Math.PI * 2, 0, Math.PI * 0.45),
+      new THREE.MeshStandardMaterial({ color: 0xe67e22 }));
+    hair.position.y = 1.75;
+    group.add(hair);
+
+    const shorts = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.35, 0.26),
+      new THREE.MeshStandardMaterial({ color: 0x111111 }));
+    shorts.position.y = 0.85;
+    group.add(shorts);
+
+    // Bacaklar
+    const legMat = new THREE.MeshStandardMaterial({ color: 0xffffff });
+    const leftLeg = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.08, 0.7, 10), legMat);
+    leftLeg.position.set(-0.16, 0.42, 0);
+    group.add(leftLeg);
+
+    const rightLegGroup = new THREE.Group();
+    rightLegGroup.position.set(0.16, 0.75, 0);
+    const rightLeg = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.08, 0.7, 10), legMat);
+    rightLeg.position.y = -0.35;
+    rightLegGroup.add(rightLeg);
+    group.add(rightLegGroup);
+
+    // Kollar (Voleye hazır açık duruş)
+    const armGeo = new THREE.CylinderGeometry(0.07, 0.06, 0.55, 10);
+    const lArm = new THREE.Mesh(armGeo, frontMat);
+    lArm.position.set(-0.35, 1.2, 0);
+    lArm.rotation.z = 0.45;
+    group.add(lArm);
+
+    const rArm = new THREE.Mesh(armGeo, frontMat);
+    rArm.position.set(0.35, 1.2, 0);
+    rArm.rotation.z = -0.45;
+    group.add(rArm);
+
+    // Baş Üstünde 3D İsim/Rol Bilgisi
+    const labelCanvas = document.createElement('canvas');
+    labelCanvas.width = 256;
+    labelCanvas.height = 64;
+    const lctx = labelCanvas.getContext('2d');
+    lctx.fillStyle = 'rgba(0, 242, 254, 0.9)';
+    if (lctx.roundRect) lctx.roundRect(4, 4, 248, 56, 12);
+    else lctx.rect(4, 4, 248, 56);
+    lctx.fill();
+    lctx.fillStyle = '#0a1424';
+    lctx.font = 'bold 28px "Segoe UI", sans-serif';
+    lctx.textAlign = 'center';
+    lctx.textBaseline = 'middle';
+    lctx.fillText(labelText, 128, 32);
+    const labelTex = new THREE.CanvasTexture(labelCanvas);
+    const labelSprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: labelTex, transparent: true }));
+    labelSprite.position.set(0, 2.3, 0);
+    labelSprite.scale.set(1.5, 0.4, 1);
+    group.add(labelSprite);
+
+    group.position.copy(pos);
+    group.lookAt(0, 0, 0);
+
+    this.scene.add(group);
+    this.teammate = {
+      group: group,
+      rightLegGroup: rightLegGroup,
+      labelSprite: labelSprite,
+      isKicking: false
+    };
+
+    return this.teammate;
+  }
+
+  // TAKIM ARKADAŞI VOLE / KAFA / ŞUT ANİMASYONU
+  triggerTeammateKickAnimation(onImpactCallback) {
+    if (!this.teammate) return;
+    this.teammate.isKicking = true;
+
+    let t = 0;
+    const animInterval = setInterval(() => {
+      t += 0.08;
+      if (t < 0.4) {
+        this.teammate.rightLegGroup.rotation.x = -Math.sin(t / 0.4 * (Math.PI / 2)) * 1.3;
+        this.teammate.group.position.y += 0.06; // Vole için havaya sıçrama
+      } else if (t < 0.7) {
+        const progress = (t - 0.4) / 0.3;
+        this.teammate.rightLegGroup.rotation.x = -1.3 + (progress * 2.7);
+        if (progress >= 0.5 && onImpactCallback) {
+          onImpactCallback();
+          onImpactCallback = null;
+        }
+      } else if (t < 1.0) {
+        const progress = (t - 0.7) / 0.3;
+        this.teammate.rightLegGroup.rotation.x = 1.4 * (1 - progress);
+        this.teammate.group.position.y = Math.max(0, this.teammate.group.position.y - 0.06);
+      } else {
+        clearInterval(animInterval);
+        this.teammate.rightLegGroup.rotation.x = 0;
+        this.teammate.group.position.y = 0;
+        this.teammate.isKicking = false;
+      }
+    }, 20);
+  }
+
   // BARAJIN ZIPLAMA ANİMASYONU
   triggerWallJump() {
     let t = 0;
@@ -449,6 +587,10 @@ class PlayerModels {
   clearAll() {
     if (this.goalkeeper) this.scene.remove(this.goalkeeper.group);
     if (this.kicker) this.scene.remove(this.kicker.group);
+    if (this.teammate) {
+      this.scene.remove(this.teammate.group);
+      this.teammate = null;
+    }
     this.wall.forEach(def => this.scene.remove(def.group));
     this.wall = [];
   }

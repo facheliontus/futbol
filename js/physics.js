@@ -129,6 +129,9 @@ class BallPhysics {
     this.hasHitWall = false;
     this.hasTriggeredEnd = false;
 
+    this.isPass = false;
+    this.onPassArrival = null;
+
     this.mesh.position.copy(this.position);
     this.mesh.rotation.set(0, 0, 0);
     this.shadow.position.set(this.position.x, 0.015, this.position.z);
@@ -138,8 +141,50 @@ class BallPhysics {
     this.trailMeshes.forEach(m => m.material.opacity = 0);
   }
 
+  // PAS / ORTA ATEŞLEME (Co-op 2 Kişilik Eşli Hücum İçin)
+  passTo(targetPos, flightDuration = 1.1, arcHeight = 1.8, curl = 0, onArrival = null) {
+    this.isPass = true;
+    this.onPassArrival = onArrival;
+    this.passTargetPos = targetPos.clone();
+
+    const toTarget = new THREE.Vector3(
+      targetPos.x - this.position.x,
+      targetPos.y - this.position.y,
+      targetPos.z - this.position.z
+    );
+
+    this.curveAccelX = curl * 10.5;
+
+    // Hedefe tam iniş için ilk hız:
+    const vx = toTarget.x / flightDuration - (0.5 * this.curveAccelX * flightDuration);
+    let vy = (toTarget.y - this.position.y - 0.5 * this.gravity * flightDuration * flightDuration) / flightDuration;
+    if (arcHeight > 0) {
+      vy += arcHeight * 1.5;
+    }
+    const vz = toTarget.z / flightDuration;
+
+    this.velocity.set(vx, vy, vz);
+    this.flightTime = flightDuration;
+    this.elapsedFlight = 0;
+
+    this.spin.set(8, curl * 20, 0);
+
+    this.isMoving = true;
+    this.hasScored = false;
+    this.hasHitPost = false;
+    this.hasBeenSaved = false;
+    this.hasHitWall = false;
+    this.hasTriggeredEnd = false;
+
+    if (window.gameSound) {
+      window.gameSound.playKick(0.75);
+    }
+  }
+
   // ŞUT ATEŞLEME (Gelişmiş Roberto Carlos / Beckham Falso Fiziği)
   shoot(dirX, dirY, power = 25, curl = 0) {
+    this.isPass = false;
+    this.onPassArrival = null;
     // dirX: -1.5 ile +1.5 arası (Kalenin dışına ve köşelere serbestçe nişan)
     // dirY: 0.1 (Yerden) ile 2.2 (Direk üstü ve 90'a aşırtma)
     // power: 20 - 34 m/s (~72 - 122 km/h)
@@ -199,6 +244,16 @@ class BallPhysics {
   update(dt, stadium, playerModels, onGoal, onMiss, onSave, onPostHit, onWallHit, onStopped) {
     if (!this.isMoving) return;
     this.elapsedFlight += dt;
+
+    // Co-op Pas Varış / İniş Kontrolü
+    if (this.isPass && this.elapsedFlight >= this.flightTime) {
+      this.isPass = false;
+      if (this.onPassArrival) {
+        const cb = this.onPassArrival;
+        this.onPassArrival = null;
+        cb();
+      }
+    }
 
     // 1. GERÇEK FALSO İVMESİ (Kullanıcı sola dediyse top sola, sağa dediyse sağa kıvrılır)
     this.velocity.x += this.curveAccelX * dt;

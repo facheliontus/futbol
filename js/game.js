@@ -28,6 +28,12 @@ class Game {
     this.gkMouseX = 0; // Kaleci modu için fare x oranı (-1 ile +1)
     this.currentFalso = 0; // -1.2 (sola) ile +1.2 (sağa)
 
+    // Co-op 2 Kişilik Eşli Hücum Durumu
+    this.isCoopMatch = false;
+    this.coopRole = 'passer'; // 'passer' veya 'shooter'
+    this.coopScenario = null;
+    this.coopState = 'waiting_pass'; // 'waiting_pass', 'passing', 'ready_to_shoot', 'shot_taken'
+
     // Zaman ve Döngü
     this.lastTime = performance.now();
     this.timeScale = 1.0; // Slow-motion efekti için
@@ -235,6 +241,153 @@ class Game {
     }
   }
 
+  // CO-OP 2 KİŞİLİK EŞLİ HÜCUM SENARYOSU KUR
+  setupCoopScenario(scen, myRole) {
+    this.isCoopMatch = true;
+    this.coopRole = myRole; // 'passer' veya 'shooter'
+    this.coopScenario = scen;
+    this.coopState = 'waiting_pass';
+    this.shotCooldown = false;
+    this.timeScale = 1.0;
+
+    this.playerModels.clearAll();
+
+    // Bot Kaleci Oluştur (Yüksek Performanslı AI Kaleci)
+    this.playerModels.createGoalkeeper(0x27ae60);
+
+    // Varsa Baraj Kur
+    if (scen.hasWall) {
+      const wallX = scen.passerPos.x * 0.4;
+      const wallZ = (scen.passerPos.z + 0) * 0.65;
+      this.playerModels.createWall(new THREE.Vector3(wallX, 0.11, wallZ), 3, 0x34495e);
+    }
+
+    // Pasör Modelini Oluştur
+    const passerPos = new THREE.Vector3(scen.passerPos.x, scen.passerPos.y, scen.passerPos.z);
+    this.playerModels.createKicker(passerPos, 0xe74c3c, 10);
+
+    // Şutör / Bitirici Modelini Oluştur
+    const shooterPos = new THREE.Vector3(scen.shooterPos.x, scen.shooterPos.y, scen.shooterPos.z);
+    const shooterLabel = (myRole === 'shooter') ? 'SEN (VOLE / ŞUT)' : 'ARKADAŞIN (VOLE / ŞUT)';
+    this.playerModels.createTeammate(shooterPos, 0xe74c3c, 9, shooterLabel);
+
+    // Topu Pasörün Ayağına Koy
+    this.ball.reset(passerPos);
+
+    if (this.gkReticleGroup) this.gkReticleGroup.visible = false;
+
+    // Kamera ve HUD Rol Ayarları
+    const fBar = document.querySelector('.falso-control-bar');
+    if (fBar) fBar.style.display = 'flex';
+
+    const hintEl = document.getElementById('hud-control-hint');
+    if (myRole === 'passer') {
+      this.camera.position.set(passerPos.x * 0.9, passerPos.y + 2.2, passerPos.z + 4.5);
+      this.camera.lookAt(shooterPos.x * 0.5, 1.2, (shooterPos.z + 0) * 0.5);
+      if (hintEl) {
+        hintEl.innerHTML = `🎯 <b>ORTA / PAS VER:</b> Fareyle ceza sahasındaki arkadaşına doğru çekip bırak! | [Q/E] Kavis`;
+      }
+    } else {
+      this.camera.position.set(shooterPos.x * 0.5, 2.5, shooterPos.z + 5.2);
+      this.camera.lookAt(0, 1.2, 0);
+      if (hintEl) {
+        hintEl.innerHTML = `👀 <b>BEKLE:</b> Arkadaşın orta açıyor... Top sana ulaştığında kaleye voleyi yapıştır!`;
+      }
+    }
+  }
+
+  // CO-OP PASI GÖNDER (Pasör Ekranı)
+  triggerCoopPass(targetPos, flightDuration, arcHeight, curl) {
+    if (this.shotCooldown) return;
+    this.shotCooldown = true;
+    this.coopState = 'passing';
+
+    this.playerModels.triggerKickAnimation(() => {
+      this.ball.passTo(targetPos, flightDuration, arcHeight, curl, () => {
+        this.onCoopPassArrived();
+      });
+      if (window.onlineManager) {
+        window.onlineManager.sendCoopPass(targetPos, 25, curl, arcHeight, flightDuration);
+      }
+    });
+  }
+
+  // CO-OP PASINI AL (Şutör Ekranı)
+  receiveCoopPass(data) {
+    this.shotCooldown = false;
+    this.coopState = 'passing';
+
+    const targetPos = new THREE.Vector3(data.targetPos.x, data.targetPos.y, data.targetPos.z);
+    this.playerModels.triggerKickAnimation(() => {
+      this.ball.passTo(targetPos, data.flightDuration || 1.15, data.arcHeight || 2.0, data.curl || 0, () => {
+        this.onCoopPassArrived();
+      });
+    });
+
+    // Top havadayken şutörün nişan almasını etkinleştir (Vole zamanlama penceresi)
+    setTimeout(() => {
+      if (this.coopRole === 'shooter') {
+        this.coopState = 'ready_to_shoot';
+        this.showGoalBanner("💥 TOP GELİYOR! GELİŞİNE KALEYE VOLEYİ ÇAK!");
+        const hintEl = document.getElementById('hud-control-hint');
+        if (hintEl) {
+          hintEl.innerHTML = `💥 <b>GELİŞİNE VOLE VUR:</b> Fareyle kaleye doğru çekip bırak!`;
+        }
+      }
+    }, 400);
+  }
+
+  // PAS YERİNE ULAŞTIĞINDA
+  onCoopPassArrived() {
+    if (this.coopRole === 'shooter' && this.coopState !== 'shot_taken') {
+      this.coopState = 'ready_to_shoot';
+    }
+  }
+
+  // CO-OP ŞUTU / VOLEYİ ÇEK (Şutör Ekranı)
+  triggerCoopShot(dirX, dirY, power, curl) {
+    if (this.coopState === 'shot_taken') return;
+    this.coopState = 'shot_taken';
+    this.shotCooldown = true;
+
+    const targetX = dirX * 4.6;
+    const targetY = dirY * 2.5;
+
+    this.clearAimLine();
+
+    this.playerModels.triggerTeammateKickAnimation(() => {
+      this.ball.shoot(dirX, dirY, power, curl);
+      this.updateSpeedHUD(power);
+
+      if (window.onlineManager) {
+        window.onlineManager.sendCoopShot(dirX, dirY, power, curl);
+      }
+
+      // Bot Kaleci Uçuşu
+      const flightDuration = (this.ball.position.z / power);
+      setTimeout(() => {
+        this.playerModels.triggerGoalkeeperDive(targetX, targetY, 0, flightDuration * 0.95);
+      }, 200);
+    });
+  }
+
+  // CO-OP ŞUTUNU AL (Pasör Ekranı)
+  receiveCoopShot(data) {
+    this.coopState = 'shot_taken';
+    const targetX = data.dirX * 4.6;
+    const targetY = data.dirY * 2.5;
+
+    this.playerModels.triggerTeammateKickAnimation(() => {
+      this.ball.shoot(data.dirX, data.dirY, data.power, data.curl);
+      this.updateSpeedHUD(data.power);
+
+      const flightDuration = (this.ball.position.z / data.power);
+      setTimeout(() => {
+        this.playerModels.triggerGoalkeeperDive(targetX, targetY, 0, flightDuration * 0.95);
+      }, 200);
+    });
+  }
+
   // RAKİP AI ŞUT ÇEKME (Kaleci Modunda)
   executeAIShot(ballPos, distance) {
     if (this.shotCooldown) return;
@@ -270,6 +423,25 @@ class Game {
 
     // MOUSE DOWN: Nişan almaya başla
     canvas.addEventListener('mousedown', (e) => {
+      if (this.isCoopMatch) {
+        if (this.coopRole === 'passer' && this.coopState === 'waiting_pass') {
+          this.isAiming = true;
+          this.aimStart.x = e.clientX;
+          this.aimStart.y = e.clientY;
+          this.aimCurrent.x = e.clientX;
+          this.aimCurrent.y = e.clientY;
+          return;
+        } else if (this.coopRole === 'shooter' && this.coopState === 'ready_to_shoot') {
+          this.isAiming = true;
+          this.aimStart.x = e.clientX;
+          this.aimStart.y = e.clientY;
+          this.aimCurrent.x = e.clientX;
+          this.aimCurrent.y = e.clientY;
+          return;
+        }
+        return;
+      }
+
       if (this.career.player && this.career.player.position === 'GK') {
         // Kaleci modunda tıklama = Uçarak Kurtarış Hamlesi (Dive)
         this.handleGoalkeeperDiveAction();
@@ -313,7 +485,7 @@ class Game {
       this.updateAimTrajectory();
     });
 
-    // MOUSE UP: Şutu Çek!
+    // MOUSE UP: Şutu veya Pası Gönder!
     window.addEventListener('mouseup', (e) => {
       if (!this.isAiming) return;
       this.isAiming = false;
@@ -324,6 +496,22 @@ class Game {
 
       // Minimum sürükleme eşiği (15px)
       if (Math.hypot(dx, dy) < 15) return;
+
+      if (this.isCoopMatch) {
+        if (this.coopRole === 'passer' && this.coopState === 'waiting_pass') {
+          const scen = this.coopScenario;
+          const targetPos = new THREE.Vector3(scen.shooterPos.x, scen.shooterPos.y, scen.shooterPos.z);
+          this.triggerCoopPass(targetPos, scen.flightDuration, scen.arcHeight, this.currentFalso || scen.curl);
+        } else if (this.coopRole === 'shooter' && this.coopState === 'ready_to_shoot') {
+          const dragY = Math.abs(dy);
+          const dirX = THREE.MathUtils.clamp(dx / 85, -1.6, 1.6);
+          const dirY = THREE.MathUtils.clamp(0.2 + (dragY / 65), 0.25, 2.2);
+          const dragDistance = Math.hypot(dx, dragY);
+          const power = THREE.MathUtils.clamp(23 + (dragDistance / 14), 24, 34);
+          this.triggerCoopShot(dirX, dirY, power, this.currentFalso);
+        }
+        return;
+      }
 
       this.executePlayerShot(dx, dy);
     });
@@ -535,9 +723,38 @@ class Game {
       return;
     }
 
+    const bPos = this.ball.position;
+
+    // Co-op Pasör Nişanı (Arkadaşına Doğru Kavisli Pas Çizgisi)
+    if (this.isCoopMatch && this.coopRole === 'passer' && this.coopScenario) {
+      const sPos = this.coopScenario.shooterPos;
+      const targetX = sPos.x;
+      const targetY = sPos.y + 0.3;
+      const targetZ = sPos.z;
+
+      if (this.crosshair) {
+        this.crosshair.position.set(targetX, targetY, targetZ);
+        this.crosshair.material.opacity = 0.9;
+        this.crosshair.material.color.setHex(0x00ff88);
+      }
+
+      const points = [];
+      const steps = 25;
+      const arcApex = this.coopScenario.arcHeight || 2.2;
+      for (let i = 0; i <= steps; i++) {
+        const tNorm = i / steps;
+        const px = THREE.MathUtils.lerp(bPos.x, targetX, tNorm);
+        const py = THREE.MathUtils.lerp(bPos.y, targetY, tNorm) + Math.sin(tNorm * Math.PI) * arcApex;
+        const pz = THREE.MathUtils.lerp(bPos.z, targetZ, tNorm);
+        points.push(new THREE.Vector3(px, py, pz));
+      }
+      this.aimLine.geometry.setFromPoints(points);
+      this.aimLine.material.opacity = 0.9;
+      return;
+    }
+
     const dirX = THREE.MathUtils.clamp(dx / 85, -1.6, 1.6);
     const dirY = THREE.MathUtils.clamp(0.2 + (dragY / 65), 0.25, 2.2);
-    const bPos = this.ball.position;
 
     // Hedef noktası: Kalenin dışına, direklerin yanına/üstüne tamamen serbestçe çıkar!
     const targetX = dirX * 4.6;
@@ -603,7 +820,11 @@ class Game {
 
     // Online Maç Bildirimi
     if (window.onlineManager && window.onlineManager.isOnlineMatch) {
-      window.onlineManager.reportOutcome('goal');
+      if (this.isCoopMatch) {
+        window.onlineManager.reportCoopOutcome('goal');
+      } else {
+        window.onlineManager.reportOutcome('goal');
+      }
       return;
     }
 
@@ -617,8 +838,12 @@ class Game {
   // KURTARIŞ YAPILDIĞINDA
   onBallSaved() {
     if (window.onlineManager && window.onlineManager.isOnlineMatch) {
-      this.showGoalBanner("KALECİ KURTARDI! HARİKA REFLEKS!");
-      window.onlineManager.reportOutcome('save');
+      this.showGoalBanner("BOT KALECİ ÇIKARDI! HARİKA REFLEKS!");
+      if (this.isCoopMatch) {
+        window.onlineManager.reportCoopOutcome('save');
+      } else {
+        window.onlineManager.reportOutcome('save');
+      }
       return;
     }
 
@@ -645,7 +870,11 @@ class Game {
   onBallStopped() {
     if (window.onlineManager && window.onlineManager.isOnlineMatch) {
       this.showGoalBanner("POZİSYON TAMAMLANDI!");
-      window.onlineManager.reportOutcome('miss');
+      if (this.isCoopMatch) {
+        window.onlineManager.reportCoopOutcome('miss');
+      } else {
+        window.onlineManager.reportOutcome('miss');
+      }
       return;
     }
 
@@ -657,7 +886,11 @@ class Game {
   onBallMissed() {
     if (window.onlineManager && window.onlineManager.isOnlineMatch) {
       this.showGoalBanner("TOP DIŞARIDA! AUT!");
-      window.onlineManager.reportOutcome('miss');
+      if (this.isCoopMatch) {
+        window.onlineManager.reportCoopOutcome('miss');
+      } else {
+        window.onlineManager.reportOutcome('miss');
+      }
       return;
     }
 
