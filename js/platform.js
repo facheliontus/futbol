@@ -890,15 +890,46 @@ class PlatformManager {
       modal.style.display = 'flex';
       modal.classList.remove('hidden');
       modal.classList.add('active');
+
+      // Kariyer paneli render et
+      if (window.careerManager) {
+        window.careerManager.renderCareerHub();
+      }
+
       modal.querySelectorAll('.gmode-tab').forEach(tab => {
         tab.onclick = (e) => {
           modal.querySelectorAll('.gmode-tab').forEach(t => t.classList.remove('active'));
           modal.querySelectorAll('.gmode-pane').forEach(p => p.classList.remove('active'));
           e.currentTarget.classList.add('active');
           const targetPane = document.getElementById(`gmode-pane-${e.currentTarget.dataset.gmode}`);
-          if (targetPane) targetPane.classList.add('active');
+          if (targetPane) {
+            targetPane.classList.add('active');
+            if (e.currentTarget.dataset.gmode === 'career' && window.careerManager) {
+              window.careerManager.renderCareerHub();
+            }
+          }
         };
       });
+    }
+  }
+
+  // Hızlı Maç Panelinde Lig Değişimi Dinleyicisi
+  onQuickMatchLeagueChange(leagueId) {
+    const homeSelect = document.getElementById('select-home-team');
+    const awaySelect = document.getElementById('select-away-team');
+    if (!homeSelect || !awaySelect || !window.dataService) return;
+
+    const teams = window.dataService.getTeamsByLeague(leagueId);
+    if (!teams || teams.length === 0) return;
+
+    const optionsHtml = teams.map(t => `<option value="${t.id}">${t.name} (${t.logo || '⚽'})</option>`).join('');
+
+    homeSelect.innerHTML = optionsHtml;
+    awaySelect.innerHTML = optionsHtml;
+
+    if (teams.length >= 2) {
+      homeSelect.value = teams[0].id;
+      awaySelect.value = teams[1].id;
     }
   }
 
@@ -1105,24 +1136,21 @@ class PlatformManager {
 
   // 6. KARİYER MODU AKIŞI
   launchCareerFlow(isNew = false) {
-    this.closeGameModeSelector();
-    this.showView('game');
-    if (window.matchEngine) {
-      window.matchEngine.isActive = false;
-    }
-    const careerModal = document.getElementById('career-creation-modal');
-    if (isNew && careerModal) {
-      careerModal.classList.add('active');
-    } else {
-      if (window.gameInstance) {
-        window.gameInstance.isDeadBallSetPiece = false;
-        window.gameInstance.setupScenario({
-          type: 'open_play',
-          distance: 22,
-          defenders: 2,
-          title: 'Akıcı Hücum & Şut Pozisyonu',
-          desc: 'Ceza sahasına sokul, stoperleri çalımla ve fileleri havalandır!'
-        });
+    this.showGameModeSelector();
+    const modal = document.getElementById('game-modes-modal');
+    if (modal) {
+      modal.querySelectorAll('.gmode-tab').forEach(t => t.classList.remove('active'));
+      modal.querySelectorAll('.gmode-pane').forEach(p => p.classList.remove('active'));
+      const careerTab = modal.querySelector('[data-gmode="career"]');
+      const careerPane = document.getElementById('gmode-pane-career');
+      if (careerTab) careerTab.classList.add('active');
+      if (careerPane) careerPane.classList.add('active');
+      if (window.careerManager) {
+        if (isNew) {
+          window.careerManager.promptChangeTeamModal();
+        } else {
+          window.careerManager.renderCareerHub();
+        }
       }
     }
   }

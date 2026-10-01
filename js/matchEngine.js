@@ -735,9 +735,15 @@ class MatchEngine {
     const ball = game.ball;
     const bPos = ball.position;
     const goalZ = (team === 'away') ? -38 : 38;
+
+    if (gkData.clearCooldown > 0) {
+      gkData.clearCooldown -= dt;
+    }
+
+    // Topun kaleye doğru gelip gelmediği kontrolü
     const isBallIncoming = (team === 'away')
-      ? (ball.velocity.z < -4 && bPos.z > -37.5)
-      : (ball.velocity.z > 4 && bPos.z < 37.5);
+      ? (ball.velocity.z < -2.5 && bPos.z > -37.5)
+      : (ball.velocity.z > 2.5 && bPos.z < 37.5);
 
     if (gkData.isDiving) {
       gkData.diveTimer += dt;
@@ -785,7 +791,7 @@ class MatchEngine {
       if (gk.rightArmGroup) gk.rightArmGroup.rotation.z = THREE.MathUtils.lerp(gk.rightArmGroup.rotation.z, -0.2, 8.0 * dt);
 
       // Eğer top kaleye doğru şut halinde geliyorsa ve henüz dalış başlatılmamışsa otomatik reaksiyon ver
-      if (isBallIncoming && Math.abs(bPos.z - goalZ) < 24 && !ball.hasBeenSaved && !ball.hasScored) {
+      if (isBallIncoming && Math.abs(bPos.z - goalZ) < 24 && !ball.hasBeenSaved && !ball.hasScored && (gkData.clearCooldown || 0) <= 0) {
         const timeToGoal = Math.abs((goalZ - bPos.z) / (ball.velocity.z || 1));
         const predX = bPos.x + ball.velocity.x * timeToGoal;
         const predY = Math.max(0.2, bPos.y + ball.velocity.y * timeToGoal - 4.9 * timeToGoal * timeToGoal);
@@ -794,7 +800,8 @@ class MatchEngine {
     }
 
     // KURTARIŞ / TOP ÇELME / TOP TUTMA ÇARPIŞMA KONTROLÜ
-    if (ball.isMoving && !ball.hasScored && !ball.hasBeenSaved) {
+    // Top sadece kaleye doğru GELİYORKEN ve GK cooldown'da DEĞİLKEN kurtarış yapılabilir!
+    if (ball.isMoving && !ball.hasScored && !ball.hasBeenSaved && isBallIncoming && (gkData.clearCooldown || 0) <= 0 && this.ballCarrier !== gk) {
       const nearGoalZ = (team === 'away')
         ? (bPos.z <= -34.8 && bPos.z >= -37.8)
         : (bPos.z >= 34.8 && bPos.z <= 37.8);
@@ -818,6 +825,7 @@ class MatchEngine {
     if (game.ball.hasBeenSaved || game.ball.hasScored) return;
     game.ball.hasBeenSaved = true;
 
+    const gkData = (team === 'away') ? this.awayGKData : this.homeGKData;
     if (window.gameSound) window.gameSound.playSave();
 
     const isSoftShot = game.ball.velocity.length() < 24 && Math.abs(game.ball.position.x - gk.group.position.x) < 0.95;
@@ -832,12 +840,13 @@ class MatchEngine {
       const gkName = (team === 'home') ? 'Muslera' : 'Livakovic';
       this.showMatchBanner(`🧤 ${gkName.toUpperCase()} TOPU KONTROL ETTİ!`);
 
-      // 1.1 saniye sonra degaj yap
-      setTimeout(() => {
+      // 850ms sonra degaj yap (Asla elde takılı kalmaz!)
+      clearTimeout(gkData.degajTimer);
+      gkData.degajTimer = setTimeout(() => {
         if (this.ballCarrier === gk && window.gameInstance?.ball) {
           this.clearBallFromGoalkeeper(team, gk, window.gameInstance);
         }
-      }, 1100);
+      }, 850);
     } else {
       // 2. KÖŞEDEN ÇIKARMA / ÇELME (PARRY / DEFLECT)
       const reboundDirZ = (team === 'away') ? 1 : -1;
@@ -854,10 +863,10 @@ class MatchEngine {
       const gkName = (team === 'home') ? 'Muslera' : 'Livakovic';
       this.showMatchBanner(`🧤 MÜTHİŞ KURTARIŞ! ${gkName.toUpperCase()} KÖŞEDEN ÇIKARDI!`);
 
-      // 800ms sonra yeni müdahaleye hazır ol
+      // 700ms sonra yeni müdahaleye hazır ol
       setTimeout(() => {
         if (game.ball) game.ball.hasBeenSaved = false;
-      }, 800);
+      }, 700);
     }
   }
 
@@ -865,6 +874,17 @@ class MatchEngine {
   clearBallFromGoalkeeper(team, gk, game) {
     if (!game.ball) return;
     this.playKickSound();
+
+    const gkData = (team === 'away') ? this.awayGKData : this.homeGKData;
+    gkData.clearCooldown = 3.0; // 3 saniye boyunca kaleci kendi degajına müdahale etmez
+    game.ball.hasBeenSaved = false;
+    this.ballCarrier = null;
+    game.hasBallPossession = false;
+
+    // Topu kalecinin 2 metre önüne yerleştir
+    const forwardZ = (team === 'away') ? 2.0 : -2.0;
+    game.ball.position.set(gk.group.position.x, 0.35, gk.group.position.z + forwardZ);
+    if (game.ball.mesh) game.ball.mesh.position.copy(game.ball.position);
 
     let targetTeammate = null;
     const squad = (team === 'home') ? this.homePlayers : this.awayPlayers;
@@ -877,13 +897,11 @@ class MatchEngine {
 
     const targetPos = targetTeammate
       ? targetTeammate.group.position.clone()
-      : new THREE.Vector3(0, 0.11, (team === 'home' ? 10 : -10));
-    targetPos.z += (team === 'home' ? -4 : 4);
+      : new THREE.Vector3((Math.random() - 0.5) * 6, 0.11, (team === 'home' ? 5 : -5));
+    targetPos.z += (team === 'home' ? -3 : 3);
 
-    this.ballCarrier = null;
-    game.hasBallPossession = false;
-
-    game.ball.passTo(targetPos, 1.1, 3.2, 0, () => {
+    // Temiz, lofted degaj pası
+    game.ball.passTo(targetPos, 0.95, 3.2, 0, () => {
       if (targetTeammate) {
         this.ballCarrier = targetTeammate;
         game.hasBallPossession = (team === 'home');
@@ -974,6 +992,11 @@ class MatchEngine {
     this.isActive = false;
     this.playWhistle();
 
+    // Kariyer modunda ise sonucu kariyer yöneticisine işle
+    if (this.mode === 'career' && window.careerManager) {
+      window.careerManager.onArcadeMatchEnded(this.homeScore, this.awayScore, this.homeTeam, this.awayTeam);
+    }
+
     const summaryModal = document.getElementById('match-summary-modal');
     if (summaryModal) {
       const titleEl = document.getElementById('summary-title');
@@ -981,10 +1004,10 @@ class MatchEngine {
       const goalsEl = document.getElementById('sum-goals');
       const ratingEl = document.getElementById('sum-rating');
 
-      if (titleEl) titleEl.innerText = 'MAÇ SONUCU (FULL TIME)';
+      if (titleEl) titleEl.innerText = (this.mode === 'career' ? '⭐ KARİYER LİG MAÇI BİTTİ' : 'MAÇ SONUCU (FULL TIME)');
       if (scoreEl) scoreEl.innerText = `${this.homeTeam.name} ${this.homeScore} - ${this.awayScore} ${this.awayTeam.name}`;
       if (goalsEl) goalsEl.innerText = this.homeScore;
-      if (ratingEl) ratingEl.innerText = this.homeScore > this.awayScore ? '9.2 (Galibiyet)' : '7.0';
+      if (ratingEl) ratingEl.innerText = this.homeScore > this.awayScore ? '9.2 (Galibiyet)' : (this.homeScore === this.awayScore ? '7.5 (Beraberlik)' : '6.5 (Mağlubiyet)');
       summaryModal.style.display = 'flex';
       summaryModal.classList.remove('hidden');
       summaryModal.classList.add('active');

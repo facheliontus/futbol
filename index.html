@@ -627,6 +627,18 @@
       <div class="modal-body">
         <!-- Panel 1: Hızlı Maç Ayarları -->
         <div id="gmode-pane-quick" class="gmode-pane active">
+          <div class="form-group mb-3">
+            <label>🌍 Lig Filtresi (Herhangi iki takımı eşleştirebilirsiniz):</label>
+            <select id="select-quick-league" class="form-select" onchange="window.platformManager.onQuickMatchLeagueChange(this.value)">
+              <option value="all" selected>🌐 Tüm Ligler & Dev Kulüpler</option>
+              <option value="super-lig">🇹🇷 Trendyol Süper Lig</option>
+              <option value="premier-league">🏴󠁧󠁢󠁥󠁮󠁧󠁿 Premier League</option>
+              <option value="la-liga">🇪🇸 La Liga</option>
+              <option value="serie-a">🇮🇹 Serie A</option>
+              <option value="bundesliga">🇩🇪 Bundesliga</option>
+            </select>
+          </div>
+
           <div class="dual-select-grid">
             <div class="form-group">
               <label>🦁 Ev Sahibi Takım:</label>
@@ -634,7 +646,13 @@
                 <option value="galatasaray" selected>Galatasaray SK (🦁)</option>
                 <option value="fenerbahce">Fenerbahçe SK (🐦)</option>
                 <option value="besiktas">Beşiktaş JK (🦅)</option>
+                <option value="trabzonspor">Trabzonspor (⚡)</option>
                 <option value="realmadrid">Real Madrid CF (👑)</option>
+                <option value="barcelona">FC Barcelona (🔵)</option>
+                <option value="mancity">Manchester City (🚢)</option>
+                <option value="arsenal">Arsenal FC (💣)</option>
+                <option value="bayern">Bayern München (🔴)</option>
+                <option value="inter">Inter Milan (🐍)</option>
               </select>
             </div>
             <div class="form-group">
@@ -643,7 +661,13 @@
                 <option value="fenerbahce" selected>Fenerbahçe SK (🐦)</option>
                 <option value="galatasaray">Galatasaray SK (🦁)</option>
                 <option value="besiktas">Beşiktaş JK (🦅)</option>
+                <option value="trabzonspor">Trabzonspor (⚡)</option>
                 <option value="realmadrid">Real Madrid CF (👑)</option>
+                <option value="barcelona">FC Barcelona (🔵)</option>
+                <option value="mancity">Manchester City (🚢)</option>
+                <option value="arsenal">Arsenal FC (💣)</option>
+                <option value="bayern">Bayern München (🔴)</option>
+                <option value="inter">Inter Milan (🐍)</option>
               </select>
             </div>
           </div>
@@ -717,15 +741,10 @@
           </div>
         </div>
 
-        <!-- Panel 3: Kariyer Modu -->
+        <!-- Panel 3: Kariyer Modu (Lig & Takım Seçimi & Canlı Puan Tablosu) -->
         <div id="gmode-pane-career" class="gmode-pane">
-          <div class="career-info-card">
-            <h4>⭐ KENDİ EFSANENİ YAZ</h4>
-            <p>Kendi futbolcunu yarat veya mevcut kariyerine devam et. Maç maç kendini kanıtla, dünya devlerinden transfer teklifleri al!</p>
-            <div class="career-btn-group mt-3">
-              <button class="btn-primary-action" onclick="window.platformManager.launchCareerFlow(false)">🚀 DEVAM ET</button>
-              <button class="btn-secondary-action" onclick="window.platformManager.launchCareerFlow(true)">⭐ YENİ KARİYER OLUŞTUR</button>
-            </div>
+          <div id="career-hub-container">
+            <!-- Dinamik Kariyer Hub JS Tarafından Render Edilir -->
           </div>
         </div>
 
@@ -908,16 +927,16 @@
   </div>
 
   <!-- JAVASCRIPT MODÜLLERİ -->
-  <script src="js/audio.js?v=arcade2026_gk2"></script>
-  <script src="js/dataService.js?v=arcade2026_gk2"></script>
-  <script src="js/career.js?v=arcade2026_gk2"></script>
-  <script src="js/stadium.js?v=arcade2026_gk2"></script>
-  <script src="js/player.js?v=arcade2026_gk2"></script>
-  <script src="js/physics.js?v=arcade2026_gk2"></script>
-  <script src="js/online.js?v=arcade2026_gk2"></script>
-  <script src="js/matchEngine.js?v=arcade2026_gk2"></script>
-  <script src="js/game.js?v=arcade2026_gk2"></script>
-  <script src="js/platform.js?v=arcade2026_gk2"></script>
+  <script src="js/audio.js?v=arcade2026_career2"></script>
+  <script src="js/dataService.js?v=arcade2026_career2"></script>
+  <script src="js/career.js?v=arcade2026_career2"></script>
+  <script src="js/stadium.js?v=arcade2026_career2"></script>
+  <script src="js/player.js?v=arcade2026_career2"></script>
+  <script src="js/physics.js?v=arcade2026_career2"></script>
+  <script src="js/online.js?v=arcade2026_career2"></script>
+  <script src="js/matchEngine.js?v=arcade2026_career2"></script>
+  <script src="js/game.js?v=arcade2026_career2"></script>
+  <script src="js/platform.js?v=arcade2026_career2"></script>
 
   <!-- Üst Düzey Başlatıcı -->
   <script>

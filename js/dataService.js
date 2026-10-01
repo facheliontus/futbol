@@ -31,15 +31,6 @@ const DEFAULT_LEAGUES = [
     teamsCount: 20
   },
   {
-    id: 'champions-league',
-    name: 'UEFA Champions League',
-    country: 'Avrupa',
-    flag: '🇪🇺',
-    logo: '⭐',
-    season: '2025/2026',
-    teamsCount: 36
-  },
-  {
     id: 'serie-a',
     name: 'Serie A Enilive',
     country: 'İtalya',
@@ -47,6 +38,24 @@ const DEFAULT_LEAGUES = [
     logo: '🇮🇹',
     season: '2025/2026',
     teamsCount: 20
+  },
+  {
+    id: 'bundesliga',
+    name: 'Bundesliga',
+    country: 'Almanya',
+    flag: '🇩🇪',
+    logo: '⚽',
+    season: '2025/2026',
+    teamsCount: 18
+  },
+  {
+    id: 'champions-league',
+    name: 'UEFA Champions League',
+    country: 'Avrupa',
+    flag: '🇪🇺',
+    logo: '⭐',
+    season: '2025/2026',
+    teamsCount: 36
   }
 ];
 
@@ -57,18 +66,29 @@ const DEFAULT_STANDINGS = {
     { rank: 3, teamId: 'besiktas', name: 'Beşiktaş', p: 26, w: 16, d: 5, l: 5, gf: 49, ga: 28, gd: 21, pts: 53, form: ['D', 'W', 'W', 'W', 'L'], zone: 'uel' },
     { rank: 4, teamId: 'trabzonspor', name: 'Trabzonspor', p: 26, w: 14, d: 6, l: 6, gf: 45, ga: 31, gd: 14, pts: 48, form: ['W', 'D', 'W', 'L', 'W'], zone: 'uecl' },
     { rank: 5, teamId: 'basaksehir', name: 'RAMS Başakşehir', p: 26, w: 12, d: 7, l: 7, gf: 41, ga: 33, gd: 8, pts: 43, form: ['W', 'L', 'D', 'W', 'D'], zone: 'mid' },
-    { rank: 6, teamId: 'samsunspor', name: 'Samsunspor', p: 26, w: 12, d: 6, l: 8, gf: 37, ga: 32, gd: 5, pts: 42, form: ['L', 'W', 'W', 'D', 'L'], zone: 'mid' },
-    { rank: 7, teamId: 'eyupspor', name: 'Eyüpspor', p: 26, w: 11, d: 6, l: 9, gf: 38, ga: 35, gd: 3, pts: 39, form: ['D', 'L', 'W', 'W', 'D'], zone: 'mid' },
-    { rank: 8, teamId: 'kasimpasa', name: 'Kasımpaşa', p: 26, w: 9, d: 8, l: 9, gf: 40, ga: 43, gd: -3, pts: 35, form: ['W', 'D', 'L', 'L', 'W'], zone: 'mid' },
-    { rank: 16, teamId: 'bodrum-fk', name: 'Bodrum FK', p: 26, w: 6, d: 6, l: 14, gf: 22, ga: 38, gd: -16, pts: 24, form: ['L', 'L', 'D', 'W', 'L'], zone: 'relegation' },
-    { rank: 17, teamId: 'hatayspor', name: 'Hatayspor', p: 26, w: 4, d: 8, l: 14, gf: 24, ga: 44, gd: -20, pts: 20, form: ['L', 'D', 'L', 'L', 'D'], zone: 'relegation' },
-    { rank: 18, teamId: 'adana-demirspor', name: 'Adana Demirspor', p: 26, w: 2, d: 5, l: 19, gf: 18, ga: 58, gd: -40, pts: 11, form: ['L', 'L', 'L', 'D', 'L'], zone: 'relegation' }
+    { rank: 6, teamId: 'samsunspor', name: 'Samsunspor', p: 26, w: 12, d: 6, l: 8, gf: 37, ga: 32, gd: 5, pts: 42, form: ['L', 'W', 'W', 'D', 'L'], zone: 'mid' }
   ],
   'premier-league': [
     { rank: 1, teamId: 'liverpool', name: 'Liverpool FC', p: 27, w: 20, d: 4, l: 3, gf: 64, ga: 25, gd: 39, pts: 64, form: ['W', 'W', 'W', 'W', 'D'], zone: 'ucl' },
     { rank: 2, teamId: 'arsenal', name: 'Arsenal FC', p: 27, w: 17, d: 7, l: 3, gf: 56, ga: 22, gd: 34, pts: 58, form: ['W', 'D', 'W', 'W', 'W'], zone: 'ucl' },
     { rank: 3, teamId: 'mancity', name: 'Manchester City', p: 27, w: 16, d: 6, l: 5, gf: 58, ga: 31, gd: 27, pts: 54, form: ['W', 'L', 'W', 'D', 'W'], zone: 'ucl' },
-    { rank: 4, teamId: 'chelsea', name: 'Chelsea FC', p: 27, w: 14, d: 7, l: 6, gf: 52, ga: 36, gd: 16, pts: 49, form: ['D', 'W', 'L', 'W', 'W'], zone: 'ucl' }
+    { rank: 4, teamId: 'chelsea', name: 'Chelsea FC', p: 27, w: 14, d: 7, l: 6, gf: 52, ga: 36, gd: 16, pts: 49, form: ['D', 'W', 'L', 'W', 'W'], zone: 'ucl' },
+    { rank: 5, teamId: 'manunited', name: 'Manchester United', p: 27, w: 13, d: 6, l: 8, gf: 46, ga: 38, gd: 8, pts: 45, form: ['W', 'W', 'L', 'D', 'W'], zone: 'uel' }
+  ],
+  'la-liga': [
+    { rank: 1, teamId: 'realmadrid', name: 'Real Madrid CF', p: 27, w: 21, d: 4, l: 2, gf: 66, ga: 20, gd: 46, pts: 67, form: ['W', 'W', 'W', 'D', 'W'], zone: 'ucl' },
+    { rank: 2, teamId: 'barcelona', name: 'FC Barcelona', p: 27, w: 19, d: 5, l: 3, gf: 71, ga: 26, gd: 45, pts: 62, form: ['W', 'W', 'D', 'W', 'W'], zone: 'ucl' },
+    { rank: 3, teamId: 'atletico', name: 'Atlético de Madrid', p: 27, w: 16, d: 8, l: 3, gf: 48, ga: 19, gd: 29, pts: 56, form: ['W', 'D', 'W', 'W', 'D'], zone: 'ucl' }
+  ],
+  'serie-a': [
+    { rank: 1, teamId: 'inter', name: 'Inter Milan', p: 27, w: 19, d: 5, l: 3, gf: 63, ga: 22, gd: 41, pts: 62, form: ['W', 'W', 'W', 'D', 'W'], zone: 'ucl' },
+    { rank: 2, teamId: 'juventus', name: 'Juventus FC', p: 27, w: 15, d: 10, l: 2, gf: 47, ga: 21, gd: 26, pts: 55, form: ['D', 'W', 'W', 'D', 'W'], zone: 'ucl' },
+    { rank: 3, teamId: 'milan', name: 'AC Milan', p: 27, w: 15, d: 7, l: 5, gf: 50, ga: 32, gd: 18, pts: 52, form: ['W', 'L', 'W', 'W', 'D'], zone: 'ucl' }
+  ],
+  'bundesliga': [
+    { rank: 1, teamId: 'bayern', name: 'Bayern München', p: 25, w: 18, d: 4, l: 3, gf: 69, ga: 24, gd: 45, pts: 58, form: ['W', 'W', 'W', 'L', 'W'], zone: 'ucl' },
+    { rank: 2, teamId: 'leverkusen', name: 'Bayer Leverkusen', p: 25, w: 16, d: 6, l: 3, gf: 57, ga: 28, gd: 29, pts: 54, form: ['W', 'D', 'W', 'W', 'D'], zone: 'ucl' },
+    { rank: 3, teamId: 'dortmund', name: 'Borussia Dortmund', p: 25, w: 14, d: 5, l: 6, gf: 49, ga: 33, gd: 16, pts: 47, form: ['L', 'W', 'W', 'D', 'W'], zone: 'ucl' }
   ]
 };
 
@@ -224,53 +244,274 @@ const DEFAULT_MATCHES = [
 ];
 
 const DEFAULT_TEAMS = [
+  // --- TRENDYOL SÜPER LİG ---
   {
     id: 'galatasaray',
     name: 'Galatasaray SK',
     league: 'Trendyol Süper Lig',
+    leagueId: 'super-lig',
     stadium: 'RAMS Park (52.280)',
     founded: 1905,
     colors: ['#b81414', '#f39c12'],
     coach: 'Okan Buruk',
     logo: '🦁',
-    rating: 84,
+    rating: 85,
     stats: { played: 26, winRate: 85, avgGoals: 2.62, avgConceded: 0.81, cleanSheets: 13, form: ['W', 'W', 'W', 'D', 'W'] }
   },
   {
     id: 'fenerbahce',
     name: 'Fenerbahçe SK',
     league: 'Trendyol Süper Lig',
+    leagueId: 'super-lig',
     stadium: 'Ülker Stadyumu (47.834)',
     founded: 1907,
     colors: ['#0c2461', '#f1c40f'],
     coach: 'José Mourinho',
     logo: '🐦',
-    rating: 83,
+    rating: 84,
     stats: { played: 26, winRate: 77, avgGoals: 2.42, avgConceded: 0.85, cleanSheets: 12, form: ['W', 'W', 'L', 'W', 'W'] }
   },
   {
     id: 'besiktas',
     name: 'Beşiktaş JK',
     league: 'Trendyol Süper Lig',
+    leagueId: 'super-lig',
     stadium: 'Tüpraş Stadyumu (42.590)',
     founded: 1903,
     colors: ['#111111', '#ffffff'],
-    coach: 'Serdar Topraktepe',
+    coach: 'Ole Gunnar Solskjaer',
     logo: '🦅',
-    rating: 80,
+    rating: 81,
     stats: { played: 26, winRate: 62, avgGoals: 1.88, avgConceded: 1.07, cleanSheets: 10, form: ['D', 'W', 'W', 'W', 'L'] }
   },
   {
+    id: 'trabzonspor',
+    name: 'Trabzonspor',
+    league: 'Trendyol Süper Lig',
+    leagueId: 'super-lig',
+    stadium: 'Papara Park (40.782)',
+    founded: 1967,
+    colors: ['#800020', '#5dade2'],
+    coach: 'Şenol Güneş',
+    logo: '⚡',
+    rating: 79,
+    stats: { played: 26, winRate: 54, avgGoals: 1.73, avgConceded: 1.19, cleanSheets: 8, form: ['W', 'D', 'W', 'L', 'W'] }
+  },
+  {
+    id: 'basaksehir',
+    name: 'RAMS Başakşehir',
+    league: 'Trendyol Süper Lig',
+    leagueId: 'super-lig',
+    stadium: 'Fatih Terim Stadı (17.156)',
+    founded: 1990,
+    colors: ['#e67e22', '#1c2833'],
+    coach: 'Çağdaş Atan',
+    logo: '🦉',
+    rating: 77,
+    stats: { played: 26, winRate: 46, avgGoals: 1.57, avgConceded: 1.26, cleanSheets: 7, form: ['W', 'L', 'D', 'W', 'D'] }
+  },
+  {
+    id: 'samsunspor',
+    name: 'Samsunspor',
+    league: 'Trendyol Süper Lig',
+    leagueId: 'super-lig',
+    stadium: '19 Mayıs Stadyumu (33.919)',
+    founded: 1965,
+    colors: ['#c0392b', '#ffffff'],
+    coach: 'Thomas Reis',
+    logo: '🔴',
+    rating: 76,
+    stats: { played: 26, winRate: 46, avgGoals: 1.42, avgConceded: 1.23, cleanSheets: 6, form: ['L', 'W', 'W', 'D', 'L'] }
+  },
+
+  // --- PREMIER LEAGUE ---
+  {
+    id: 'mancity',
+    name: 'Manchester City',
+    league: 'Premier League',
+    leagueId: 'premier-league',
+    stadium: 'Etihad Stadium (53.400)',
+    founded: 1880,
+    colors: ['#68c5db', '#0c2461'],
+    coach: 'Pep Guardiola',
+    logo: '🚢',
+    rating: 91,
+    stats: { played: 27, winRate: 72, avgGoals: 2.48, avgConceded: 0.96, cleanSheets: 13, form: ['W', 'L', 'W', 'D', 'W'] }
+  },
+  {
+    id: 'arsenal',
+    name: 'Arsenal FC',
+    league: 'Premier League',
+    leagueId: 'premier-league',
+    stadium: 'Emirates Stadium (60.704)',
+    founded: 1886,
+    colors: ['#ef0107', '#ffffff'],
+    coach: 'Mikel Arteta',
+    logo: '💣',
+    rating: 89,
+    stats: { played: 27, winRate: 74, avgGoals: 2.37, avgConceded: 0.81, cleanSheets: 14, form: ['W', 'D', 'W', 'W', 'W'] }
+  },
+  {
+    id: 'liverpool',
+    name: 'Liverpool FC',
+    league: 'Premier League',
+    leagueId: 'premier-league',
+    stadium: 'Anfield (61.276)',
+    founded: 1892,
+    colors: ['#c8102e', '#00b2a9'],
+    coach: 'Arne Slot',
+    logo: '🔴',
+    rating: 90,
+    stats: { played: 27, winRate: 78, avgGoals: 2.52, avgConceded: 0.89, cleanSheets: 15, form: ['W', 'W', 'W', 'W', 'D'] }
+  },
+  {
+    id: 'chelsea',
+    name: 'Chelsea FC',
+    league: 'Premier League',
+    leagueId: 'premier-league',
+    stadium: 'Stamford Bridge (40.341)',
+    founded: 1905,
+    colors: ['#034694', '#ffffff'],
+    coach: 'Enzo Maresca',
+    logo: '🦁',
+    rating: 85,
+    stats: { played: 27, winRate: 59, avgGoals: 1.93, avgConceded: 1.33, cleanSheets: 9, form: ['D', 'W', 'L', 'W', 'W'] }
+  },
+  {
+    id: 'manunited',
+    name: 'Manchester United',
+    league: 'Premier League',
+    leagueId: 'premier-league',
+    stadium: 'Old Trafford (74.310)',
+    founded: 1878,
+    colors: ['#da291c', '#000000'],
+    coach: 'Rúben Amorim',
+    logo: '😈',
+    rating: 84,
+    stats: { played: 27, winRate: 52, avgGoals: 1.70, avgConceded: 1.41, cleanSheets: 8, form: ['W', 'W', 'L', 'D', 'W'] }
+  },
+
+  // --- LA LIGA ---
+  {
     id: 'realmadrid',
     name: 'Real Madrid CF',
-    league: 'La Liga / UEFA Champions League',
+    league: 'La Liga EA Sports',
+    leagueId: 'la-liga',
     stadium: 'Santiago Bernabéu (84.744)',
     founded: 1902,
     colors: ['#f5f6fa', '#d4af37'],
     coach: 'Carlo Ancelotti',
     logo: '👑',
-    rating: 92,
-    stats: { played: 28, winRate: 79, avgGoals: 2.45, avgConceded: 0.82, cleanSheets: 14, form: ['W', 'W', 'W', 'D', 'W'] }
+    rating: 93,
+    stats: { played: 27, winRate: 78, avgGoals: 2.45, avgConceded: 0.74, cleanSheets: 15, form: ['W', 'W', 'W', 'D', 'W'] }
+  },
+  {
+    id: 'barcelona',
+    name: 'FC Barcelona',
+    league: 'La Liga EA Sports',
+    leagueId: 'la-liga',
+    stadium: 'Camp Nou (99.354)',
+    founded: 1899,
+    colors: ['#a50044', '#004d98'],
+    coach: 'Hansi Flick',
+    logo: '🔵',
+    rating: 90,
+    stats: { played: 27, winRate: 74, avgGoals: 2.63, avgConceded: 0.96, cleanSheets: 13, form: ['W', 'W', 'D', 'W', 'W'] }
+  },
+  {
+    id: 'atletico',
+    name: 'Atlético de Madrid',
+    league: 'La Liga EA Sports',
+    leagueId: 'la-liga',
+    stadium: 'Civitas Metropolitano (70.460)',
+    founded: 1903,
+    colors: ['#cb3524', '#ffffff'],
+    coach: 'Diego Simeone',
+    logo: '🔴',
+    rating: 87,
+    stats: { played: 27, winRate: 67, avgGoals: 1.78, avgConceded: 0.70, cleanSheets: 14, form: ['W', 'D', 'W', 'W', 'D'] }
+  },
+
+  // --- SERIE A ---
+  {
+    id: 'inter',
+    name: 'Inter Milan',
+    league: 'Serie A Enilive',
+    leagueId: 'serie-a',
+    stadium: 'San Siro (75.923)',
+    founded: 1908,
+    colors: ['#0019a5', '#000000'],
+    coach: 'Simone Inzaghi',
+    logo: '🐍',
+    rating: 88,
+    stats: { played: 27, winRate: 70, avgGoals: 2.33, avgConceded: 0.81, cleanSheets: 14, form: ['W', 'W', 'W', 'D', 'W'] }
+  },
+  {
+    id: 'milan',
+    name: 'AC Milan',
+    league: 'Serie A Enilive',
+    leagueId: 'serie-a',
+    stadium: 'San Siro (75.923)',
+    founded: 1899,
+    colors: ['#fb090b', '#000000'],
+    coach: 'Paulo Fonseca',
+    logo: '🔴',
+    rating: 85,
+    stats: { played: 27, winRate: 59, avgGoals: 1.85, avgConceded: 1.18, cleanSheets: 11, form: ['W', 'L', 'W', 'W', 'D'] }
+  },
+  {
+    id: 'juventus',
+    name: 'Juventus FC',
+    league: 'Serie A Enilive',
+    leagueId: 'serie-a',
+    stadium: 'Allianz Stadium (41.507)',
+    founded: 1897,
+    colors: ['#000000', '#ffffff'],
+    coach: 'Thiago Motta',
+    logo: '🦓',
+    rating: 86,
+    stats: { played: 27, winRate: 63, avgGoals: 1.74, avgConceded: 0.77, cleanSheets: 15, form: ['D', 'W', 'W', 'D', 'W'] }
+  },
+
+  // --- BUNDESLIGA ---
+  {
+    id: 'bayern',
+    name: 'Bayern München',
+    league: 'Bundesliga',
+    leagueId: 'bundesliga',
+    stadium: 'Allianz Arena (75.024)',
+    founded: 1900,
+    colors: ['#dc052d', '#ffffff'],
+    coach: 'Vincent Kompany',
+    logo: '🔴',
+    rating: 91,
+    stats: { played: 25, winRate: 76, avgGoals: 2.76, avgConceded: 0.96, cleanSheets: 12, form: ['W', 'W', 'W', 'L', 'W'] }
+  },
+  {
+    id: 'dortmund',
+    name: 'Borussia Dortmund',
+    league: 'Bundesliga',
+    leagueId: 'bundesliga',
+    stadium: 'Signal Iduna Park (81.365)',
+    founded: 1909,
+    colors: ['#fde100', '#000000'],
+    coach: 'Nuri Şahin',
+    logo: '🐝',
+    rating: 85,
+    stats: { played: 25, winRate: 60, avgGoals: 1.96, avgConceded: 1.32, cleanSheets: 9, form: ['L', 'W', 'W', 'D', 'W'] }
+  },
+  {
+    id: 'leverkusen',
+    name: 'Bayer Leverkusen',
+    league: 'Bundesliga',
+    leagueId: 'bundesliga',
+    stadium: 'BayArena (30.210)',
+    founded: 1904,
+    colors: ['#e32221', '#000000'],
+    coach: 'Xabi Alonso',
+    logo: '🦁',
+    rating: 88,
+    stats: { played: 25, winRate: 68, avgGoals: 2.28, avgConceded: 1.12, cleanSheets: 10, form: ['W', 'D', 'W', 'W', 'D'] }
   }
 ];
 
@@ -545,6 +786,11 @@ class DataService {
 
   getTeamById(id) {
     return this.teams.find(t => t.id === id) || this.teams[0];
+  }
+
+  getTeamsByLeague(leagueId = 'all') {
+    if (!leagueId || leagueId === 'all') return this.teams;
+    return this.teams.filter(t => t.leagueId === leagueId);
   }
 
   toggleFavorite(type, id) {
