@@ -72,6 +72,13 @@ class UIManager {
       });
     }
 
+    const btnCloseSetup = document.getElementById('btn-close-setup');
+    if (btnCloseSetup && this.setupModal) {
+      btnCloseSetup.addEventListener('click', () => {
+        this.setupModal.classList.add('hidden');
+      });
+    }
+
     // 3. Maç Sonu: Sonraki Maç / Sezon Sonu Butonu
     const btnNextMatch = document.getElementById('btn-next-match');
     if (btnNextMatch) {
@@ -111,6 +118,10 @@ class UIManager {
     if (btnOpenOnline && onlineModal) {
       btnOpenOnline.addEventListener('click', () => {
         onlineModal.classList.remove('hidden');
+        const pNameInput = document.getElementById('input-online-player-name');
+        if (pNameInput && !pNameInput.value.trim() && this.career && this.career.player) {
+          pNameInput.value = this.career.player.name || '';
+        }
       });
     }
 
@@ -186,12 +197,26 @@ class UIManager {
       });
     }
 
-    // 9. Online Odaya Katıl Butonu
+    // 9. Online Odaya Katıl Butonu & Enter Tuşu Desteği
+    const inputJoinCode = document.getElementById('input-join-room-code');
     const btnJoinRoom = document.getElementById('btn-join-room-action');
+
+    if (inputJoinCode) {
+      inputJoinCode.addEventListener('input', (e) => {
+        e.target.value = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '');
+      });
+      inputJoinCode.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          if (btnJoinRoom) btnJoinRoom.click();
+        }
+      });
+    }
+
     if (btnJoinRoom) {
       btnJoinRoom.addEventListener('click', () => {
         const pName = document.getElementById('input-online-player-name').value || 'Misafir';
-        const code = document.getElementById('input-join-room-code').value || '';
+        const code = (inputJoinCode ? inputJoinCode.value : '').trim().toUpperCase();
         if (window.onlineManager) {
           window.onlineManager.joinRoom(code, pName);
         }
@@ -224,24 +249,42 @@ class UIManager {
       });
     });
 
-    // 12. Dünya Liderlik Tablosu Aç / Kapat
+    // 12. Dünya Liderlik Tablosu Aç / Kapat (Mouse, Dokunmatik & [L] Tuşu)
     const btnOpenLeaderboard = document.getElementById('btn-open-leaderboard');
     const btnCloseLeaderboard = document.getElementById('btn-close-leaderboard');
-    if (btnOpenLeaderboard && this.leaderboardModal) {
-      btnOpenLeaderboard.addEventListener('click', () => {
+
+    const toggleLeaderboardModal = (e) => {
+      if (e) {
+        e.preventDefault();
+        e.stopPropagation();
+      }
+      if (!this.leaderboardModal) return;
+      if (this.leaderboardModal.classList.contains('hidden')) {
         this.renderLeaderboard(this.currentLeaderboardFilter);
         this.leaderboardModal.classList.remove('hidden');
+      } else {
+        this.leaderboardModal.classList.add('hidden');
+      }
+    };
+
+    if (btnOpenLeaderboard && this.leaderboardModal) {
+      btnOpenLeaderboard.addEventListener('click', toggleLeaderboardModal);
+      btnOpenLeaderboard.addEventListener('pointerup', (e) => {
+        if (e.pointerType === 'touch') toggleLeaderboardModal(e);
       });
     }
+
     if (btnCloseLeaderboard && this.leaderboardModal) {
-      btnCloseLeaderboard.addEventListener('click', () => {
+      btnCloseLeaderboard.addEventListener('click', (e) => {
+        e.stopPropagation();
         this.leaderboardModal.classList.add('hidden');
       });
     }
 
     const btnRefreshLeaderboard = document.getElementById('btn-refresh-leaderboard');
     if (btnRefreshLeaderboard) {
-      btnRefreshLeaderboard.addEventListener('click', () => {
+      btnRefreshLeaderboard.addEventListener('click', (e) => {
+        e.stopPropagation();
         this.renderLeaderboard(this.currentLeaderboardFilter);
       });
     }
@@ -249,7 +292,8 @@ class UIManager {
     // 13. Liderlik Tablosu Filtre Sekmeleri (Para, OVR, Hepsi)
     const lbTabs = document.querySelectorAll('.lb-tab-btn');
     lbTabs.forEach(tab => {
-      tab.addEventListener('click', () => {
+      tab.addEventListener('click', (e) => {
+        e.stopPropagation();
         lbTabs.forEach(t => t.classList.remove('active'));
         tab.classList.add('active');
         this.currentLeaderboardFilter = tab.dataset.filter;
@@ -271,6 +315,48 @@ class UIManager {
         this.transferHubModal.classList.add('hidden');
       });
     }
+
+    // Global Klavye Kısayolları (Tüm PC, Mac ve Tarayıcılarda Garantili Erişim)
+    window.addEventListener('keydown', (e) => {
+      // Eğer bir input veya select alanında yazı yazılıyorsa kısayolları engelle
+      if (['INPUT', 'SELECT', 'TEXTAREA'].includes(document.activeElement?.tagName)) return;
+
+      // [L] -> Liderlik Tablosu
+      if (e.code === 'KeyL' || e.key === 'l' || e.key === 'L') {
+        e.preventDefault();
+        toggleLeaderboardModal();
+      }
+      // [M] -> Mağaza
+      else if (e.code === 'KeyM' || e.key === 'm' || e.key === 'M') {
+        e.preventDefault();
+        if (this.storeModal) {
+          if (this.storeModal.classList.contains('hidden')) {
+            this.renderStore(this.currentStoreCategory);
+            this.storeModal.classList.remove('hidden');
+          } else {
+            this.storeModal.classList.add('hidden');
+          }
+        }
+      }
+      // [H] -> Transfer Masası
+      else if (e.code === 'KeyH' || e.key === 'h' || e.key === 'H') {
+        e.preventDefault();
+        if (this.transferHubModal) {
+          if (this.transferHubModal.classList.contains('hidden')) {
+            this.renderTransferHub(this.currentTransferTier);
+            this.transferHubModal.classList.remove('hidden');
+          } else {
+            this.transferHubModal.classList.add('hidden');
+          }
+        }
+      }
+      // [Escape] -> Açık olan tüm modalları kapat
+      else if (e.code === 'Escape' || e.key === 'Escape') {
+        document.querySelectorAll('.modal-overlay:not(.hidden)').forEach(modal => {
+          modal.classList.add('hidden');
+        });
+      }
+    });
 
     // Transfer Masası Lig Filtre Sekmeleri
     const thTabs = document.querySelectorAll('.th-tab-btn');

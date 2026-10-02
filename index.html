@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>PRO FOOTBALL 3D - Kariyer & Transfer Efsanesi</title>
   <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>⚽</text></svg>">
-  <link rel="stylesheet" href="style.css?v=fc_pro_2026_v7">
+  <link rel="stylesheet" href="style.css?v=fc_pro_2026_v9">
 
   <!-- Three.js 3D Motoru (r128) -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
@@ -38,7 +38,7 @@
       <div class="hud-actions">
         <button id="btn-open-transfers" class="hud-btn transfer-hub-btn" title="İstediğin Kulüple Transfer Görüşmesi Yap">🤝 TRANSFER OL</button>
         <button id="btn-open-store" class="hud-btn store-btn" title="Kariyer Mağazası (Top, Krampon, Saç, Forma)">🛒 MAĞAZA</button>
-        <button id="btn-open-leaderboard" class="hud-btn leaderboard-btn" title="Dünya Liderlik Sıralaması">🏆 LİDERLİK</button>
+        <button id="btn-open-leaderboard" class="hud-btn leaderboard-btn" title="Dünya Liderlik Sıralaması (Kısayol: L Tuşu)">🏆 LİDERLİK <span class="key-hint">L</span></button>
         <button id="btn-online-mode-toggle" class="hud-btn online-mode-toggle-btn" style="display: none;" title="Oyun Modunu Değiştir">🔄 MOD DEĞİŞTİR: 🤝 2 KİŞİLİK EŞLİ HÜCUM</button>
         <button id="btn-sound-toggle" class="hud-btn" title="Sesi Aç / Kapat">🔊</button>
         <button id="btn-retry-shot" class="hud-btn" title="Pozisyonu Tekrar Dene (R)">🔄 TEKRAR VUR (R)</button>
@@ -111,8 +111,13 @@
   <!-- MODAL 1: KARİYER BAŞLANGICI VE MEVKİ SEÇİMİ -->
   <div id="setup-modal" class="modal-overlay">
     <div class="modal-container">
-      <h2 class="modal-title">⚽ PRO FUTBOL 3D</h2>
-      <p class="modal-subtitle">Kendi efsaneni yarat, sezona başla ve dünya devlerine transfer ol!</p>
+      <div class="modal-header-row" style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.8rem;">
+        <div>
+          <h2 class="modal-title" style="text-align: left; margin: 0;">⚽ PRO FUTBOL 3D</h2>
+          <p class="modal-subtitle" style="text-align: left; margin: 0.2rem 0 0 0;">Kendi efsaneni yarat, sezona başla ve dünya devlerine transfer ol!</p>
+        </div>
+        <button id="btn-close-setup" class="modal-close-btn" title="Kapat">✕</button>
+      </div>
 
       <div class="form-group">
         <label class="form-label" for="input-player-name">OYUNCU ADINIZ</label>
@@ -468,14 +473,14 @@
   </div>
 
   <!-- Oyun Modülleri -->
-  <script src="js/audio.js?v=fc_pro_2026_v7"></script>
-  <script src="js/career.js?v=fc_pro_2026_v7"></script>
-  <script src="js/stadium.js?v=fc_pro_2026_v7"></script>
-  <script src="js/player.js?v=fc_pro_2026_v7"></script>
-  <script src="js/physics.js?v=fc_pro_2026_v7"></script>
-  <script src="js/online.js?v=fc_pro_2026_v7"></script>
-  <script src="js/game.js?v=fc_pro_2026_v7"></script>
-  <script src="js/ui.js?v=fc_pro_2026_v7"></script>
+  <script src="js/audio.js?v=fc_pro_2026_v9"></script>
+  <script src="js/career.js?v=fc_pro_2026_v9"></script>
+  <script src="js/stadium.js?v=fc_pro_2026_v9"></script>
+  <script src="js/player.js?v=fc_pro_2026_v9"></script>
+  <script src="js/physics.js?v=fc_pro_2026_v9"></script>
+  <script src="js/online.js?v=fc_pro_2026_v9"></script>
+  <script src="js/game.js?v=fc_pro_2026_v9"></script>
+  <script src="js/ui.js?v=fc_pro_2026_v9"></script>
 
   <!-- Başlatıcı -->
   <script>
