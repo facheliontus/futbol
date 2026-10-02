@@ -36,124 +36,13 @@ class BallPhysics {
     this.vortexMeshes = [];
 
     this.createBall();
+    this.initParticles();
   }
 
   createBall() {
-    // FIFA QUALITY PRO - Aerodinamik Altın & Cyan Panelli Resmi Maç Topu Dokusu
-    const canvas = document.createElement('canvas');
-    canvas.width = 1024;
-    canvas.height = 512;
-    const ctx = canvas.getContext('2d');
-
-    // 1. Zemin: Parlak Saf Futbol Beyazı
-    ctx.fillStyle = '#ffffff';
-    ctx.fillRect(0, 0, 1024, 512);
-
-    // İnce mikroskobik deri pütür dokusu
-    ctx.fillStyle = 'rgba(235, 240, 245, 0.5)';
-    for (let i = 0; i < 600; i++) {
-      const rx = Math.random() * 1024;
-      const ry = Math.random() * 512;
-      ctx.fillRect(rx, ry, 2, 2);
-    }
-
-    // 2. Aerodinamik Altın & Elektrik Cyan Kıvrımlı Paneller (FIFA Pro Deseni)
-    const drawCurvedPanel = (cx, cy, scale, angle) => {
-      ctx.save();
-      ctx.translate(cx, cy);
-      ctx.rotate(angle);
-      ctx.scale(scale, scale);
-
-      // Dış Altın Kavis
-      ctx.beginPath();
-      ctx.moveTo(-60, -40);
-      ctx.bezierCurveTo(-20, -90, 40, -85, 75, -30);
-      ctx.bezierCurveTo(90, 15, 60, 70, 10, 80);
-      ctx.bezierCurveTo(-45, 85, -85, 30, -60, -40);
-      ctx.fillStyle = '#ffd700'; // Parlak Altın
-      ctx.fill();
-
-      // İç Elektrik Cyan Aerodinamik Kanat
-      ctx.beginPath();
-      ctx.moveTo(-45, -25);
-      ctx.bezierCurveTo(-15, -65, 30, -60, 55, -20);
-      ctx.bezierCurveTo(68, 10, 45, 50, 8, 60);
-      ctx.bezierCurveTo(-30, 62, -60, 22, -45, -25);
-      ctx.fillStyle = '#00f2fe'; // Elektrik Cyan
-      ctx.fill();
-
-      // Gece Mavisi Kontrast Çekirdek
-      ctx.beginPath();
-      ctx.arc(5, 5, 20, 0, Math.PI * 2);
-      ctx.fillStyle = '#0a192f';
-      ctx.fill();
-
-      // İnce altın yıldız parıltısı
-      ctx.fillStyle = '#ffffff';
-      ctx.beginPath();
-      ctx.arc(5, 5, 5, 0, Math.PI * 2);
-      ctx.fill();
-
-      ctx.restore();
-    };
-
-    // 8 Ana Aerodinamik Kanat Dağılımı
-    const panelCoords = [
-      [128, 128, 1.1, 0.4],
-      [384, 128, 1.1, -0.6],
-      [640, 128, 1.1, 0.8],
-      [896, 128, 1.1, -0.2],
-      [128, 384, 1.1, -0.5],
-      [384, 384, 1.1, 0.7],
-      [640, 384, 1.1, -0.4],
-      [896, 384, 1.1, 0.5]
-    ];
-    panelCoords.forEach(([x, y, sc, a]) => drawCurvedPanel(x, y, sc, a));
-
-    // 3. FIFA QUALITY PRO Resmi Onay Damgası
-    const drawFifaBadge = (x, y) => {
-      ctx.save();
-      ctx.translate(x, y);
-      ctx.fillStyle = 'rgba(10, 25, 47, 0.9)';
-      if (ctx.roundRect) ctx.roundRect(-55, -28, 110, 56, 8);
-      else ctx.rect(-55, -28, 110, 56);
-      ctx.fill();
-      ctx.strokeStyle = '#ffd700';
-      ctx.lineWidth = 2.5;
-      ctx.stroke();
-
-      ctx.fillStyle = '#ffd700';
-      ctx.font = 'bold 15px "Segoe UI", sans-serif';
-      ctx.textAlign = 'center';
-      ctx.fillText("FIFA", 0, -8);
-      ctx.fillStyle = '#ffffff';
-      ctx.font = 'bold 9px "Segoe UI", sans-serif';
-      ctx.fillText("QUALITY PRO", 0, 8);
-      ctx.fillStyle = '#00f2fe';
-      ctx.font = '7px sans-serif';
-      ctx.fillText("2026 OFFICIAL MATCH", 0, 20);
-      ctx.restore();
-    };
-    drawFifaBadge(256, 256);
-    drawFifaBadge(768, 256);
-
-    // 4. Termal Yapıştırma Dikiş Olukları (Thermal Bonded Seams)
-    ctx.strokeStyle = '#cbd5e1';
-    ctx.lineWidth = 3;
-    for (let x = 0; x <= 1024; x += 128) {
-      ctx.beginPath();
-      ctx.moveTo(x, 0);
-      ctx.bezierCurveTo(x + 30, 170, x - 30, 340, x, 512);
-      ctx.stroke();
-    }
-
-    const ballTexture = new THREE.CanvasTexture(canvas);
-    ballTexture.wrapS = THREE.RepeatWrapping;
-    ballTexture.wrapT = THREE.ClampToEdgeWrapping;
-
     const geo = new THREE.SphereGeometry(this.radius, 32, 32);
     const mat = new THREE.MeshStandardMaterial({
-      map: ballTexture,
+      map: this.generateBallTexture('ball_pro'),
       roughness: 0.22,
       metalness: 0.16
     });
@@ -174,7 +63,191 @@ class BallPhysics {
     this.shadow.rotation.x = -Math.PI / 2;
     this.shadow.position.set(this.position.x, 0.015, this.position.z);
     this.scene.add(this.shadow);
+  }
 
+  setBallStyle(ballStyle = 'ball_pro') {
+    if (!this.mesh) return;
+    this.currentBallStyle = ballStyle;
+    const tex = this.generateBallTexture(ballStyle);
+    this.mesh.material.map = tex;
+    if (ballStyle === 'ball_gold') {
+      this.mesh.material.metalness = 0.85;
+      this.mesh.material.roughness = 0.15;
+    } else if (ballStyle === 'ball_cyber') {
+      this.mesh.material.metalness = 0.4;
+      this.mesh.material.roughness = 0.2;
+    } else {
+      this.mesh.material.metalness = 0.16;
+      this.mesh.material.roughness = 0.22;
+    }
+    this.mesh.material.needsUpdate = true;
+  }
+
+  generateBallTexture(ballStyle = 'ball_pro') {
+    const canvas = document.createElement('canvas');
+    canvas.width = 1024;
+    canvas.height = 512;
+    const ctx = canvas.getContext('2d');
+
+    if (ballStyle === 'ball_classic') {
+      // Klasik Siyah-Beyaz Beşgen Deri Top
+      ctx.fillStyle = '#f8fafc';
+      ctx.fillRect(0, 0, 1024, 512);
+
+      // Siyah beşgenler
+      const drawPentagon = (x, y, r) => {
+        ctx.save();
+        ctx.translate(x, y);
+        ctx.beginPath();
+        for (let i = 0; i < 5; i++) {
+          const a = (i * 2 * Math.PI) / 5 - Math.PI / 2;
+          const px = Math.cos(a) * r;
+          const py = Math.sin(a) * r;
+          if (i === 0) ctx.moveTo(px, py);
+          else ctx.lineTo(px, py);
+        }
+        ctx.closePath();
+        ctx.fillStyle = '#0f172a';
+        ctx.fill();
+        ctx.strokeStyle = '#334155';
+        ctx.lineWidth = 4;
+        ctx.stroke();
+        ctx.restore();
+      };
+
+      for (let y = 80; y <= 450; y += 170) {
+        for (let x = 60; x <= 980; x += 170) {
+          drawPentagon(x, y, 48);
+        }
+      }
+    } else if (ballStyle === 'ball_cyber') {
+      // Cyberpunk Neon Matrix
+      ctx.fillStyle = '#050b14';
+      ctx.fillRect(0, 0, 1024, 512);
+
+      // Neon ızgaralar
+      ctx.strokeStyle = '#00f2fe';
+      ctx.lineWidth = 3;
+      for (let x = 0; x < 1024; x += 64) {
+        ctx.beginPath();
+        ctx.moveTo(x, 0);
+        ctx.lineTo(x, 512);
+        ctx.stroke();
+      }
+      ctx.strokeStyle = '#ff007f';
+      for (let y = 0; y < 512; y += 64) {
+        ctx.beginPath();
+        ctx.moveTo(0, y);
+        ctx.lineTo(1024, y);
+        ctx.stroke();
+      }
+      // Parlayan siber çekirdekler
+      for (let i = 0; i < 16; i++) {
+        const cx = (i * 68) % 1024;
+        const cy = ((i * 115) % 450) + 30;
+        ctx.fillStyle = '#00f2fe';
+        ctx.beginPath();
+        ctx.arc(cx, cy, 14, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    } else if (ballStyle === 'ball_lava') {
+      // Alevli Volkanik Magma
+      ctx.fillStyle = '#1c0a0a';
+      ctx.fillRect(0, 0, 1024, 512);
+
+      // Kor alev damarları
+      for (let i = 0; i < 35; i++) {
+        ctx.strokeStyle = (i % 2 === 0) ? '#ff3300' : '#ff9900';
+        ctx.lineWidth = 5 + (i % 4) * 2;
+        ctx.beginPath();
+        let sx = Math.random() * 1024;
+        let sy = Math.random() * 512;
+        ctx.moveTo(sx, sy);
+        for (let s = 0; s < 5; s++) {
+          sx += (Math.random() - 0.5) * 160;
+          sy += (Math.random() - 0.5) * 160;
+          ctx.lineTo(sx, sy);
+        }
+        ctx.stroke();
+      }
+    } else if (ballStyle === 'ball_gold') {
+      // 24K Ballon d'Or Saf Altın
+      const grad = ctx.createLinearGradient(0, 0, 1024, 512);
+      grad.addColorStop(0, '#fef08a');
+      grad.addColorStop(0.3, '#f59e0b');
+      grad.addColorStop(0.7, '#d97706');
+      grad.addColorStop(1, '#fef08a');
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, 1024, 512);
+
+      // Altın parıltı yıldızları
+      ctx.fillStyle = '#ffffff';
+      for (let i = 0; i < 40; i++) {
+        const gx = Math.random() * 1024;
+        const gy = Math.random() * 512;
+        ctx.beginPath();
+        ctx.arc(gx, gy, 6, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    } else {
+      // FIFA QUALITY PRO (Standart)
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 0, 1024, 512);
+
+      const drawCurvedPanel = (cx, cy, scale, angle) => {
+        ctx.save();
+        ctx.translate(cx, cy);
+        ctx.rotate(angle);
+        ctx.scale(scale, scale);
+
+        ctx.beginPath();
+        ctx.moveTo(-60, -40);
+        ctx.bezierCurveTo(-20, -90, 40, -85, 75, -30);
+        ctx.bezierCurveTo(90, 15, 60, 70, 10, 80);
+        ctx.bezierCurveTo(-45, 85, -85, 30, -60, -40);
+        ctx.fillStyle = '#ffd700';
+        ctx.fill();
+
+        ctx.beginPath();
+        ctx.moveTo(-45, -25);
+        ctx.bezierCurveTo(-15, -65, 30, -60, 55, -20);
+        ctx.bezierCurveTo(68, 10, 45, 50, 8, 60);
+        ctx.bezierCurveTo(-30, 62, -60, 22, -45, -25);
+        ctx.fillStyle = '#00f2fe';
+        ctx.fill();
+
+        ctx.beginPath();
+        ctx.arc(5, 5, 20, 0, Math.PI * 2);
+        ctx.fillStyle = '#0a192f';
+        ctx.fill();
+
+        ctx.restore();
+      };
+
+      const panelCoords = [
+        [128, 128, 1.1, 0.4], [384, 128, 1.1, -0.6], [640, 128, 1.1, 0.8], [896, 128, 1.1, -0.2],
+        [128, 384, 1.1, -0.5], [384, 384, 1.1, 0.7], [640, 384, 1.1, -0.4], [896, 384, 1.1, 0.5]
+      ];
+      panelCoords.forEach(([x, y, sc, a]) => drawCurvedPanel(x, y, sc, a));
+
+      // Termal dikişler
+      ctx.strokeStyle = '#cbd5e1';
+      ctx.lineWidth = 3;
+      for (let x = 0; x <= 1024; x += 128) {
+        ctx.beginPath();
+        ctx.moveTo(x, 0);
+        ctx.bezierCurveTo(x + 30, 170, x - 30, 340, x, 512);
+        ctx.stroke();
+      }
+    }
+
+    const ballTexture = new THREE.CanvasTexture(canvas);
+    ballTexture.wrapS = THREE.RepeatWrapping;
+    ballTexture.wrapT = THREE.ClampToEdgeWrapping;
+    return ballTexture;
+  }
+
+  initParticles() {
     // Normal Trail parçacıkları havuzu
     for (let i = 0; i < 20; i++) {
       const tGeo = new THREE.SphereGeometry(this.radius * 0.4, 8, 8);

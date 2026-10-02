@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>PRO FOOTBALL 3D - Kariyer & Transfer Efsanesi</title>
   <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>⚽</text></svg>">
-  <link rel="stylesheet" href="style.css?v=frikik_2026_orig">
+  <link rel="stylesheet" href="style.css?v=fc_pro_2026_v4">
 
   <!-- Three.js 3D Motoru (r128) -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
@@ -22,14 +22,22 @@
   <div id="hud-overlay">
     <!-- Üst Bar: Skorboard & Ayarlar -->
     <header class="top-broadcast-bar">
-      <div class="scoreboard">
-        <span id="hud-team-home" class="team-pill">GALATASARAY</span>
-        <div id="hud-score-display" class="score-badge">0 - 0</div>
-        <span id="hud-team-away" class="team-pill">FENERBAHÇE</span>
-        <span id="hud-match-distance" class="match-clock">24 Metre</span>
+      <div class="scoreboard-wrapper">
+        <div class="scoreboard">
+          <span id="hud-team-home" class="team-pill">GALATASARAY</span>
+          <div id="hud-score-display" class="score-badge">0 - 0</div>
+          <span id="hud-team-away" class="team-pill">FENERBAHÇE</span>
+          <span id="hud-match-distance" class="match-clock">24 Metre</span>
+        </div>
+        <div class="hud-wallet-pill" id="hud-wallet-pill" title="Maaş Birikimi & Cüzdan Bakiyesi">
+          <span class="wallet-icon">💰</span>
+          <span id="hud-wallet-balance">€0</span>
+        </div>
       </div>
 
       <div class="hud-actions">
+        <button id="btn-open-store" class="hud-btn store-btn" title="Kariyer Mağazası (Top, Krampon, Saç, Forma)">🛒 MAĞAZA</button>
+        <button id="btn-open-leaderboard" class="hud-btn leaderboard-btn" title="Dünya Liderlik Sıralaması">🏆 LİDERLİK</button>
         <button id="btn-online-mode-toggle" class="hud-btn online-mode-toggle-btn" style="display: none;" title="Oyun Modunu Değiştir">🔄 MOD DEĞİŞTİR: 🤝 2 KİŞİLİK EŞLİ HÜCUM</button>
         <button id="btn-sound-toggle" class="hud-btn" title="Sesi Aç / Kapat">🔊</button>
         <button id="btn-retry-shot" class="hud-btn" title="Pozisyonu Tekrar Dene (R)">🔄 TEKRAR VUR (R)</button>
@@ -186,6 +194,21 @@
         <div class="table-row">
           <span>Ödül:</span>
           <span id="sum-motm-badge" class="motm-badge">⭐ MAÇIN ADAMI (MOTM)</span>
+        </div>
+      </div>
+
+      <!-- Detaylı Maaş & Prim Kazançları -->
+      <div class="earnings-summary-card">
+        <div class="earnings-header">💰 MAÇ KAZANÇLARI & MAAŞ RAPORU</div>
+        <div class="earnings-grid">
+          <div class="earn-item"><span>Haftalık Maaş:</span><b id="sum-earn-wage">€0</b></div>
+          <div class="earn-item"><span>Gol/Kurtarış Primi:</span><b id="sum-earn-perf">€0</b></div>
+          <div class="earn-item"><span>Galibiyet / Puan Primi:</span><b id="sum-earn-win">€0</b></div>
+          <div class="earn-item total"><span>Bankaya Yatan:</span><b id="sum-earn-total" style="color: #00ff88;">+€0</b></div>
+        </div>
+        <div class="wallet-balance-row">
+          <span>Güncel Cüzdan Bakiyesi:</span>
+          <b id="sum-current-wallet" style="color: #f1c40f;">€0</b>
         </div>
       </div>
 
@@ -348,15 +371,78 @@
     </div>
   </div>
 
+  <!-- MODAL 7: KARİYER MAĞAZASI (STORE MODAL) -->
+  <div id="store-modal" class="modal-overlay hidden">
+    <div class="modal-container store-modal-container">
+      <div class="modal-header-row">
+        <div class="modal-header-info">
+          <h2 class="modal-title" style="text-align: left; margin: 0;">🛒 PROFESYONEL SPOR MAĞAZASI</h2>
+          <p class="modal-subtitle" style="text-align: left; margin: 0.2rem 0 0 0;">Kazandığın maç primleri ve haftalık maaşınla ekipmanlarını yükselt!</p>
+        </div>
+        <div class="modal-header-wallet">
+          <span class="store-wallet-label">KASA BAKİYEN:</span>
+          <span id="store-wallet-display" class="store-wallet-val">€0</span>
+          <button id="btn-close-store" class="modal-close-btn" title="Kapat">✕</button>
+        </div>
+      </div>
+
+      <!-- Mağaza Kategori Sekmeleri -->
+      <div class="store-tabs">
+        <button class="store-tab-btn active" data-category="balls">⚽ MAÇ TOPLARI</button>
+        <button class="store-tab-btn" data-category="boots">👟 KRAMPONLAR</button>
+        <button class="store-tab-btn" data-category="hairs">✂️ SAÇ & İMAJ</button>
+        <button class="store-tab-btn" data-category="kits">👕 ÖZEL FORMALAR</button>
+      </div>
+
+      <!-- Ürünler Listesi Izgarası -->
+      <div id="store-items-grid" class="store-items-grid">
+        <!-- JavaScript ile dinamik olarak doldurulur -->
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL 8: DÜNYA LİDERLİK TABLOSU (LEADERBOARD MODAL) -->
+  <div id="leaderboard-modal" class="modal-overlay hidden">
+    <div class="modal-container leaderboard-modal-container">
+      <div class="modal-header-row">
+        <div class="modal-header-info">
+          <h2 class="modal-title" style="text-align: left; margin: 0;">🏆 DÜNYA FUTBOL SIRALAMASI</h2>
+          <p class="modal-subtitle" style="text-align: left; margin: 0.2rem 0 0 0;">Dünyanın en zengin ve en yetenekli süperstarları arasındaki yerini gör!</p>
+        </div>
+        <button id="btn-close-leaderboard" class="modal-close-btn" title="Kapat">✕</button>
+      </div>
+
+      <!-- Filtre Sekmeleri: EN ÇOK PARA / EN YÜKSEK OVERALL / HEPSİ -->
+      <div class="leaderboard-tabs">
+        <button class="lb-tab-btn active" data-filter="money">💰 EN ÇOK PARA (SERVET)</button>
+        <button class="lb-tab-btn" data-filter="ovr">⭐ EN YÜKSEK OVERALL (YETENEK)</button>
+        <button class="lb-tab-btn" data-filter="all">👑 HEPSİ (BİRLEŞİK PUAN)</button>
+      </div>
+
+      <div class="leaderboard-table-wrapper">
+        <div class="leaderboard-table-header">
+          <span class="lb-col-rank">SIRA</span>
+          <span class="lb-col-player">FUTBOLCU / KULÜP</span>
+          <span class="lb-col-ovr">OVR</span>
+          <span class="lb-col-money">SERVET / BİRİKİM</span>
+          <span class="lb-col-score" id="lb-header-score">DURUM</span>
+        </div>
+        <div id="leaderboard-list" class="leaderboard-rows-container">
+          <!-- JavaScript ile dinamik olarak doldurulur -->
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- Oyun Modülleri -->
-  <script src="js/audio.js?v=frikik2026_trivela_pro"></script>
-  <script src="js/career.js?v=frikik2026_trivela_pro"></script>
-  <script src="js/stadium.js?v=frikik2026_trivela_pro"></script>
-  <script src="js/player.js?v=frikik2026_trivela_pro"></script>
-  <script src="js/physics.js?v=frikik2026_trivela_pro"></script>
-  <script src="js/online.js?v=frikik2026_trivela_pro"></script>
-  <script src="js/game.js?v=frikik2026_trivela_pro"></script>
-  <script src="js/ui.js?v=frikik2026_trivela_pro"></script>
+  <script src="js/audio.js?v=fc_pro_2026_v4"></script>
+  <script src="js/career.js?v=fc_pro_2026_v4"></script>
+  <script src="js/stadium.js?v=fc_pro_2026_v4"></script>
+  <script src="js/player.js?v=fc_pro_2026_v4"></script>
+  <script src="js/physics.js?v=fc_pro_2026_v4"></script>
+  <script src="js/online.js?v=fc_pro_2026_v4"></script>
+  <script src="js/game.js?v=fc_pro_2026_v4"></script>
+  <script src="js/ui.js?v=fc_pro_2026_v4"></script>
 
   <!-- Başlatıcı -->
   <script>

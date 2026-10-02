@@ -11,6 +11,10 @@ class UIManager {
     this.matchSummaryModal = document.getElementById('match-summary-modal');
     this.transferModal = document.getElementById('transfer-modal');
     this.signingModal = document.getElementById('signing-modal');
+    this.storeModal = document.getElementById('store-modal');
+    this.leaderboardModal = document.getElementById('leaderboard-modal');
+    this.currentStoreCategory = 'balls';
+    this.currentLeaderboardFilter = 'money';
 
     this.initEvents();
   }
@@ -191,6 +195,58 @@ class UIManager {
         }
       });
     }
+
+    // 10. Kariyer Mağazası Aç / Kapat
+    const btnOpenStore = document.getElementById('btn-open-store');
+    const btnCloseStore = document.getElementById('btn-close-store');
+    if (btnOpenStore && this.storeModal) {
+      btnOpenStore.addEventListener('click', () => {
+        this.renderStore(this.currentStoreCategory);
+        this.storeModal.classList.remove('hidden');
+      });
+    }
+    if (btnCloseStore && this.storeModal) {
+      btnCloseStore.addEventListener('click', () => {
+        this.storeModal.classList.add('hidden');
+      });
+    }
+
+    // 11. Mağaza Kategori Sekmeleri
+    const storeTabs = document.querySelectorAll('.store-tab-btn');
+    storeTabs.forEach(tab => {
+      tab.addEventListener('click', () => {
+        storeTabs.forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+        this.currentStoreCategory = tab.dataset.category;
+        this.renderStore(this.currentStoreCategory);
+      });
+    });
+
+    // 12. Dünya Liderlik Tablosu Aç / Kapat
+    const btnOpenLeaderboard = document.getElementById('btn-open-leaderboard');
+    const btnCloseLeaderboard = document.getElementById('btn-close-leaderboard');
+    if (btnOpenLeaderboard && this.leaderboardModal) {
+      btnOpenLeaderboard.addEventListener('click', () => {
+        this.renderLeaderboard(this.currentLeaderboardFilter);
+        this.leaderboardModal.classList.remove('hidden');
+      });
+    }
+    if (btnCloseLeaderboard && this.leaderboardModal) {
+      btnCloseLeaderboard.addEventListener('click', () => {
+        this.leaderboardModal.classList.add('hidden');
+      });
+    }
+
+    // 13. Liderlik Tablosu Filtre Sekmeleri (Para, OVR, Hepsi)
+    const lbTabs = document.querySelectorAll('.lb-tab-btn');
+    lbTabs.forEach(tab => {
+      tab.addEventListener('click', () => {
+        lbTabs.forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+        this.currentLeaderboardFilter = tab.dataset.filter;
+        this.renderLeaderboard(this.currentLeaderboardFilter);
+      });
+    });
   }
 
   // OYUNCU BİLGİ KARTINI GÜNCELLE
@@ -205,6 +261,12 @@ class UIManager {
     document.getElementById('hud-club-name').innerText = club.badge + ' ' + club.name;
     document.getElementById('hud-player-ovr').innerText = p.overall;
     document.getElementById('hud-season-badge').innerText = `SEZON ${this.career.season} - MAÇ ${this.career.currentMatchIndex + 1}/${this.career.matchesPerSeason}`;
+
+    // Cüzdan Bakiyesi
+    const walletEl = document.getElementById('hud-wallet-balance');
+    if (walletEl) {
+      walletEl.innerText = '€' + (p.money || 0).toLocaleString('tr-TR');
+    }
 
     // Kaleci / Forvet ipuçlarını mevkine göre özelleştir
     const hintEl = document.getElementById('hud-control-hint');
@@ -255,10 +317,177 @@ class UIManager {
     const motmBadge = document.getElementById('sum-motm-badge');
     motmBadge.style.display = summary.motm ? 'inline-block' : 'none';
 
+    // Detaylı Kazanç ve Maaş Gösterimi
+    if (summary.earnings) {
+      const e = summary.earnings;
+      const elWage = document.getElementById('sum-earn-wage');
+      if (elWage) elWage.innerText = '€' + (e.baseWage || 0).toLocaleString('tr-TR');
+      const elPerf = document.getElementById('sum-earn-perf');
+      if (elPerf) elPerf.innerText = '+€' + ((e.goalBonus || 0) + (e.saveBonus || 0)).toLocaleString('tr-TR');
+      const elWin = document.getElementById('sum-earn-win');
+      if (elWin) elWin.innerText = '+€' + ((e.winBonus || 0) + (e.cleanSheetBonus || 0) + (e.motmBonus || 0)).toLocaleString('tr-TR');
+      const elTotal = document.getElementById('sum-earn-total');
+      if (elTotal) elTotal.innerText = '+€' + (e.totalEarned || 0).toLocaleString('tr-TR');
+      const elWallet = document.getElementById('sum-current-wallet');
+      if (elWallet) elWallet.innerText = '€' + (e.currentWallet || 0).toLocaleString('tr-TR');
+    }
+
+    this.updatePlayerHUD();
+
     const btnNext = document.getElementById('btn-next-match');
     btnNext.innerText = isSeasonEnd ? '🏆 SEZONU TAMAMLA & TRANSFER TEKLİFLERİNE GEÇ' : 'SONRAKİ MAÇA GEÇ ➔';
 
     this.matchSummaryModal.classList.remove('hidden');
+  }
+
+  // MAĞAZA ÜRÜNLERİNİ LİSTELE & SATIN ALMA / KUŞANMA YÖNETİMİ
+  renderStore(category = 'balls') {
+    const p = this.career.player;
+    if (!p) return;
+
+    // Güncel bakiye göstergeleri
+    const formattedWallet = '€' + (p.money || 0).toLocaleString('tr-TR');
+    const storeWalletEl = document.getElementById('store-wallet-display');
+    if (storeWalletEl) storeWalletEl.innerText = formattedWallet;
+    const hudWalletEl = document.getElementById('hud-wallet-balance');
+    if (hudWalletEl) hudWalletEl.innerText = formattedWallet;
+
+    const grid = document.getElementById('store-items-grid');
+    if (!grid) return;
+    grid.innerHTML = '';
+
+    const catalog = this.career.getStoreCatalog();
+    const items = catalog[category] || [];
+
+    items.forEach(item => {
+      const isOwned = p.purchasedItems && p.purchasedItems.includes(item.id);
+      let isEquipped = false;
+      if (category === 'balls') isEquipped = (p.equippedBall === item.id);
+      else if (category === 'boots') isEquipped = (p.equippedBoot === item.id);
+      else if (category === 'hairs') isEquipped = (p.equippedHair === item.id);
+      else if (category === 'kits') isEquipped = (p.equippedKit === item.id);
+
+      const card = document.createElement('div');
+      card.className = 'store-card';
+      if (isEquipped) card.classList.add('equipped');
+      else if (isOwned) card.classList.add('owned');
+
+      const priceDisplay = item.price === 0 
+        ? '<span class="store-card-price free">BAŞLANGIÇ</span>' 
+        : `<span class="store-card-price">€${item.price.toLocaleString('tr-TR')}</span>`;
+
+      let actionBtnHtml = '';
+      if (isEquipped) {
+        actionBtnHtml = `<button class="btn-store-action active-equipped" disabled>✓ KUŞANILDI</button>`;
+      } else if (isOwned) {
+        actionBtnHtml = `<button class="btn-store-action equip" data-cat="${category}" data-id="${item.id}">KUŞAN</button>`;
+      } else {
+        const canAfford = p.money >= item.price;
+        actionBtnHtml = `<button class="btn-store-action buy" data-cat="${category}" data-id="${item.id}" ${canAfford ? '' : 'style="opacity:0.75;"'}>
+          🛒 SATIN AL
+        </button>`;
+      }
+
+      card.innerHTML = `
+        <div class="store-card-header">
+          <div class="store-card-icon">${item.icon}</div>
+          <span class="store-card-badge" style="background:${item.accentColor}22; color:${item.accentColor}; border:1px solid ${item.accentColor}55;">
+            ${item.badge}
+          </span>
+        </div>
+        <h4 class="store-card-title">${item.name}</h4>
+        <p class="store-card-desc">${item.desc}</p>
+        <div class="store-card-footer">
+          ${priceDisplay}
+          ${actionBtnHtml}
+        </div>
+      `;
+
+      // Buton aksiyonu
+      const btnAction = card.querySelector('.btn-store-action');
+      if (btnAction && !isEquipped) {
+        btnAction.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const res = this.career.buyItem(category, item.id);
+          if (res.success) {
+            if (window.gameSound) {
+              window.gameSound.playGoalCheer();
+            }
+            this.updatePlayerHUD();
+            if (this.game && typeof this.game.applyCosmetics === 'function') {
+              this.game.applyCosmetics();
+            }
+            this.renderStore(category);
+          } else {
+            alert(res.msg);
+          }
+        });
+      }
+
+      grid.appendChild(card);
+    });
+  }
+
+  // DÜNYA LİDERLİK TABLOSUNU LİSTELE (PARA / OVERALL / HEPSİ)
+  renderLeaderboard(filter = 'money') {
+    const listContainer = document.getElementById('leaderboard-list');
+    if (!listContainer) return;
+    listContainer.innerHTML = '';
+
+    const headerScoreEl = document.getElementById('lb-header-score');
+    if (headerScoreEl) {
+      if (filter === 'money') headerScoreEl.innerText = 'BİRİKMİŞ SERVET';
+      else if (filter === 'ovr') headerScoreEl.innerText = 'YETENEK OVR';
+      else headerScoreEl.innerText = 'BİRLEŞİK PUAN';
+    }
+
+    const leaderboardData = this.career.getLeaderboard(filter);
+
+    leaderboardData.forEach(entry => {
+      const row = document.createElement('div');
+      row.className = 'lb-row';
+      if (entry.isUser) row.classList.add('user-row');
+
+      let rankDisplay = `#${entry.rank}`;
+      let rankBadgeClass = '';
+      if (entry.rank === 1) { rankDisplay = '🥇 1'; rankBadgeClass = 'lb-rank-1'; }
+      else if (entry.rank === 2) { rankDisplay = '🥈 2'; rankBadgeClass = 'lb-rank-2'; }
+      else if (entry.rank === 3) { rankDisplay = '🥉 3'; rankBadgeClass = 'lb-rank-3'; }
+
+      const moneyFormatted = entry.money >= 1000000
+        ? `€${(entry.money / 1000000).toFixed(1)}M`
+        : `€${entry.money.toLocaleString('tr-TR')}`;
+
+      let scoreDisplay = '';
+      if (filter === 'money') {
+        scoreDisplay = moneyFormatted;
+      } else if (filter === 'ovr') {
+        scoreDisplay = `${entry.ovr} OVR`;
+      } else {
+        const compositeScore = Math.round(((entry.ovr * 1500000) + entry.money) / 1000000);
+        scoreDisplay = `⭐ ${compositeScore}P`;
+      }
+
+      const userTag = entry.isUser ? '<span class="lb-user-badge">SEN</span>' : '';
+
+      row.innerHTML = `
+        <div class="lb-col-rank">
+          <span class="lb-rank-badge ${rankBadgeClass}">${rankDisplay}</span>
+        </div>
+        <div class="lb-col-player">
+          <span class="lb-player-flag">${entry.country || '⚽'}</span>
+          <div class="lb-player-names">
+            <span class="lb-player-title">${entry.name} ${userTag}</span>
+            <span class="lb-player-club">${entry.club}</span>
+          </div>
+        </div>
+        <div class="lb-col-ovr">${entry.ovr}</div>
+        <div class="lb-col-money">${moneyFormatted}</div>
+        <div class="lb-col-score">${scoreDisplay}</div>
+      `;
+
+      listContainer.appendChild(row);
+    });
   }
 
   // TRANSFER PAZARI VE KULÜP TEKLİFLERİNİ GÖSTER

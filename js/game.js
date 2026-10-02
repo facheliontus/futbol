@@ -290,7 +290,7 @@ class Game {
     const footOffsetX = (this.currentFoot === 'R') ? -0.65 : 0.65;
     const kickerPos = new THREE.Vector3(bPos.x + footOffsetX, 0.11, bPos.z + 1.85);
     this.playerModels.kicker.group.position.copy(kickerPos);
-    this.playerModels.kicker.group.lookAt(0, 0, 0);
+    this.playerModels.kicker.group.lookAt(0, 0.11, 0);
   }
 
   // HUD KONTROL BUTONLARINI GÜNCELLE
@@ -326,6 +326,12 @@ class Game {
       else if (this.cameraMode === 'action') camName = 'AKSİYON (C)';
       camBtn.innerHTML = `🎥 ${camName}`;
     }
+
+    // Cüzdan Bakiyesi Güncelle
+    const walletEl = document.getElementById('hud-wallet-balance');
+    if (walletEl && this.career && this.career.player) {
+      walletEl.innerText = '€' + (this.career.player.money || 0).toLocaleString('tr-TR');
+    }
   }
 
   // YENİ POZİSYON / SENARYO YÜKLE (FRİKİK VE PENALTI SET-PIECE)
@@ -345,10 +351,20 @@ class Game {
       this.currentFoot = this.career.player.preferredFoot;
     }
 
-    // HUD Başlıklarını Güncelle
+    // HUD Başlıklarını ve Canlı Skor Tablosunu Güncelle
     document.getElementById('hud-scenario-title').innerText = scenario.title;
     document.getElementById('hud-scenario-desc').innerText = scenario.desc;
     document.getElementById('hud-match-distance').innerText = scenario.distance + ' Metre';
+
+    const match = this.career.currentMatch;
+    if (match) {
+      const hTeamEl = document.getElementById('hud-team-home');
+      if (hTeamEl) hTeamEl.innerText = match.homeTeam.toUpperCase();
+      const aTeamEl = document.getElementById('hud-team-away');
+      if (aTeamEl) aTeamEl.innerText = match.awayTeam.toUpperCase();
+      const scoreEl = document.getElementById('hud-score-display');
+      if (scoreEl) scoreEl.innerText = `${match.matchScoreHome} - ${match.matchScoreAway}`;
+    }
 
     // Senaryo Koordinatları (spotX ve distance desteği)
     let spotX = (scenario.spotX !== undefined) ? scenario.spotX : (scenario.type === 'freekick' ? (Math.random() - 0.5) * 8 : 0);
@@ -357,6 +373,18 @@ class Game {
 
     const ballPos = new THREE.Vector3(spotX, this.ball.radius, distance);
     this.ball.reset(ballPos);
+
+    // Mağazadan kuşanılan top stilini uygula
+    if (this.career && this.career.player && this.career.player.equippedBall) {
+      this.ball.setBallStyle(this.career.player.equippedBall);
+    }
+
+    // Kuşanılan kozmetik modelleri
+    const cosmetics = {
+      hair: (this.career && this.career.player) ? this.career.player.equippedHair : 'hair_fade',
+      boot: (this.career && this.career.player) ? this.career.player.equippedBoot : 'boot_copa',
+      kit: (this.career && this.career.player) ? this.career.player.equippedKit : 'kit_club'
+    };
 
     if (isGK) {
       // OYUNCU KALECİ İSE:
@@ -370,17 +398,14 @@ class Game {
       // Rakip Forveti Topun arkasına koy
       const footOffsetX = (this.currentFoot === 'R') ? -0.65 : 0.65;
       const kickerPos = new THREE.Vector3(spotX + footOffsetX, 0.11, distance + 1.85);
-      this.playerModels.createKicker(kickerPos, 0xe74c3c, 9, 'RAKİP FORVET', this.currentFoot);
-      if (this.playerModels.kicker && this.playerModels.kicker.group) {
-        this.playerModels.kicker.group.lookAt(0, 0, 0);
-      }
+      this.playerModels.createKicker(kickerPos, 0xe74c3c, 9, 'RAKİP FORVET', this.currentFoot, cosmetics);
 
-      // Baraj (Penaltı değilse)
+      // Baraj (Penaltı değilse) - Kalenin içine kesinlikle girmez (min z: 5.8m)
       if (scenario.type === 'freekick' || scenario.wall) {
         const wallCount = scenario.wall || 4;
-        const wallZ = Math.max(5.5, distance - 9.15);
+        const wallZ = Math.max(5.8, distance - 9.15);
         const wallX = spotX * 0.65;
-        this.playerModels.createWall(new THREE.Vector3(wallX, 0.11, wallZ), wallCount, 0x34495e);
+        this.playerModels.createWall(new THREE.Vector3(wallX, 0.11, wallZ), wallCount, 0x34495e, ballPos);
       }
 
       if (this.gkReticleGroup) {
@@ -416,18 +441,16 @@ class Game {
         clubColor,
         this.career.player.jerseyNumber || 10,
         this.career.player.name || 'STAR',
-        this.currentFoot
+        this.currentFoot,
+        cosmetics
       );
-      if (this.playerModels.kicker && this.playerModels.kicker.group) {
-        this.playerModels.kicker.group.lookAt(0, 0, 0);
-      }
 
-      // Baraj kur (Penaltı hariç)
+      // Baraj kur (Penaltı hariç) - Kesinlikle kalenin içine girmez (min z: 5.8m)
       if (scenario.type === 'freekick' || scenario.wall) {
         const wallCount = scenario.wall || (distance >= 28 ? 5 : 4);
-        const wallZ = Math.max(5.5, distance - 9.15);
+        const wallZ = Math.max(5.8, distance - 9.15);
         const wallX = spotX * 0.65;
-        this.playerModels.createWall(new THREE.Vector3(wallX, 0.11, wallZ), wallCount, 0x34495e);
+        this.playerModels.createWall(new THREE.Vector3(wallX, 0.11, wallZ), wallCount, 0x34495e, ballPos);
       }
 
       this.hasBallPossession = true;
@@ -446,6 +469,17 @@ class Game {
 
       this.updateHUDControls();
       this.updateFalsoDisplay();
+    }
+  }
+
+  // KUŞANILAN KOZMETİKLERİ CANLI SAHNEDE GÜNCELLE
+  applyCosmetics() {
+    if (!this.career || !this.career.player) return;
+    if (this.ball && this.career.player.equippedBall) {
+      this.ball.setBallStyle(this.career.player.equippedBall);
+    }
+    if (this.currentScenario && !this.isCoopMatch) {
+      this.setupScenario(this.currentScenario);
     }
   }
 
@@ -1503,7 +1537,7 @@ class Game {
     } else if (kickCheck.type === 'header') {
       this.playerModels.triggerHeaderAnimation(animCallback);
     } else if (isTrivela) {
-      this.playerModels.triggerTrivelaAnimation(this.currentFoot, animCallback);
+      this.playerModels.triggerTrivelaAnimation(animCallback, null, this.currentFoot);
     } else {
       this.playerModels.triggerKickAnimation(animCallback, null, this.currentFoot);
     }
@@ -1609,14 +1643,9 @@ class Game {
 
     const isTrivela = this.isTrivelaActive();
 
-    // Nişan alırken forvetin gövdesini ve bakışını hedeflenen açıya gerçek zamanlı olarak çevir
+    // Nişan alırken forvetin gövdesi ve yüzü doğrudan hedefe döner
     if (this.playerModels && this.playerModels.kicker && this.playerModels.kicker.group) {
-      const aimAngle = Math.atan2(-targetX, -bPos.z);
-      this.playerModels.kicker.group.rotation.y = THREE.MathUtils.lerp(
-        this.playerModels.kicker.group.rotation.y,
-        aimAngle,
-        0.25
-      );
+      this.playerModels.kicker.group.lookAt(targetX, 0.11, 0);
     }
 
     // 3D Nişangahı hedef noktasına taşı ve göster
@@ -1682,15 +1711,11 @@ class Game {
 
   // GOL OLDUĞUNDA
   onGoalScored() {
-    this.showGoalBanner("GOOOOOL! HARİKA VURUŞ!");
     this.timeScale = 0.45; // Çatala girdiğinde slow-mo
-
-    if (window.uiManager && window.uiManager.launchConfetti) {
-      window.uiManager.launchConfetti();
-    }
 
     // Online Maç Bildirimi
     if (window.onlineManager && window.onlineManager.isOnlineMatch) {
+      this.showGoalBanner("GOOOOOL! HARİKA VURUŞ!");
       if (this.isCoopMatch) {
         window.onlineManager.reportCoopOutcome('goal');
       } else {
@@ -1699,8 +1724,25 @@ class Game {
       return;
     }
 
-    if (this.career.player.position !== 'GK') {
+    if (this.isHumanGoalkeeper()) {
+      // Kaleciysek gol yedik!
+      if (this.career.currentMatch) {
+        this.career.currentMatch.matchScoreAway++;
+      }
+      this.showGoalBanner("GOL YEDİN! RAKİP 90'A ASTI!");
+    } else {
+      // Forvetsek gol attık!
+      this.showGoalBanner("GOOOOOL! HARİKA VURUŞ!");
+      if (window.uiManager && window.uiManager.launchConfetti) {
+        window.uiManager.launchConfetti();
+      }
       this.career.recordScenarioSuccess('goal');
+    }
+
+    const match = this.career.currentMatch;
+    if (match) {
+      const scoreEl = document.getElementById('hud-score-display');
+      if (scoreEl) scoreEl.innerText = `${match.matchScoreHome} - ${match.matchScoreAway}`;
     }
 
     this.advanceScenarioAfterDelay(2600);
@@ -1718,11 +1760,19 @@ class Game {
       return;
     }
 
-    if (this.career.player.position === 'GK') {
+    if (this.isHumanGoalkeeper()) {
       this.showGoalBanner("İNANILMAZ KURTARIŞ! DEVLEŞTİN!");
       this.career.recordScenarioSuccess('save');
     } else {
       this.showGoalBanner("KALECİ ÇIKARDI! KORNER!");
+      const oppGoal = this.career.triggerOpponentGoalCheck();
+      if (oppGoal) {
+        setTimeout(() => {
+          this.showGoalBanner(`⚠️ ${oppGoal.rival.toUpperCase()} GOLÜ ATTI! [${oppGoal.homeScore} - ${oppGoal.awayScore}]`);
+          const scoreEl = document.getElementById('hud-score-display');
+          if (scoreEl) scoreEl.innerText = `${oppGoal.homeScore} - ${oppGoal.awayScore}`;
+        }, 900);
+      }
     }
     this.advanceScenarioAfterDelay(2200);
   }
@@ -1765,11 +1815,19 @@ class Game {
       return;
     }
 
-    if (this.career.player.position === 'GK') {
+    if (this.isHumanGoalkeeper()) {
       this.showGoalBanner("TOP DIŞARIDA! BAŞARILI SAVUNMA!");
       this.career.recordScenarioSuccess('save');
     } else {
       this.showGoalBanner("TOP AZ FARKLA AUTTA!");
+      const oppGoal = this.career.triggerOpponentGoalCheck();
+      if (oppGoal) {
+        setTimeout(() => {
+          this.showGoalBanner(`⚠️ ${oppGoal.rival.toUpperCase()} KONTRA ATAKTA GOL ATTI! [${oppGoal.homeScore} - ${oppGoal.awayScore}]`);
+          const scoreEl = document.getElementById('hud-score-display');
+          if (scoreEl) scoreEl.innerText = `${oppGoal.homeScore} - ${oppGoal.awayScore}`;
+        }, 900);
+      }
     }
     this.advanceScenarioAfterDelay(2000);
   }

@@ -1,9 +1,11 @@
 // ==========================================================
-// FUTBOL KARİYER & TRANSFER SİSTEMİ (career.js)
+// FUTBOL KARİYER, EKONOMİ, MAĞAZA VE LİDERLİK SİSTEMİ (career.js)
 // ==========================================================
 
 const CLUBS_DATABASE = {
-  // Başlangıç Kulüpleri (Tier 1)
+  // ==========================================================
+  // 1. LİG KULÜPLERİ (Tier 1)
+  // ==========================================================
   'anadolu': {
     id: 'anadolu',
     name: 'Anadolu Kaplanları FK',
@@ -37,17 +39,118 @@ const CLUBS_DATABASE = {
     budget: '€1.8M',
     badge: '⭐'
   },
+  'genclerbirligi': {
+    id: 'genclerbirligi',
+    name: 'Gençlerbirliği SK',
+    short: 'GBR',
+    tier: 1,
+    reputation: 68,
+    colors: { primary: '#c0392b', secondary: '#111111', text: '#ffffff' },
+    league: '1. Lig',
+    budget: '€2.5M',
+    badge: '🔴'
+  },
+  'sakaryaspor': {
+    id: 'sakaryaspor',
+    name: 'Sakaryaspor',
+    short: 'SAK',
+    tier: 1,
+    reputation: 67,
+    colors: { primary: '#16a085', secondary: '#111111', text: '#ffffff' },
+    league: '1. Lig',
+    budget: '€2.2M',
+    badge: '🟢'
+  },
+  'kocaelispor': {
+    id: 'kocaelispor',
+    name: 'Kocaelispor',
+    short: 'KOC',
+    tier: 1,
+    reputation: 68,
+    colors: { primary: '#27ae60', secondary: '#111111', text: '#ffffff' },
+    league: '1. Lig',
+    budget: '€2.8M',
+    badge: '🌲'
+  },
+  'bandirmaspor': {
+    id: 'bandirmaspor',
+    name: 'Bandırmaspor',
+    short: 'BAN',
+    tier: 1,
+    reputation: 65,
+    colors: { primary: '#8e44ad', secondary: '#ffffff', text: '#ffffff' },
+    league: '1. Lig',
+    budget: '€1.9M',
+    badge: '🟣'
+  },
+  'corumfk': {
+    id: 'corumfk',
+    name: 'Çorum FK',
+    short: 'COR',
+    tier: 1,
+    reputation: 63,
+    colors: { primary: '#c0392b', secondary: '#ffffff', text: '#ffffff' },
+    league: '1. Lig',
+    budget: '€1.7M',
+    badge: '🛡️'
+  },
+  'amedspor': {
+    id: 'amedspor',
+    name: 'Amed Sportif',
+    short: 'AMD',
+    tier: 1,
+    reputation: 66,
+    colors: { primary: '#27ae60', secondary: '#c0392b', text: '#ffffff' },
+    league: '1. Lig',
+    budget: '€2.1M',
+    badge: '🦅'
+  },
+  'boluspor': {
+    id: 'boluspor',
+    name: 'Boluspor',
+    short: 'BOL',
+    tier: 1,
+    reputation: 63,
+    colors: { primary: '#c0392b', secondary: '#ffffff', text: '#ffffff' },
+    league: '1. Lig',
+    budget: '€1.6M',
+    badge: '🔴'
+  },
+  'umraniyespor': {
+    id: 'umraniyespor',
+    name: 'Ümraniyespor',
+    short: 'UMR',
+    tier: 1,
+    reputation: 62,
+    colors: { primary: '#c0392b', secondary: '#ffffff', text: '#ffffff' },
+    league: '1. Lig',
+    budget: '€1.5M',
+    badge: '⚪'
+  },
+  'igdirfk': {
+    id: 'igdirfk',
+    name: 'Iğdır FK',
+    short: 'IGD',
+    tier: 1,
+    reputation: 64,
+    colors: { primary: '#27ae60', secondary: '#ffffff', text: '#ffffff' },
+    league: '1. Lig',
+    budget: '€2.3M',
+    badge: '⛰️'
+  },
 
-  // Süper Lig & Avrupa Ligleri (Tier 2)
+  // ==========================================================
+  // SÜPER LİG KULÜPLERİ (Tier 2)
+  // ==========================================================
   'galatasaray': {
     id: 'galatasaray',
     name: 'Galatasaray SK',
     short: 'GS',
     tier: 2,
-    reputation: 82,
+    reputation: 84,
     colors: { primary: '#b81414', secondary: '#f39c12', text: '#ffffff' },
-    league: 'Süper Lig / Avrupa',
-    budget: '€25M',
+    league: 'Süper Lig',
+    budget: '€45M',
     badge: '🦁'
   },
   'fenerbahce': {
@@ -55,10 +158,10 @@ const CLUBS_DATABASE = {
     name: 'Fenerbahçe SK',
     short: 'FB',
     tier: 2,
-    reputation: 82,
+    reputation: 84,
     colors: { primary: '#0c2461', secondary: '#f1c40f', text: '#ffffff' },
-    league: 'Süper Lig / Avrupa',
-    budget: '€24M',
+    league: 'Süper Lig',
+    budget: '€44M',
     badge: '🐦'
   },
   'besiktas': {
@@ -66,25 +169,192 @@ const CLUBS_DATABASE = {
     name: 'Beşiktaş JK',
     short: 'BJK',
     tier: 2,
-    reputation: 80,
+    reputation: 82,
     colors: { primary: '#111111', secondary: '#ffffff', text: '#ffffff' },
-    league: 'Süper Lig / Avrupa',
-    budget: '€20M',
+    league: 'Süper Lig',
+    budget: '€35M',
     badge: '🦅'
   },
-  'ajax': {
-    id: 'ajax',
-    name: 'Ajax Amsterdam',
-    short: 'AJX',
+  'trabzonspor': {
+    id: 'trabzonspor',
+    name: 'Trabzonspor',
+    short: 'TS',
     tier: 2,
-    reputation: 81,
+    reputation: 80,
+    colors: { primary: '#6e1d24', secondary: '#0984e3', text: '#ffffff' },
+    league: 'Süper Lig',
+    budget: '€28M',
+    badge: '🌊'
+  },
+  'basaksehir': {
+    id: 'basaksehir',
+    name: 'Başakşehir FK',
+    short: 'IBFK',
+    tier: 2,
+    reputation: 77,
+    colors: { primary: '#e67e22', secondary: '#0c2461', text: '#ffffff' },
+    league: 'Süper Lig',
+    budget: '€20M',
+    badge: '🦉'
+  },
+  'samsunspor': {
+    id: 'samsunspor',
+    name: 'Samsunspor',
+    short: 'SAM',
+    tier: 2,
+    reputation: 76,
     colors: { primary: '#c0392b', secondary: '#ffffff', text: '#ffffff' },
-    league: 'Eredivisie / Avrupa',
-    budget: '€30M',
-    badge: '🛡️'
+    league: 'Süper Lig',
+    budget: '€18M',
+    badge: '🔴'
+  },
+  'goztepe': {
+    id: 'goztepe',
+    name: 'Göztepe SK',
+    short: 'GOZ',
+    tier: 2,
+    reputation: 76,
+    colors: { primary: '#f1c40f', secondary: '#c0392b', text: '#111111' },
+    league: 'Süper Lig',
+    budget: '€17M',
+    badge: '⚓'
+  },
+  'eyupspor': {
+    id: 'eyupspor',
+    name: 'Eyüpspor',
+    short: 'EYP',
+    tier: 2,
+    reputation: 75,
+    colors: { primary: '#6c5ce7', secondary: '#f1c40f', text: '#ffffff' },
+    league: 'Süper Lig',
+    budget: '€16M',
+    badge: '💜'
+  },
+  'antalyaspor': {
+    id: 'antalyaspor',
+    name: 'Antalyaspor',
+    short: 'ANT',
+    tier: 2,
+    reputation: 74,
+    colors: { primary: '#c0392b', secondary: '#ffffff', text: '#ffffff' },
+    league: 'Süper Lig',
+    budget: '€14M',
+    badge: '🦂'
+  },
+  'sivasspor': {
+    id: 'sivasspor',
+    name: 'Sivasspor',
+    short: 'SIV',
+    tier: 2,
+    reputation: 73,
+    colors: { primary: '#c0392b', secondary: '#ffffff', text: '#ffffff' },
+    league: 'Süper Lig',
+    budget: '€12M',
+    badge: '⚔️'
+  },
+  'kasimpasa': {
+    id: 'kasimpasa',
+    name: 'Kasımpaşa SK',
+    short: 'KAS',
+    tier: 2,
+    reputation: 73,
+    colors: { primary: '#0984e3', secondary: '#ffffff', text: '#ffffff' },
+    league: 'Süper Lig',
+    budget: '€13M',
+    badge: '⚓'
+  },
+  'konyaspor': {
+    id: 'konyaspor',
+    name: 'Konyaspor',
+    short: 'KON',
+    tier: 2,
+    reputation: 73,
+    colors: { primary: '#27ae60', secondary: '#ffffff', text: '#ffffff' },
+    league: 'Süper Lig',
+    budget: '€13M',
+    badge: '🦅'
+  },
+  'rizespor': {
+    id: 'rizespor',
+    name: 'Çaykur Rizespor',
+    short: 'RIZ',
+    tier: 2,
+    reputation: 73,
+    colors: { primary: '#27ae60', secondary: '#0984e3', text: '#ffffff' },
+    league: 'Süper Lig',
+    budget: '€12M',
+    badge: '🍵'
+  },
+  'gaziantepfk': {
+    id: 'gaziantepfk',
+    name: 'Gaziantep FK',
+    short: 'GFK',
+    tier: 2,
+    reputation: 72,
+    colors: { primary: '#c0392b', secondary: '#111111', text: '#ffffff' },
+    league: 'Süper Lig',
+    budget: '€11M',
+    badge: '🦅'
+  },
+  'alanyaspor': {
+    id: 'alanyaspor',
+    name: 'Alanyaspor',
+    short: 'ALN',
+    tier: 2,
+    reputation: 72,
+    colors: { primary: '#e67e22', secondary: '#27ae60', text: '#ffffff' },
+    league: 'Süper Lig',
+    budget: '€11M',
+    badge: '🏰'
+  },
+  'kayserispor': {
+    id: 'kayserispor',
+    name: 'Kayserispor',
+    short: 'KAY',
+    tier: 2,
+    reputation: 71,
+    colors: { primary: '#f1c40f', secondary: '#c0392b', text: '#111111' },
+    league: 'Süper Lig',
+    budget: '€10M',
+    badge: '🏔️'
+  },
+  'bodrumfk': {
+    id: 'bodrumfk',
+    name: 'Bodrum FK',
+    short: 'BOD',
+    tier: 2,
+    reputation: 70,
+    colors: { primary: '#27ae60', secondary: '#ffffff', text: '#ffffff' },
+    league: 'Süper Lig',
+    budget: '€9M',
+    badge: '⛵'
+  },
+  'hatayspor': {
+    id: 'hatayspor',
+    name: 'Hatayspor',
+    short: 'HAT',
+    tier: 2,
+    reputation: 70,
+    colors: { primary: '#8b0000', secondary: '#ffffff', text: '#ffffff' },
+    league: 'Süper Lig',
+    budget: '€9M',
+    badge: '🌿'
+  },
+  'adanademirspor': {
+    id: 'adanademirspor',
+    name: 'Adana Demirspor',
+    short: 'ADS',
+    tier: 2,
+    reputation: 71,
+    colors: { primary: '#0984e3', secondary: '#0c2461', text: '#ffffff' },
+    league: 'Süper Lig',
+    budget: '€10M',
+    badge: '⚡'
   },
 
-  // Dünya Devleri (Tier 3)
+  // ==========================================================
+  // AVRUPA & DÜNYA DEVLERİ (Tier 3 - Şampiyonlar Ligi)
+  // ==========================================================
   'realmadrid': {
     id: 'realmadrid',
     name: 'Real Madrid CF',
@@ -93,7 +363,7 @@ const CLUBS_DATABASE = {
     reputation: 96,
     colors: { primary: '#f5f6fa', secondary: '#d4af37', text: '#1e272e' },
     league: 'La Liga / Şampiyonlar Ligi',
-    budget: '€120M',
+    budget: '€140M',
     badge: '👑'
   },
   'mancity': {
@@ -104,7 +374,7 @@ const CLUBS_DATABASE = {
     reputation: 95,
     colors: { primary: '#68c5db', secondary: '#0c2461', text: '#ffffff' },
     league: 'Premier League',
-    budget: '€150M',
+    budget: '€160M',
     badge: '🚢'
   },
   'bayern': {
@@ -115,7 +385,7 @@ const CLUBS_DATABASE = {
     reputation: 94,
     colors: { primary: '#eb2f06', secondary: '#0c2461', text: '#ffffff' },
     league: 'Bundesliga',
-    budget: '€110M',
+    budget: '€120M',
     badge: '🔴'
   },
   'arsenal': {
@@ -123,18 +393,301 @@ const CLUBS_DATABASE = {
     name: 'Arsenal FC',
     short: 'ARS',
     tier: 3,
-    reputation: 92,
+    reputation: 93,
     colors: { primary: '#e55039', secondary: '#ffffff', text: '#ffffff' },
     league: 'Premier League',
-    budget: '€95M',
+    budget: '€110M',
     badge: '💣'
+  },
+  'barcelona': {
+    id: 'barcelona',
+    name: 'FC Barcelona',
+    short: 'BAR',
+    tier: 3,
+    reputation: 94,
+    colors: { primary: '#0984e3', secondary: '#b81414', text: '#ffffff' },
+    league: 'La Liga',
+    budget: '€115M',
+    badge: '🔵'
+  },
+  'liverpool': {
+    id: 'liverpool',
+    name: 'Liverpool FC',
+    short: 'LIV',
+    tier: 3,
+    reputation: 93,
+    colors: { primary: '#c0392b', secondary: '#f1c40f', text: '#ffffff' },
+    league: 'Premier League',
+    budget: '€115M',
+    badge: '🔴'
+  },
+  'psg': {
+    id: 'psg',
+    name: 'Paris Saint-Germain',
+    short: 'PSG',
+    tier: 3,
+    reputation: 92,
+    colors: { primary: '#0c2461', secondary: '#c0392b', text: '#ffffff' },
+    league: 'Ligue 1',
+    budget: '€130M',
+    badge: '🗼'
+  },
+  'inter': {
+    id: 'inter',
+    name: 'Inter Milan',
+    short: 'INT',
+    tier: 3,
+    reputation: 91,
+    colors: { primary: '#0984e3', secondary: '#111111', text: '#ffffff' },
+    league: 'Serie A',
+    budget: '€90M',
+    badge: '🐍'
+  },
+  'juventus': {
+    id: 'juventus',
+    name: 'Juventus FC',
+    short: 'JUV',
+    tier: 3,
+    reputation: 90,
+    colors: { primary: '#111111', secondary: '#ffffff', text: '#ffffff' },
+    league: 'Serie A',
+    budget: '€85M',
+    badge: '🦓'
+  },
+  'leverkusen': {
+    id: 'leverkusen',
+    name: 'Bayer Leverkusen',
+    short: 'B04',
+    tier: 3,
+    reputation: 90,
+    colors: { primary: '#c0392b', secondary: '#111111', text: '#ffffff' },
+    league: 'Bundesliga',
+    budget: '€85M',
+    badge: '🦁'
+  },
+  'atletico': {
+    id: 'atletico',
+    name: 'Atlético de Madrid',
+    short: 'ATM',
+    tier: 3,
+    reputation: 89,
+    colors: { primary: '#c0392b', secondary: '#0984e3', text: '#ffffff' },
+    league: 'La Liga',
+    budget: '€80M',
+    badge: '🐻'
   }
 };
 
-const RIVAL_NAMES = [
-  'Kuzey Yıldızı', 'Boğaziçi FK', 'Toros Gücü', 'Karadeniz Fırtınası',
-  'Göztepe', 'Başakşehir', 'Sevilla', 'Napoli', 'Borussia Dortmund',
-  'Inter Milan', 'Juventus', 'Liverpool', 'Barcelona'
+// ==========================================================
+// MAĞAZA KATALOĞU (STORE CATALOG - HIGH TICKET SALARY ITEMS)
+// ==========================================================
+const STORE_CATALOG = {
+  balls: [
+    {
+      id: 'ball_pro',
+      name: 'FIFA Quality Pro - Golden Panelli',
+      price: 0,
+      desc: 'Aerodinamik altın/cyan kıvrımlı panellere sahip resmi maç topu.',
+      icon: '⚽',
+      badge: 'STANDART',
+      accentColor: '#ffd700'
+    },
+    {
+      id: 'ball_classic',
+      name: 'Klasik Deri Nostalji Topu',
+      price: 25000,
+      desc: '1970 Mexico tarzı elle dikilmiş gerçek deri retro futbol topu.',
+      icon: '⚽',
+      badge: 'RETRO',
+      accentColor: '#cbd5e1'
+    },
+    {
+      id: 'ball_cyber',
+      name: 'Cyberpunk Neon Matrix Topu',
+      price: 280000,
+      desc: 'Havada parıldayan neon pembe & camgöbeği ızgaralı hologramik maç topu.',
+      icon: '🔮',
+      badge: 'CYBER',
+      accentColor: '#00f2fe'
+    },
+    {
+      id: 'ball_lava',
+      name: 'Alevli Volkanik Magma Topu',
+      price: 850000,
+      desc: 'Kor gibi parlayan volkanik lav desenli, havayı yakan özel şut topu.',
+      icon: '🔥',
+      badge: 'EFSANEVİ',
+      accentColor: '#ff3366'
+    },
+    {
+      id: 'ball_gold',
+      name: '24K Saf Altın Ballon d\'Or Topu',
+      price: 2500000,
+      desc: 'Tamamı 24 karat saf altın kaplama, dünya yıldızlarına özel şaheser.',
+      icon: '👑',
+      badge: 'LUXURY',
+      accentColor: '#f1c40f'
+    }
+  ],
+  boots: [
+    {
+      id: 'boot_copa',
+      name: 'Copa Pure Klasik Deri',
+      price: 0,
+      desc: 'Geleneksel siyah dana derisi ve konforlu çivili krampon.',
+      icon: '👟',
+      badge: 'STANDART',
+      accentColor: '#94a3b8'
+    },
+    {
+      id: 'boot_predator',
+      name: 'Predator Strike Neon Kırmızı',
+      price: 95000,
+      desc: 'Falsolu plase ve füze vuruşlar için kauçuk falso panelleri.',
+      icon: '⚡',
+      badge: 'GÜÇ',
+      accentColor: '#ff3366'
+    },
+    {
+      id: 'boot_mercurial',
+      name: 'Mercurial Trivela Cyan Edition',
+      price: 350000,
+      desc: 'Dış ayak vuruşlarında maksimum kamçı etkisi sağlayan aerodinamik saya.',
+      icon: '🌪️',
+      badge: 'TRİVELA',
+      accentColor: '#00f2fe'
+    },
+    {
+      id: 'boot_phantom',
+      name: 'Phantom GX Altın Çivili Pro',
+      price: 1250000,
+      desc: 'Altın kaplama 8 çivi ve lazer kesim temas yüzeyi ile kusursuz vuruş.',
+      icon: '🏆',
+      badge: 'ELİT',
+      accentColor: '#ffd700'
+    },
+    {
+      id: 'boot_diamond',
+      name: 'Diamond Elite Kristal Krampon',
+      price: 4500000,
+      desc: 'Elmas parıltılı sayası ve ultra hafif karbon fiber tabanlı lüks model.',
+      icon: '💎',
+      badge: 'MİTİK',
+      accentColor: '#a78bfa'
+    }
+  ],
+  hairs: [
+    {
+      id: 'hair_fade',
+      name: 'Klasik Fade & Atletik Bandana',
+      price: 0,
+      desc: 'Modern sporcu saç kesimi ve teri tutan beyaz kafa bandı.',
+      icon: '✂️',
+      badge: 'STANDART',
+      accentColor: '#ffffff'
+    },
+    {
+      id: 'hair_buzz',
+      name: 'Modern Asker Traşı (Buzz Cut)',
+      price: 15000,
+      desc: 'Net, sert ve tavizsiz kısa saç stili.',
+      icon: '💈',
+      badge: 'POPÜLER',
+      accentColor: '#64748b'
+    },
+    {
+      id: 'hair_samurai',
+      name: 'Samuray Topuz & Ninja Bandı',
+      price: 75000,
+      desc: 'Zlatan / Bale tarzı tepede toplanmış karizmatik topuz.',
+      icon: '🥋',
+      badge: 'ÖZEL',
+      accentColor: '#e67e22'
+    },
+    {
+      id: 'hair_platinum',
+      name: 'Platin Sarı Boyalı Saç (Neymar Stili)',
+      price: 220000,
+      desc: 'Sahada anında fark edilen platin sarısı parlak stil.',
+      icon: '✨',
+      badge: 'YILDIZ',
+      accentColor: '#fef08a'
+    },
+    {
+      id: 'hair_afro',
+      name: 'Kıvırcık Hacimli Efsane Afro',
+      price: 650000,
+      desc: '1980lerin ve Brezilya sambacılarının ikonik afro saç stili.',
+      icon: '🌀',
+      badge: 'KLASİK',
+      accentColor: '#d97706'
+    },
+    {
+      id: 'hair_goldcrown',
+      name: 'Altın Taçlı Kral Saç Modeli',
+      price: 2000000,
+      desc: 'Kraliyet altın tacı ve altın parıltılı şampiyon saç tasarımı.',
+      icon: '👑',
+      badge: 'KRAL',
+      accentColor: '#ffd700'
+    }
+  ],
+  kits: [
+    {
+      id: 'kit_club',
+      name: 'Kulüp Resmi Maç Forması',
+      price: 0,
+      desc: 'Mevcut kulübünün orijinal renkleri ve arması.',
+      icon: '👕',
+      badge: 'RESMÎ',
+      accentColor: '#38bdf8'
+    },
+    {
+      id: 'kit_blackgold',
+      name: 'Gece Siyahı & Altın V-Yaka Özel Kit',
+      price: 300000,
+      desc: 'Mat siyah kumaş üzerine 24K altın yaldızlı sponsor ve numara detayları.',
+      icon: '🖤',
+      badge: 'VIP',
+      accentColor: '#f1c40f'
+    },
+    {
+      id: 'kit_retro',
+      name: '1990s Retro Nostalji Çubuklu Kit',
+      price: 950000,
+      desc: 'Futbolun altın çağının dikey nostaljik çizgileri ve vintage yaka.',
+      icon: '⭐',
+      badge: 'RETRO',
+      accentColor: '#ec4899'
+    },
+    {
+      id: 'kit_cyber',
+      name: 'Cyberpunk Hologram 2050 Kiti',
+      price: 3000000,
+      desc: 'Işık saçan dinamik devre hatlarına sahip geleceğin zırh forması.',
+      icon: '🌌',
+      badge: 'GELECEK',
+      accentColor: '#00ff88'
+    }
+  ]
+};
+
+// ==========================================================
+// DÜNYA EFSANELERİ LİDERLİK TABLOSU VERİLERİ (LEADERBOARD)
+// ==========================================================
+const BASE_LEADERBOARD = [
+  { name: 'Cristiano Ronaldo', club: 'Al Nassr', ovr: 86, money: 260000000, country: '🇵🇹', isIcon: true },
+  { name: 'Lionel Messi', club: 'Inter Miami', ovr: 88, money: 185000000, country: '🇦🇷', isIcon: true },
+  { name: 'Neymar Jr', club: 'Al Hilal', ovr: 87, money: 145000000, country: '🇧🇷', isIcon: true },
+  { name: 'Kylian Mbappé', club: 'Real Madrid', ovr: 91, money: 115000000, country: '🇫🇷', isIcon: true },
+  { name: 'Erling Haaland', club: 'Manchester City', ovr: 91, money: 85000000, country: '🇳🇴', isIcon: true },
+  { name: 'Kevin De Bruyne', club: 'Manchester City', ovr: 91, money: 65000000, country: '🇧🇪', isIcon: true },
+  { name: 'Vinicius Jr', club: 'Real Madrid', ovr: 90, money: 55000000, country: '🇧🇷', isIcon: true },
+  { name: 'Jude Bellingham', club: 'Real Madrid', ovr: 90, money: 48000000, country: '🏴󠁧󠁢󠁥󠁮󠁧󠁿', isIcon: true },
+  { name: 'Harry Kane', club: 'Bayern München', ovr: 90, money: 45000000, country: '🏴󠁧󠁢󠁥󠁮󠁧󠁿', isIcon: true },
+  { name: 'Arda Güler', club: 'Real Madrid', ovr: 82, money: 18000000, country: '🇹🇷', isIcon: true },
+  { name: 'Mauro Icardi', club: 'Galatasaray', ovr: 83, money: 28000000, country: '🇦🇷', isIcon: true },
+  { name: 'Dusan Tadic', club: 'Fenerbahçe', ovr: 82, money: 22000000, country: '🇷🇸', isIcon: true }
 ];
 
 class CareerManager {
@@ -162,17 +715,26 @@ class CareerManager {
 
   createProfile(name, position, jerseyNumber, startingClubId = 'anadolu', preferredFoot = 'R') {
     const club = CLUBS_DATABASE[startingClubId] || CLUBS_DATABASE['anadolu'];
+    const startingWage = (club.tier === 1) ? 15000 : (club.tier === 2 ? 65000 : 220000);
+    const startingMoney = startingWage * 3; // Başlangıç birikimi
+
     this.player = {
       name: name.trim() || 'Yıldız Oyuncu',
       position: position, // 'ST' (Forvet), 'GK' (Kaleci), 'CAM' (Orta Saha)
       preferredFoot: preferredFoot || 'R', // 'R' (Sağ Ayak), 'L' (Sol Ayak)
       jerseyNumber: parseInt(jerseyNumber) || 10,
       clubId: club.id,
-      overall: position === 'GK' ? 73 : 75,
-      marketValue: 1200000, // €1.2M
-      wage: 5000, // haftalık €5,000
+      overall: position === 'GK' ? 74 : 76,
+      marketValue: 1500000,
+      money: startingMoney,
+      wage: startingWage,
       totalCareerGoals: 0,
       totalCareerSaves: 0,
+      purchasedItems: ['ball_pro', 'boot_copa', 'hair_fade', 'kit_club'],
+      equippedBall: 'ball_pro',
+      equippedBoot: 'boot_copa',
+      equippedHair: 'hair_fade',
+      equippedKit: 'kit_club',
       trophies: []
     };
     this.season = 1;
@@ -193,6 +755,13 @@ class CareerManager {
       if (data) {
         this.player = JSON.parse(data);
         if (!this.player.preferredFoot) this.player.preferredFoot = 'R';
+        if (this.player.money === undefined) this.player.money = 50000;
+        if (!this.player.purchasedItems) this.player.purchasedItems = ['ball_pro', 'boot_copa', 'hair_fade', 'kit_club'];
+        if (!this.player.equippedBall) this.player.equippedBall = 'ball_pro';
+        if (!this.player.equippedBoot) this.player.equippedBoot = 'boot_copa';
+        if (!this.player.equippedHair) this.player.equippedHair = 'hair_fade';
+        if (!this.player.equippedKit) this.player.equippedKit = 'kit_club';
+
         this.season = parseInt(localStorage.getItem('fc_career_season')) || 1;
         this.currentMatchIndex = parseInt(localStorage.getItem('fc_career_match_idx')) || 0;
         const stats = localStorage.getItem('fc_career_season_stats');
@@ -227,21 +796,29 @@ class CareerManager {
     return CLUBS_DATABASE[this.player.clubId] || CLUBS_DATABASE['anadolu'];
   }
 
-  // Sezon Maçını Oluştur
+  // ==========================================================
+  // GERÇEKÇİ LİG EŞLEŞTİRMESİ & SENARYO OLUŞTURMA
+  // ==========================================================
   generateNextMatch() {
     const club = this.getCurrentClub();
     const matchNum = this.currentMatchIndex + 1;
-    let rivalName = RIVAL_NAMES[(this.season * 3 + matchNum) % RIVAL_NAMES.length];
-    
-    // Final maçı ise dev rakip
-    if (matchNum === this.matchesPerSeason) {
-      rivalName = club.tier === 3 ? 'Barcelona FC (Şampiyonlar Ligi Finali)' : 'Fenerbahçe SK (Kupa Finali)';
+
+    // YALNIZCA OYUNCUNUN BULUNDUĞU LİGİN TAKIMLARINI SEÇ:
+    const leagueRivals = Object.values(CLUBS_DATABASE).filter(c => c.tier === club.tier && c.id !== club.id);
+    let chosenRival;
+    if (leagueRivals.length > 0) {
+      const rivalIdx = (this.season * 5 + matchNum) % leagueRivals.length;
+      chosenRival = leagueRivals[rivalIdx];
+    } else {
+      chosenRival = { name: 'Rakip FK', badge: '🛡️', colors: { primary: '#34495e' } };
     }
 
-    // Maç senaryosu türleri: 'freekick', 'penalty'
+    // Rakibin bu maçta atacağı gol hedefi (Biz de gol yiyelim mantığı: 0, 1 veya 2 gol)
+    const targetAwayGoals = (club.tier === 1) ? Math.floor(Math.random() * 2) : Math.floor(Math.random() * 3);
+
     let scenarios = [];
     if (this.player.position === 'GK') {
-      // Kaleci Senaryoları (Farklı mesafeler, açılar ve barajlar)
+      // Kaleci Senaryoları
       const pool = [
         { type: 'penalty', title: '90. Dakika Penaltı Kurtarışı!', distance: 11, spotX: 0, wall: 0, desc: 'Rakip forvet topun başında! [A/D] ile yere atla veya [A/D + Space] ile 90\'a uç!' },
         { type: 'freekick', title: '21 Metre Sol Çapraz Frikik', distance: 21, spotX: -5.0, wall: 4, desc: 'Sol çaprazdan baraj üstü tehlikeli falso! Köşeyi kapat ve devleş!' },
@@ -254,34 +831,36 @@ class CareerManager {
       ];
       scenarios = pool.sort(() => 0.5 - Math.random()).slice(0, 4);
     } else {
-      // Forvet ve Orta Saha Senaryoları (Zengin Frikik ve Penaltı Çeşitleri)
+      // Forvet ve Orta Saha Senaryoları
       const pool = [
         { type: 'penalty', title: 'Hakem Penaltı Noktasını Gösterdi!', distance: 11, spotX: 0, wall: 0, desc: 'Soğukkanlı kal, kaleciyi ters köşeye yatır veya 90\'a as!' },
         { type: 'freekick', title: '17 Metre Ceza Sahası Çizgisi Frikik', distance: 17, spotX: -3.5, wall: 3, desc: 'Ceza yayı önü çok yakın mesafe! Barajın üstünden köşeye bırak!' },
         { type: 'freekick', title: '20 Metre Ceza Yayı Karşıdan Vuruş', distance: 20, spotX: 0, wall: 4, desc: 'Tam karşıdan net bir frikik fırsatı! Barajı aşırtıp köşeye tak!' },
         { type: 'freekick', title: '22 Metre Sol Çapraz Serbest Vuruş', distance: 22, spotX: -5.5, wall: 4, desc: 'Sol çaprazdan sağ köşeye nefis bir plase veya sert falso gönder!' },
-        { type: 'freekick', title: '24 Metre Sağ Çapraz (Beckham Kavis)', distance: 24, spotX: 6.2, wall: 4, desc: 'Sağ çaprazdan sola doğru dış falsoyla kaleciyi çaresiz bırak!' },
+        { type: 'freekick', title: '24 Metre Sağ Çapraz (Trivela & Kavis)', distance: 24, spotX: 6.2, wall: 4, desc: 'Sağ çaprazdan dış ayak trivelayla [G] veya falsolu kaleciyi çaresiz bırak!' },
         { type: 'freekick', title: '28 Metre Roberto Carlos Füzesi!', distance: 28, spotX: -8.5, wall: 5, desc: 'Sol açık açıdan barajın dışından ters kavisle 90\'a roket yolla!' },
         { type: 'freekick', title: '30 Metre Uzak Mesafe Bomba Şut', distance: 30, spotX: 2.0, wall: 5, desc: 'Çok uzak mesafe! Maksimum güçle tavana veya direk dibine sert şut çıkar!' },
         { type: 'freekick', title: '19 Metre Dar Açı Frikik', distance: 19, spotX: 7.8, wall: 3, desc: 'Sağ dar açıdan ön direğe sert veya uzak direğin 90\'ına aşırtma vur!' },
-        { type: 'freekick', title: '90+3 Son Dakika Şampiyonluk Frikiki', distance: 26, spotX: -4.0, wall: 4, desc: 'Tüm stat nefesini tuttu! Barajın üstünden köşeye falsola ve maçı bitir!' },
+        { type: 'freekick', title: '90+3 Son Dakika Galibiyet Frikiki', distance: 26, spotX: -4.0, wall: 4, desc: 'Tüm stat nefesini tuttu! Barajın üstünden köşeye falsola ve maçı bitir!' },
         { type: 'penalty', title: 'Kupa Finali Seri Penaltı', distance: 11, spotX: 0, wall: 0, desc: 'Tarihi an! Çatala mermiyi gönder ve kupayı getir!' }
       ];
-      // Karışık 4 senaryo seç
       scenarios = pool.sort(() => 0.5 - Math.random()).slice(0, 4);
     }
 
     this.currentMatch = {
       matchNumber: matchNum,
       homeTeam: club.name,
-      awayTeam: rivalName,
+      awayTeam: chosenRival.name,
+      awayClub: chosenRival,
       scenarios: scenarios,
       currentScenarioIdx: 0,
       goalsThisMatch: 0,
       assistsThisMatch: 0,
       savesThisMatch: 0,
       matchScoreHome: 0,
-      matchScoreAway: 0
+      matchScoreAway: 0,
+      targetAwayGoals: targetAwayGoals,
+      awayGoalsConceded: 0
     };
 
     return this.currentMatch;
@@ -304,37 +883,93 @@ class CareerManager {
     }
   }
 
+  // RAKİP KONTRA ATAKLA GOL ATMA SİMÜLASYONU ("Biz de gol yiyelim")
+  triggerOpponentGoalCheck() {
+    if (!this.currentMatch) return null;
+    if (this.currentMatch.awayGoalsConceded < this.currentMatch.targetAwayGoals) {
+      this.currentMatch.matchScoreAway++;
+      this.currentMatch.awayGoalsConceded++;
+      return {
+        conceded: true,
+        rival: this.currentMatch.awayTeam,
+        homeScore: this.currentMatch.matchScoreHome,
+        awayScore: this.currentMatch.matchScoreAway
+      };
+    }
+    return null;
+  }
+
+  // ==========================================================
+  // MAÇ SONU: MAAŞ, PRİMLER VE KAZANÇ HESAPLAMA
+  // ==========================================================
   finishMatch() {
     if (!this.currentMatch) return null;
     this.seasonStats.matches++;
 
-    // Maç puanı hesapla (6.0 - 10.0 arası)
-    let matchRating = 6.2;
+    // Rakibin kalan hedef gollerini ekle
+    while (this.currentMatch.awayGoalsConceded < this.currentMatch.targetAwayGoals) {
+      this.currentMatch.matchScoreAway++;
+      this.currentMatch.awayGoalsConceded++;
+    }
+
+    const homeScore = this.currentMatch.matchScoreHome;
+    const awayScore = this.currentMatch.matchScoreAway;
+    const isWin = homeScore > awayScore;
+    const isDraw = homeScore === awayScore;
+
+    // Maç puanı hesapla (5.0 - 10.0 arası)
+    let matchRating = 6.0;
     if (this.player.position === 'GK') {
-      matchRating += (this.currentMatch.savesThisMatch * 1.2);
+      matchRating += (this.currentMatch.savesThisMatch * 1.3);
+      if (awayScore === 0) matchRating += 1.2;
     } else {
-      matchRating += (this.currentMatch.goalsThisMatch * 1.1) + (this.currentMatch.assistsThisMatch * 0.7);
+      matchRating += (this.currentMatch.goalsThisMatch * 1.2) + (this.currentMatch.assistsThisMatch * 0.7);
+      if (isWin) matchRating += 0.6;
     }
     matchRating = Math.min(10.0, Math.max(5.0, Number(matchRating.toFixed(1))));
-
     this.seasonStats.totalRating += matchRating;
 
-    // Oyuncu OVR ve Piyasa Değeri Gelişimi
-    if (matchRating >= 8.0) {
+    // OVR Gelişimi
+    if (matchRating >= 8.2) {
       this.player.overall = Math.min(99, this.player.overall + 1);
-      this.player.marketValue += Math.round(this.player.marketValue * 0.15);
+      this.player.marketValue += Math.round(this.player.marketValue * 0.12);
     }
+
+    // ========================================================
+    // MAAŞ & PRİM KAZANÇLARI (BANKAYA GEÇEN PARA)
+    // ========================================================
+    const baseWage = this.player.wage || 25000;
+    const goalBonus = this.currentMatch.goalsThisMatch * 15000;
+    const saveBonus = this.currentMatch.savesThisMatch * 12000;
+    const winBonus = isWin ? 35000 : (isDraw ? 10000 : 0);
+    const cleanSheetBonus = (awayScore === 0) ? 30000 : 0;
+    const motmBonus = (matchRating >= 8.5) ? 25000 : 0;
+
+    const totalEarnedThisMatch = baseWage + goalBonus + saveBonus + winBonus + cleanSheetBonus + motmBonus;
+    this.player.money += totalEarnedThisMatch;
 
     const summary = {
       matchNum: this.currentMatch.matchNumber,
       homeTeam: this.currentMatch.homeTeam,
       awayTeam: this.currentMatch.awayTeam,
-      homeScore: this.currentMatch.matchScoreHome,
-      awayScore: this.currentMatch.matchScoreAway,
+      homeScore: homeScore,
+      awayScore: awayScore,
       goals: this.currentMatch.goalsThisMatch,
       saves: this.currentMatch.savesThisMatch,
       rating: matchRating,
-      motm: matchRating >= 8.5
+      motm: matchRating >= 8.5,
+      isWin: isWin,
+      isDraw: isDraw,
+      earnings: {
+        baseWage,
+        goalBonus,
+        saveBonus,
+        winBonus,
+        cleanSheetBonus,
+        motmBonus,
+        totalEarned: totalEarnedThisMatch,
+        currentWallet: this.player.money
+      }
     };
 
     this.currentMatchIndex++;
@@ -344,76 +979,167 @@ class CareerManager {
     return { summary, isSeasonEnd };
   }
 
-  // SEZON BİTTİĞİNDE TRANSFER TEKLİFLERİ ÜRET
+  // ==========================================================
+  // MAĞAZA VE EKİPMAN İŞLEMLERİ (SHOP SYSTEM)
+  // ==========================================================
+  getStoreCatalog() {
+    return STORE_CATALOG;
+  }
+
+  buyItem(category, itemId) {
+    if (!this.player) return { success: false, msg: 'Oyuncu bulunamadı.' };
+    const items = STORE_CATALOG[category] || [];
+    const item = items.find(it => it.id === itemId);
+    if (!item) return { success: false, msg: 'Ürün bulunamadı.' };
+
+    if (this.player.purchasedItems.includes(itemId)) {
+      this.equipItem(category, itemId);
+      return { success: true, msg: `${item.name} kuşanıldı!`, equipped: true };
+    }
+
+    if (this.player.money < item.price) {
+      const diff = item.price - this.player.money;
+      return {
+        success: false,
+        msg: `Yetersiz bakiye! Bu ürünü almak için €${diff.toLocaleString('tr-TR')} daha maaş biriktirmelisin.`
+      };
+    }
+
+    // Satın Al
+    this.player.money -= item.price;
+    this.player.purchasedItems.push(itemId);
+    this.equipItem(category, itemId);
+    this.saveProfile();
+
+    return {
+      success: true,
+      msg: `Tebrikler! ${item.name} satın alındı ve kuşanıldı!`,
+      equipped: true,
+      newWallet: this.player.money
+    };
+  }
+
+  equipItem(category, itemId) {
+    if (!this.player) return false;
+    if (!this.player.purchasedItems.includes(itemId)) return false;
+
+    if (category === 'balls') this.player.equippedBall = itemId;
+    else if (category === 'boots') this.player.equippedBoot = itemId;
+    else if (category === 'hairs') this.player.equippedHair = itemId;
+    else if (category === 'kits') this.player.equippedKit = itemId;
+
+    this.saveProfile();
+    return true;
+  }
+
+  // ==========================================================
+  // LİDERLİK TABLOSU (LEADERBOARD: EN ÇOK PARA, EN ÇOK OVERALL, HEPSİ)
+  // ==========================================================
+  getLeaderboard(filter = 'money') {
+    if (!this.player) return [];
+    const club = this.getCurrentClub();
+
+    // Kullanıcının oyuncusunu ekle
+    const userEntry = {
+      name: `${this.player.name} (SEN)`,
+      club: club.name,
+      ovr: this.player.overall,
+      money: this.player.money,
+      country: '🇹🇷',
+      isUser: true
+    };
+
+    const combinedList = [...BASE_LEADERBOARD, userEntry];
+
+    if (filter === 'money') {
+      // En Çok Para (En zengin futbolcular)
+      combinedList.sort((a, b) => b.money - a.money);
+    } else if (filter === 'ovr') {
+      // En Yüksek Overall
+      combinedList.sort((a, b) => b.ovr - a.ovr || b.money - a.money);
+    } else {
+      // HEPSİ: Hem Overall hem Para birleşik puanı (Composite Score)
+      combinedList.sort((a, b) => {
+        const scoreA = (a.ovr * 1500000) + a.money;
+        const scoreB = (b.ovr * 1500000) + b.money;
+        return scoreB - scoreA;
+      });
+    }
+
+    return combinedList.map((entry, index) => ({
+      rank: index + 1,
+      ...entry
+    }));
+  }
+
+  // ==========================================================
+  // SEZON BİTTİĞİNDE TRANSFER TEKLİFLERİ ÜRET (LİGLERE GÖRE)
+  // ==========================================================
   generateTransferOffers() {
     const avgRating = this.seasonStats.matches > 0 
       ? (this.seasonStats.totalRating / this.seasonStats.matches).toFixed(1)
-      : 7.0;
+      : 7.2;
 
     const currentClub = this.getCurrentClub();
     const offers = [];
 
-    // Mevcut Kulüpten Sözleşme Yenileme Teklifi (Her zaman gelir)
-    const renewalWage = Math.round(this.player.wage * (avgRating >= 7.5 ? 1.4 : 1.1));
+    // 1. Mevcut Kulüpten Sözleşme Yenileme Teklifi
+    const renewalWage = Math.round(this.player.wage * (avgRating >= 7.5 ? 1.45 : 1.15));
     offers.push({
       club: currentClub,
       type: 'renewal',
       headline: `${currentClub.name} Sözleşme Uzatmak İstiyor!`,
       weeklyWage: renewalWage,
-      status: 'Mevcut Kulübün',
-      promise: 'Takım Kaptanı & Değişilmez İlk 11',
-      desc: 'Kulüp performansından çok memnun, maaşına zam yaparak seni takımda tutmak istiyor.'
+      status: `Mevcut Kulübün (${currentClub.league})`,
+      promise: 'Takım Kaptanı & 10 Numara Liderlik',
+      desc: 'Kulüp performansından son derece memnun. Maaşına sağlam zam yaparak seni takımda tutmak istiyor.'
     });
 
-    // Başarıya Göre Dış Teklifler
-    const allClubs = Object.values(CLUBS_DATABASE).filter(c => c.id !== currentClub.id);
+    // 2. Dış Kulüplerden Transfer Teklifleri
+    const availableClubs = Object.values(CLUBS_DATABASE).filter(c => c.id !== currentClub.id);
 
-    // Eğer ortalama puan 8.5+ ise Tier 3 (Real Madrid, City, Bayern vb.) teklif yapar
-    // Eğer 7.2+ ise Tier 2 (GS, FB, BJK, Ajax) teklif yapar
-    allClubs.forEach(club => {
-      let shouldOffer = false;
-      let weeklyWage = 0;
-
-      if (club.tier === 3 && avgRating >= 8.3 && this.player.overall >= 78) {
-        shouldOffer = true;
-        weeklyWage = Math.round(180000 + (this.player.overall * 1500));
-      } else if (club.tier === 2 && avgRating >= 7.0) {
-        shouldOffer = true;
-        weeklyWage = Math.round(35000 + (this.player.overall * 600));
-      } else if (club.tier === 1 && avgRating < 7.0) {
-        shouldOffer = true;
-        weeklyWage = Math.round(8000 + (this.player.overall * 100));
+    // Eğer 1. Ligdeyse ve başarılıysa Süper Lig devleri ister!
+    // Eğer Süper Ligdeyse ve harikaysa Avrupa Devleri (Real, City, Bayern) kapıyı çalar!
+    let targetClubs = [];
+    if (currentClub.tier === 1) {
+      if (avgRating >= 7.2) {
+        // Süper Lig teklifleri
+        targetClubs = availableClubs.filter(c => c.tier === 2);
+      } else {
+        // 1. Lig diğer iddialı takımlar
+        targetClubs = availableClubs.filter(c => c.tier === 1);
       }
-
-      if (shouldOffer) {
-        offers.push({
-          club: club,
-          type: 'transfer',
-          headline: `${club.name} Dev Transfer Teklifi Yaptı!`,
-          weeklyWage: weeklyWage,
-          status: `${club.league}`,
-          promise: this.player.position === 'GK' ? '1 Numaralı Eldiven & Kupa Hedefi' : 'Hücum Hattı Lideri & 10 Numara',
-          desc: `${club.name} scoutları sezon boyunca seni izledi. Seni transfer etmek için dev bonservis ödemeye hazırlar!`
-        });
+    } else if (currentClub.tier === 2) {
+      if (avgRating >= 8.2 && this.player.overall >= 80) {
+        // Avrupa Şampiyonlar Ligi devleri
+        targetClubs = availableClubs.filter(c => c.tier === 3);
+      } else {
+        // Diğer Süper Lig büyükleri
+        targetClubs = availableClubs.filter(c => c.tier === 2);
       }
-    });
-
-    // En az 3 cazip teklif garanti olsun
-    if (offers.length < 3) {
-      const fallbackClubs = allClubs.filter(c => !offers.some(o => o.club.id === c.id));
-      if (fallbackClubs.length > 0) {
-        const fc = fallbackClubs[0];
-        offers.push({
-          club: fc,
-          type: 'transfer',
-          headline: `${fc.name} Resmî Masaya Oturdu!`,
-          weeklyWage: Math.round(this.player.wage * 1.3),
-          status: `${fc.league}`,
-          promise: 'İlk 11 Garantisi',
-          desc: 'Gelecek sezon iddialı bir kadro kurmak istiyorlar.'
-        });
-      }
+    } else {
+      // Avrupa Devi
+      targetClubs = availableClubs.filter(c => c.tier === 3);
     }
+
+    // Karıştır ve 4 farklı takımdan teklif çıkar
+    const shuffled = targetClubs.sort(() => 0.5 - Math.random()).slice(0, 4);
+
+    shuffled.forEach(club => {
+      let offeredWage = Math.round(this.player.wage * (1.3 + Math.random() * 0.5));
+      if (club.tier === 3) offeredWage = Math.max(offeredWage, 220000);
+      else if (club.tier === 2) offeredWage = Math.max(offeredWage, 65000);
+
+      offers.push({
+        club: club,
+        type: 'transfer',
+        headline: `${club.name} Dev Bonservisle Kapıyı Çaldı!`,
+        weeklyWage: offeredWage,
+        status: `${club.league}`,
+        promise: this.player.position === 'GK' ? '1 Numaralı Eldiven & Kupa Hedefi' : 'İlk 11 Garantisi & Şampiyonluk',
+        desc: `${club.name} teknik heyeti ve yönetimi seni kadrosuna katmak için her türlü fedakarlığa hazır!`
+      });
+    });
 
     return {
       avgRating,
@@ -422,14 +1148,12 @@ class CareerManager {
     };
   }
 
-  // Kulüp Transferini Kabul Et
   acceptTransfer(clubId, newWage) {
     if (!this.player) return;
     const oldClub = this.getCurrentClub();
     this.player.clubId = clubId;
     if (newWage) this.player.wage = newWage;
 
-    // Sezonu bir artır, maç sayacını sıfırla
     this.history.push({
       season: this.season,
       club: oldClub.name,
