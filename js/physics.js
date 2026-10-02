@@ -560,8 +560,16 @@ class BallPhysics {
 
         const isHuman = !!gkBounds.isPlayerGK;
         const isDiving = !!gkBounds.isDiving;
-        const gloveThreshold = isHuman ? (isDiving ? 1.05 : 0.85) : 0.42;
-        const bodyThreshold = isHuman ? (isDiving ? 1.15 : 0.90) : 0.55;
+
+        // Eldiven ve ekipman reach bonusu (Mağazadan alınan eldivenler kurtarış alanını genişletir)
+        let reachBonus = 0;
+        if (isHuman && window.careerManager && typeof window.careerManager.getPlayerBonusStats === 'function') {
+          reachBonus = (window.careerManager.getPlayerBonusStats().gkReach || 0);
+        }
+        const reachMultiplier = 1 + (reachBonus / 100);
+
+        const gloveThreshold = (isHuman ? (isDiving ? 1.05 : 0.85) : 0.42) * reachMultiplier;
+        const bodyThreshold = (isHuman ? (isDiving ? 1.15 : 0.90) : 0.55) * reachMultiplier;
 
         let isSaved = false;
 
@@ -703,18 +711,31 @@ class BallPhysics {
   }
 
   updateTrail() {
-    this.trail.unshift(this.position.clone());
-    if (this.trail.length > this.trailMeshes.length) {
-      this.trail.pop();
+    if (!this._trailPool) {
+      this._trailPool = [];
+      for (let i = 0; i < this.trailMeshes.length; i++) {
+        this._trailPool.push(new THREE.Vector3());
+      }
     }
 
-    this.trail.forEach((pos, idx) => {
+    // Shift previous positions down the pool
+    for (let i = this.trailMeshes.length - 1; i > 0; i--) {
+      this._trailPool[i].copy(this._trailPool[i - 1]);
+    }
+    this._trailPool[0].copy(this.position);
+
+    const activeCount = Math.min(this.trailMeshes.length, Math.floor((this.elapsedFlight || 0) * 45));
+    for (let idx = 0; idx < this.trailMeshes.length; idx++) {
       const m = this.trailMeshes[idx];
-      m.position.copy(pos);
-      m.material.opacity = Math.max(0, 0.6 - (idx / this.trailMeshes.length) * 0.6);
-      const scale = 1 - (idx / this.trailMeshes.length) * 0.6;
-      m.scale.set(scale, scale, scale);
-    });
+      if (idx < activeCount) {
+        m.position.copy(this._trailPool[idx]);
+        m.material.opacity = Math.max(0, 0.6 - (idx / this.trailMeshes.length) * 0.6);
+        const scale = 1 - (idx / this.trailMeshes.length) * 0.6;
+        m.scale.set(scale, scale, scale);
+      } else {
+        m.material.opacity = 0;
+      }
+    }
 
     if (this.isTrivela) {
       this.updateTrivelaVortex();

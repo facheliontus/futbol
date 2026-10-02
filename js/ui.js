@@ -253,6 +253,25 @@ class UIManager {
     const btnOpenLeaderboard = document.getElementById('btn-open-leaderboard');
     const btnCloseLeaderboard = document.getElementById('btn-close-leaderboard');
 
+    const openLeaderboardModal = (e) => {
+      if (e) {
+        e.preventDefault();
+        e.stopPropagation();
+      }
+      if (!this.leaderboardModal) return;
+      this.leaderboardModal.classList.remove('hidden');
+      this.renderLeaderboard(this.currentLeaderboardFilter);
+    };
+
+    const closeLeaderboardModal = (e) => {
+      if (e) {
+        e.preventDefault();
+        e.stopPropagation();
+      }
+      if (!this.leaderboardModal) return;
+      this.leaderboardModal.classList.add('hidden');
+    };
+
     const toggleLeaderboardModal = (e) => {
       if (e) {
         e.preventDefault();
@@ -260,17 +279,15 @@ class UIManager {
       }
       if (!this.leaderboardModal) return;
       if (this.leaderboardModal.classList.contains('hidden')) {
-        this.renderLeaderboard(this.currentLeaderboardFilter);
-        this.leaderboardModal.classList.remove('hidden');
+        openLeaderboardModal(e);
       } else {
-        this.leaderboardModal.classList.add('hidden');
+        closeLeaderboardModal(e);
       }
     };
 
     if (btnOpenLeaderboard && this.leaderboardModal) {
-      btnOpenLeaderboard.addEventListener('click', toggleLeaderboardModal);
-      btnOpenLeaderboard.addEventListener('pointerup', (e) => {
-        if (e.pointerType === 'touch') toggleLeaderboardModal(e);
+      btnOpenLeaderboard.addEventListener('click', (e) => {
+        openLeaderboardModal(e);
       });
     }
 
@@ -493,6 +510,7 @@ class UIManager {
       else if (category === 'boots') isEquipped = (p.equippedBoot === item.id);
       else if (category === 'hairs') isEquipped = (p.equippedHair === item.id);
       else if (category === 'kits') isEquipped = (p.equippedKit === item.id);
+      else if (category === 'gloves') isEquipped = (p.equippedGloves === item.id);
 
       const card = document.createElement('div');
       card.className = 'store-card';
@@ -515,6 +533,26 @@ class UIManager {
         </button>`;
       }
 
+      // Stat Boost Hapları
+      let statsPillsHtml = '';
+      if (item.stats) {
+        const pills = [];
+        if (item.stats.power) pills.push(`<span class="store-stat-pill power">⚡ +${item.stats.power} ŞUT GÜCÜ</span>`);
+        if (item.stats.curve) pills.push(`<span class="store-stat-pill curve">🌪️ +${item.stats.curve} FALSO</span>`);
+        if (item.stats.trivela) pills.push(`<span class="store-stat-pill trivela">🌀 +${item.stats.trivela} TRİVELA</span>`);
+        if (item.stats.accuracy) pills.push(`<span class="store-stat-pill accuracy">🎯 +${item.stats.accuracy} İSABET</span>`);
+        if (item.stats.ballSpeed) pills.push(`<span class="store-stat-pill speed">🚀 +${item.stats.ballSpeed} TOP HIZI</span>`);
+        if (item.stats.dipKnuckle) pills.push(`<span class="store-stat-pill knuckle">💥 +${item.stats.dipKnuckle} KNUCKLE</span>`);
+        if (item.stats.gkReflex) pills.push(`<span class="store-stat-pill reflex">🧤 +${item.stats.gkReflex} REFLEKS</span>`);
+        if (item.stats.gkReach) pills.push(`<span class="store-stat-pill reach">🦅 +${item.stats.gkReach} KANAT AÇIKLIĞI</span>`);
+        if (item.stats.gkParry) pills.push(`<span class="store-stat-pill parry">🛡️ +${item.stats.gkParry} ÇELME</span>`);
+        if (item.stats.wageBonus) pills.push(`<span class="store-stat-pill wage">💰 +%${item.stats.wageBonus} MAAŞ PRİMİ</span>`);
+        if (item.stats.charisma) pills.push(`<span class="store-stat-pill charisma">👑 +${item.stats.charisma} PRESTİJ</span>`);
+        if (pills.length > 0) {
+          statsPillsHtml = `<div class="store-card-stats-box">${pills.join('')}</div>`;
+        }
+      }
+
       card.innerHTML = `
         <div class="store-card-header">
           <div class="store-card-icon">${item.icon}</div>
@@ -524,6 +562,7 @@ class UIManager {
         </div>
         <h4 class="store-card-title">${item.name}</h4>
         <p class="store-card-desc">${item.desc}</p>
+        ${statsPillsHtml}
         <div class="store-card-footer">
           ${priceDisplay}
           ${actionBtnHtml}

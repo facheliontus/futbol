@@ -479,7 +479,8 @@ const CLUBS_DATABASE = {
 };
 
 // ==========================================================
-// MAĞAZA KATALOĞU (STORE CATALOG - HIGH TICKET SALARY ITEMS)
+// MAĞAZA KATALOĞU (STORE CATALOG - DETAYLI STAT BOOSTLU EKİPMANLAR)
+// Kramponlar, Maç Topları, Kaleci Eldivenleri, Özel İmaj ve VIP Formalar
 // ==========================================================
 const STORE_CATALOG = {
   balls: [
@@ -487,19 +488,31 @@ const STORE_CATALOG = {
       id: 'ball_pro',
       name: 'FIFA Quality Pro - Golden Panelli',
       price: 0,
-      desc: 'Aerodinamik altın/cyan kıvrımlı panellere sahip resmi maç topu.',
+      desc: 'Aerodinamik altın/cyan kıvrımlı panellere sahip resmi lig maç topu.',
       icon: '⚽',
       badge: 'STANDART',
-      accentColor: '#ffd700'
+      accentColor: '#ffd700',
+      stats: { ballSpeed: 0, dipKnuckle: 0 }
     },
     {
       id: 'ball_classic',
-      name: 'Klasik Deri Nostalji Topu',
+      name: 'Klasik Deri Nostalji Topu (1970)',
       price: 25000,
-      desc: '1970 Mexico tarzı elle dikilmiş gerçek deri retro futbol topu.',
+      desc: '1970 Mexico tarzı elle dikilmiş gerçek deri retro futbol topu. Kararlı sekme sağlar.',
       icon: '⚽',
       badge: 'RETRO',
-      accentColor: '#cbd5e1'
+      accentColor: '#cbd5e1',
+      stats: { ballSpeed: 5, dipKnuckle: 4 }
+    },
+    {
+      id: 'ball_champions',
+      name: 'UCL Yıldızlı Şampiyonlar Topu',
+      price: 135000,
+      desc: 'Devler ligi için özel aerodinamik dikişsiz termal paneller. Falsoyu mükemmel iletir.',
+      icon: '⭐',
+      badge: 'UCL',
+      accentColor: '#38bdf8',
+      stats: { ballSpeed: 12, dipKnuckle: 12, accuracy: 10 }
     },
     {
       id: 'ball_cyber',
@@ -508,25 +521,38 @@ const STORE_CATALOG = {
       desc: 'Havada parıldayan neon pembe & camgöbeği ızgaralı hologramik maç topu.',
       icon: '🔮',
       badge: 'CYBER',
-      accentColor: '#00f2fe'
+      accentColor: '#00f2fe',
+      stats: { ballSpeed: 18, dipKnuckle: 20 }
     },
     {
       id: 'ball_lava',
       name: 'Alevli Volkanik Magma Topu',
       price: 850000,
-      desc: 'Kor gibi parlayan volkanik lav desenli, havayı yakan özel şut topu.',
+      desc: 'Kor gibi parlayan volkanik lav desenli, havayı yırtan süpersonik şut topu.',
       icon: '🔥',
       badge: 'EFSANEVİ',
-      accentColor: '#ff3366'
+      accentColor: '#ff3366',
+      stats: { ballSpeed: 25, dipKnuckle: 25, power: 12 }
     },
     {
       id: 'ball_gold',
       name: '24K Saf Altın Ballon d\'Or Topu',
       price: 2500000,
-      desc: 'Tamamı 24 karat saf altın kaplama, dünya yıldızlarına özel şaheser.',
+      desc: 'Tamamı 24 karat saf altın kaplama, dünya yıldızlarına özel paha biçilmez şaheser.',
       icon: '👑',
       badge: 'LUXURY',
-      accentColor: '#f1c40f'
+      accentColor: '#f1c40f',
+      stats: { ballSpeed: 32, dipKnuckle: 32, power: 20 }
+    },
+    {
+      id: 'ball_galaxy',
+      name: 'Kozmik Galaksi Sonsuzluk Topu',
+      price: 6000000,
+      desc: 'Yıldız tozu ve yerçekimi dalgası üreten uzay çağı prototip futbol topu.',
+      icon: '🌌',
+      badge: 'KOZMİK',
+      accentColor: '#a855f7',
+      stats: { ballSpeed: 42, dipKnuckle: 40, power: 28, accuracy: 25 }
     }
   ],
   boots: [
@@ -537,16 +563,18 @@ const STORE_CATALOG = {
       desc: 'Geleneksel siyah dana derisi ve konforlu çivili krampon.',
       icon: '👟',
       badge: 'STANDART',
-      accentColor: '#94a3b8'
+      accentColor: '#94a3b8',
+      stats: { power: 0, curve: 0, accuracy: 0 }
     },
     {
       id: 'boot_predator',
       name: 'Predator Strike Neon Kırmızı',
       price: 95000,
-      desc: 'Falsolu plase ve füze vuruşlar için kauçuk falso panelleri.',
+      desc: 'Kauçuk vuruş kanatları ile füze gibi sert şutlar ve ani çatala dalışlar.',
       icon: '⚡',
       badge: 'GÜÇ',
-      accentColor: '#ff3366'
+      accentColor: '#ff3366',
+      stats: { power: 18, curve: 12, accuracy: 12 }
     },
     {
       id: 'boot_mercurial',
@@ -555,25 +583,120 @@ const STORE_CATALOG = {
       desc: 'Dış ayak vuruşlarında maksimum kamçı etkisi sağlayan aerodinamik saya.',
       icon: '🌪️',
       badge: 'TRİVELA',
-      accentColor: '#00f2fe'
+      accentColor: '#00f2fe',
+      stats: { power: 15, curve: 28, trivela: 28 }
+    },
+    {
+      id: 'boot_hypervenom',
+      name: 'Hypervenom Zehirli Yeşil V-Strike',
+      price: 680000,
+      desc: 'Ceza sahası canavarı forvetler için ölümcül bitiricilik ve yön değiştirme.',
+      icon: '🐍',
+      badge: 'BİTİRİCİ',
+      accentColor: '#22c55e',
+      stats: { power: 24, curve: 18, accuracy: 22 }
+    },
+    {
+      id: 'boot_magista',
+      name: 'Magista Opus Maestro Plase',
+      price: 980000,
+      desc: '90\'a kavisli plase bırakan oyun kuruculara özel 3D petek dokulu temas yüzeyi.',
+      icon: '🎯',
+      badge: 'MAESTRO',
+      accentColor: '#06b6d4',
+      stats: { power: 20, curve: 34, accuracy: 28 }
     },
     {
       id: 'boot_phantom',
       name: 'Phantom GX Altın Çivili Pro',
       price: 1250000,
-      desc: 'Altın kaplama 8 çivi ve lazer kesim temas yüzeyi ile kusursuz vuruş.',
+      desc: 'Altın kaplama 8 çivi ve lazer kesim temas yüzeyi ile kusursuz vuruş stabilitesi.',
       icon: '🏆',
       badge: 'ELİT',
-      accentColor: '#ffd700'
+      accentColor: '#ffd700',
+      stats: { power: 28, curve: 24, accuracy: 30 }
+    },
+    {
+      id: 'boot_superfly',
+      name: 'Mercurial Superfly 360 Karbon',
+      price: 2400000,
+      desc: 'Havacılık sınıfı karbon fiber taban plakası ve dinamik bilek çorabı.',
+      icon: '🚀',
+      badge: 'PRO+',
+      accentColor: '#f97316',
+      stats: { power: 34, curve: 32, trivela: 34 }
     },
     {
       id: 'boot_diamond',
       name: 'Diamond Elite Kristal Krampon',
       price: 4500000,
-      desc: 'Elmas parıltılı sayası ve ultra hafif karbon fiber tabanlı lüks model.',
+      desc: 'Elmas parıltılı sayası ve ultra hafif karbon fiber tabanlı lüks zirve model.',
       icon: '💎',
       badge: 'MİTİK',
-      accentColor: '#a78bfa'
+      accentColor: '#a78bfa',
+      stats: { power: 42, curve: 38, trivela: 40, accuracy: 38 }
+    }
+  ],
+  gloves: [
+    {
+      id: 'gloves_standard',
+      name: 'Temel Antrenman Eldiveni',
+      price: 0,
+      desc: 'Yeni başlayan kaleciler için standart sünger avuçlu eldiven.',
+      icon: '🧤',
+      badge: 'STANDART',
+      accentColor: '#94a3b8',
+      stats: { gkReflex: 0, gkReach: 0 }
+    },
+    {
+      id: 'gloves_predator_pro',
+      name: 'Predator Pro 4mm Contact Latex',
+      price: 85000,
+      desc: 'Topun avuçtan kaymasını engelleyen yüksek tutuşlu Alman temas lateksi.',
+      icon: '🧤',
+      badge: 'GÜÇLÜ',
+      accentColor: '#ff3366',
+      stats: { gkReflex: 16, gkReach: 14 }
+    },
+    {
+      id: 'gloves_vapor_grip',
+      name: 'Vapor Grip 3 All-Weather',
+      price: 320000,
+      desc: 'Yağmurda ve karda maksimum kavrama sağlayan kavisli parmak kesimi.',
+      icon: '🧤',
+      badge: 'KAVRAMA',
+      accentColor: '#f97316',
+      stats: { gkReflex: 24, gkReach: 20 }
+    },
+    {
+      id: 'gloves_reusch_attrakt',
+      name: 'Reusch Attrakt G3 Fusion Pro',
+      price: 750000,
+      desc: 'Sert şutları parmak uçlarıyla 90\'dan kornere çelen esnek kemikli teknoloji.',
+      icon: '🧤',
+      badge: 'BARAJ',
+      accentColor: '#38bdf8',
+      stats: { gkReflex: 30, gkReach: 26, gkParry: 24 }
+    },
+    {
+      id: 'gloves_titan_gold',
+      name: 'Titan Pro 24K Altın Dikişli',
+      price: 1500000,
+      desc: 'Özel titanyum parmak zırhı ve 24K altın dikişli devasa kanat açıklığı.',
+      icon: '👑',
+      badge: 'DEVLEŞEN',
+      accentColor: '#f1c40f',
+      stats: { gkReflex: 38, gkReach: 34, gkParry: 32 }
+    },
+    {
+      id: 'gloves_cyber_reflex',
+      name: 'Cyber 2050 Biyonik Refleks Zırhı',
+      price: 3800000,
+      desc: 'Yapay zeka güdümlü mikro servo motorlu ve nano-yapışkanlı gelecek çağı eldiveni.',
+      icon: '🤖',
+      badge: 'BİYONİK',
+      accentColor: '#00ff88',
+      stats: { gkReflex: 50, gkReach: 44, gkParry: 46 }
     }
   ],
   hairs: [
@@ -584,7 +707,8 @@ const STORE_CATALOG = {
       desc: 'Modern sporcu saç kesimi ve teri tutan beyaz kafa bandı.',
       icon: '✂️',
       badge: 'STANDART',
-      accentColor: '#ffffff'
+      accentColor: '#ffffff',
+      stats: { charisma: 0 }
     },
     {
       id: 'hair_buzz',
@@ -593,25 +717,38 @@ const STORE_CATALOG = {
       desc: 'Net, sert ve tavizsiz kısa saç stili.',
       icon: '💈',
       badge: 'POPÜLER',
-      accentColor: '#64748b'
+      accentColor: '#64748b',
+      stats: { charisma: 5 }
     },
     {
       id: 'hair_samurai',
       name: 'Samuray Topuz & Ninja Bandı',
       price: 75000,
-      desc: 'Zlatan / Bale tarzı tepede toplanmış karizmatik topuz.',
+      desc: 'Zlatan / Bale tarzı tepede toplanmış karizmatik samuray topuzu.',
       icon: '🥋',
       badge: 'ÖZEL',
-      accentColor: '#e67e22'
+      accentColor: '#e67e22',
+      stats: { charisma: 14 }
     },
     {
       id: 'hair_platinum',
       name: 'Platin Sarı Boyalı Saç (Neymar Stili)',
       price: 220000,
-      desc: 'Sahada anında fark edilen platin sarısı parlak stil.',
+      desc: 'Sahada anında fark edilen platin sarısı parlak yıldız stili.',
       icon: '✨',
       badge: 'YILDIZ',
-      accentColor: '#fef08a'
+      accentColor: '#fef08a',
+      stats: { charisma: 22 }
+    },
+    {
+      id: 'hair_dreads',
+      name: 'Rasta Örgülü Sporcu Saçı',
+      price: 450000,
+      desc: 'Ronaldinho tarzı atletik bandana ve dinamik rasta örgüleri.',
+      icon: '🦁',
+      badge: 'SAMBA',
+      accentColor: '#10b981',
+      stats: { charisma: 28 }
     },
     {
       id: 'hair_afro',
@@ -620,7 +757,8 @@ const STORE_CATALOG = {
       desc: '1980lerin ve Brezilya sambacılarının ikonik afro saç stili.',
       icon: '🌀',
       badge: 'KLASİK',
-      accentColor: '#d97706'
+      accentColor: '#d97706',
+      stats: { charisma: 32 }
     },
     {
       id: 'hair_goldcrown',
@@ -629,7 +767,8 @@ const STORE_CATALOG = {
       desc: 'Kraliyet altın tacı ve altın parıltılı şampiyon saç tasarımı.',
       icon: '👑',
       badge: 'KRAL',
-      accentColor: '#ffd700'
+      accentColor: '#ffd700',
+      stats: { charisma: 50, wageBonus: 20 }
     }
   ],
   kits: [
@@ -640,7 +779,8 @@ const STORE_CATALOG = {
       desc: 'Mevcut kulübünün orijinal renkleri ve arması.',
       icon: '👕',
       badge: 'RESMÎ',
-      accentColor: '#38bdf8'
+      accentColor: '#38bdf8',
+      stats: { wageBonus: 0, charisma: 0 }
     },
     {
       id: 'kit_blackgold',
@@ -649,7 +789,8 @@ const STORE_CATALOG = {
       desc: 'Mat siyah kumaş üzerine 24K altın yaldızlı sponsor ve numara detayları.',
       icon: '🖤',
       badge: 'VIP',
-      accentColor: '#f1c40f'
+      accentColor: '#f1c40f',
+      stats: { wageBonus: 18, charisma: 22 }
     },
     {
       id: 'kit_retro',
@@ -658,7 +799,8 @@ const STORE_CATALOG = {
       desc: 'Futbolun altın çağının dikey nostaljik çizgileri ve vintage yaka.',
       icon: '⭐',
       badge: 'RETRO',
-      accentColor: '#ec4899'
+      accentColor: '#ec4899',
+      stats: { wageBonus: 28, charisma: 30 }
     },
     {
       id: 'kit_cyber',
@@ -667,7 +809,18 @@ const STORE_CATALOG = {
       desc: 'Işık saçan dinamik devre hatlarına sahip geleceğin zırh forması.',
       icon: '🌌',
       badge: 'GELECEK',
-      accentColor: '#00ff88'
+      accentColor: '#00ff88',
+      stats: { wageBonus: 45, charisma: 45 }
+    },
+    {
+      id: 'kit_champions_gold',
+      name: 'UEFA Şampiyonluk Zırh Forması',
+      price: 5500000,
+      desc: 'Saf altın yaldızlı Şampiyonlar Ligi armalı, kulüp yönetimini büyüleyen efsane forma.',
+      icon: '🏆',
+      badge: 'ŞAMPİYON',
+      accentColor: '#ffd700',
+      stats: { wageBonus: 65, charisma: 60 }
     }
   ]
 };
@@ -819,11 +972,12 @@ class CareerManager {
       wage: startingWage,
       totalCareerGoals: 0,
       totalCareerSaves: 0,
-      purchasedItems: ['ball_pro', 'boot_copa', 'hair_fade', 'kit_club'],
+      purchasedItems: ['ball_pro', 'boot_copa', 'hair_fade', 'kit_club', 'gloves_standard'],
       equippedBall: 'ball_pro',
       equippedBoot: 'boot_copa',
       equippedHair: 'hair_fade',
       equippedKit: 'kit_club',
+      equippedGloves: 'gloves_standard',
       trophies: []
     };
     this.season = 1;
@@ -892,11 +1046,13 @@ class CareerManager {
         }
         if (!this.player.preferredFoot) this.player.preferredFoot = 'R';
         if (this.player.money === undefined) this.player.money = 50000;
-        if (!this.player.purchasedItems) this.player.purchasedItems = ['ball_pro', 'boot_copa', 'hair_fade', 'kit_club'];
+        if (!this.player.purchasedItems) this.player.purchasedItems = ['ball_pro', 'boot_copa', 'hair_fade', 'kit_club', 'gloves_standard'];
+        if (!this.player.purchasedItems.includes('gloves_standard')) this.player.purchasedItems.push('gloves_standard');
         if (!this.player.equippedBall) this.player.equippedBall = 'ball_pro';
         if (!this.player.equippedBoot) this.player.equippedBoot = 'boot_copa';
         if (!this.player.equippedHair) this.player.equippedHair = 'hair_fade';
         if (!this.player.equippedKit) this.player.equippedKit = 'kit_club';
+        if (!this.player.equippedGloves) this.player.equippedGloves = 'gloves_standard';
 
         this.season = parseInt(localStorage.getItem('fc_career_season')) || 1;
         this.currentMatchIndex = parseInt(localStorage.getItem('fc_career_match_idx')) || 0;
@@ -1110,13 +1266,18 @@ class CareerManager {
     const weeklyWage = this.player.wage || 25000;
     const baseWage = isPayday ? weeklyWage : 0;
 
+    // Kuşanılan formadan gelen maaş prim çarpanı
+    const bonusStats = this.getPlayerBonusStats();
+    const wageMultiplier = 1 + ((bonusStats.wageBonus || 0) / 100);
+
     const goalBonus = this.currentMatch.goalsThisMatch * 15000;
     const saveBonus = this.currentMatch.savesThisMatch * 12000;
     const winBonus = isWin ? 35000 : (isDraw ? 10000 : 0);
     const cleanSheetBonus = (awayScore === 0) ? 30000 : 0;
     const motmBonus = (matchRating >= 8.5) ? 25000 : 0;
 
-    const totalEarnedThisMatch = baseWage + goalBonus + saveBonus + winBonus + cleanSheetBonus + motmBonus;
+    const baseEarned = baseWage + goalBonus + saveBonus + winBonus + cleanSheetBonus + motmBonus;
+    const totalEarnedThisMatch = Math.round(baseEarned * wageMultiplier);
     this._executeTransaction(() => {
       this.player.money += totalEarnedThisMatch;
     });
@@ -1153,6 +1314,51 @@ class CareerManager {
 
     const isSeasonEnd = this.currentMatchIndex >= this.matchesPerSeason;
     return { summary, isSeasonEnd };
+  }
+
+  // ==========================================================
+  // OYUNCUNUN TÜM KUŞANDIĞI EKİPMANLARIN BONUS STATLARINI HESAPLA
+  // ==========================================================
+  getPlayerBonusStats() {
+    const stats = {
+      shotPower: 0,
+      curve: 0,
+      trivela: 0,
+      accuracy: 0,
+      ballSpeed: 0,
+      dipKnuckle: 0,
+      gkReflex: 0,
+      gkReach: 0,
+      gkParry: 0,
+      wageBonus: 0,
+      charisma: 0
+    };
+    if (!this.player) return stats;
+
+    const equipped = [
+      { cat: 'balls', id: this.player.equippedBall },
+      { cat: 'boots', id: this.player.equippedBoot },
+      { cat: 'gloves', id: this.player.equippedGloves },
+      { cat: 'hairs', id: this.player.equippedHair },
+      { cat: 'kits', id: this.player.equippedKit }
+    ];
+
+    equipped.forEach(itemInfo => {
+      if (!itemInfo.id) return;
+      const list = STORE_CATALOG[itemInfo.cat] || [];
+      const item = list.find(it => it.id === itemInfo.id);
+      if (item && item.stats) {
+        for (const [k, v] of Object.entries(item.stats)) {
+          if (stats[k] !== undefined) {
+            stats[k] += v;
+          } else {
+            stats[k] = v;
+          }
+        }
+      }
+    });
+
+    return stats;
   }
 
   // ==========================================================
@@ -1206,6 +1412,7 @@ class CareerManager {
     else if (category === 'boots') this.player.equippedBoot = itemId;
     else if (category === 'hairs') this.player.equippedHair = itemId;
     else if (category === 'kits') this.player.equippedKit = itemId;
+    else if (category === 'gloves') this.player.equippedGloves = itemId;
 
     this.saveProfile();
     return true;
@@ -1378,24 +1585,37 @@ class CareerManager {
   // Sıfır Bot! Oyunu 2 kişi oynadıysa tam 2 kişi görünür!
   // ==========================================================
   getLeaderboard(filter = 'money') {
-    if (!this.player) return [];
-    const club = this.getCurrentClub();
-
-    // 1. Canlı Oyuncu Kaydı (SEN)
-    const userEntry = {
-      id: this.player.id,
-      name: `${this.player.name} (SEN)`,
-      club: club.name,
-      ovr: this.player.overall,
-      money: this.player.money,
-      country: '🇹🇷',
-      isUser: true,
-      isRealPlayer: true
-    };
+    let userEntry = null;
+    if (this.player) {
+      const club = this.getCurrentClub();
+      userEntry = {
+        id: this.player.id,
+        name: `${this.player.name} (SEN)`,
+        club: club ? club.name : 'Süper Lig',
+        ovr: this.player.overall || 75,
+        money: this.player.money || 0,
+        country: '🇹🇷',
+        isUser: true,
+        isRealPlayer: true
+      };
+    } else {
+      userEntry = {
+        id: 'guest_user',
+        name: 'Yıldız Adayı (SEN)',
+        club: 'Süper Lig',
+        ovr: 75,
+        money: 50000,
+        country: '🇹🇷',
+        isUser: true,
+        isRealPlayer: true
+      };
+    }
 
     // 2. Buluttan veya WebRTC'den gelen diğer GERÇEK oyuncular (Asla bot yok!)
+    const currentId = this.player ? this.player.id : 'guest_user';
+    const currentName = this.player ? this.player.name : 'Yıldız Adayı';
     const otherRealPlayers = (this.cachedCloudPlayers || [])
-      .filter(p => p && p.id !== this.player.id && p.name !== this.player.name && p.isRealPlayer !== false && !String(p.id).startsWith('bot_'))
+      .filter(p => p && p.id !== currentId && p.name !== currentName && p.isRealPlayer !== false && !String(p.id).startsWith('bot_'))
       .map(p => ({
         ...p,
         isUser: false,

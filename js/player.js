@@ -484,29 +484,64 @@ class PlayerModels {
   // 5. PROFESYONEL KALECİ ELDİVENİ (4mm German Latex, 5 Eklemli Parmak,
   //    Kabartmalı Yumruk Bölgesi / Punch Zone ve Neopren Bilek Bandı)
   // ==========================================================
-  createGoalkeeperGlove(isLeft = true, gloveColorHex = 0x00ff88) {
+  createGoalkeeperGlove(isLeft = true, gloveColorHex = 0x00ff88, gloveStyle = 'gloves_standard') {
     const gloveGroup = new THREE.Group();
 
-    // 4mm German Contact Latex (Yüksek sürtünmeli parlak kavrama yüzeyi)
+    let palmColor = gloveColorHex;
+    let punchColor = 0x00f2fe;
+    let backColor = 0x0f172a;
+    let strapColor = 0xffffff;
+    let isMetallicGlove = false;
+
+    if (gloveStyle === 'gloves_predator_pro') {
+      palmColor = 0xff1744;
+      punchColor = 0x111111;
+      backColor = 0x111111;
+      strapColor = 0xff1744;
+    } else if (gloveStyle === 'gloves_vapor_grip') {
+      palmColor = 0xf97316;
+      punchColor = 0xffffff;
+      backColor = 0x1e293b;
+      strapColor = 0xf97316;
+    } else if (gloveStyle === 'gloves_reusch_attrakt') {
+      palmColor = 0x38bdf8;
+      punchColor = 0x0284c7;
+      backColor = 0x0f172a;
+      strapColor = 0x38bdf8;
+    } else if (gloveStyle === 'gloves_titan_gold') {
+      palmColor = 0xf1c40f;
+      punchColor = 0xffd700;
+      backColor = 0x1a1a1a;
+      strapColor = 0xf1c40f;
+      isMetallicGlove = true;
+    } else if (gloveStyle === 'gloves_cyber_reflex') {
+      palmColor = 0x00ff88;
+      punchColor = 0x00f2fe;
+      backColor = 0x050510;
+      strapColor = 0x00ff88;
+      isMetallicGlove = true;
+    }
+
+    // 4mm German Contact Latex (Yüksek sürtünmeli kavrama yüzeyi)
     const latexPalmMat = new THREE.MeshStandardMaterial({
-      color: gloveColorHex,
-      roughness: 0.25,
-      metalness: 0.15
+      color: palmColor,
+      roughness: isMetallicGlove ? 0.2 : 0.25,
+      metalness: isMetallicGlove ? 0.65 : 0.15
     });
 
     // Arka El Koruyucu Plaka & Silikon Punch Zone
     const backhandMat = new THREE.MeshStandardMaterial({
-      color: 0x0f172a,
+      color: backColor,
       roughness: 0.45,
       metalness: 0.35
     });
     const punchZoneMat = new THREE.MeshStandardMaterial({
-      color: 0x00f2fe,
+      color: punchColor,
       roughness: 0.2,
       metalness: 0.6
     });
     const strapMat = new THREE.MeshStandardMaterial({
-      color: 0xffffff,
+      color: strapColor,
       roughness: 0.6
     });
 
@@ -571,11 +606,13 @@ class PlayerModels {
   // ==========================================================
   // KALECİ 3D MODELİ OLUŞTURMA (Modern Atletik Dev Kaleci - 1.96m Heybetli Duruş)
   // ==========================================================
-  createGoalkeeper(colorHex = 0x00ff88) {
+  createGoalkeeper(colorHex = 0x00ff88, gloveStyle = null, kitStyle = 'kit_club') {
     if (this.goalkeeper) {
       this.scene.remove(this.goalkeeper.group);
       this.goalkeeper = null;
     }
+
+    const activeGloveStyle = gloveStyle || ((window.careerManager && window.careerManager.player) ? window.careerManager.player.equippedGloves : 'gloves_standard');
 
     const group = new THREE.Group();
     const visualGroup = new THREE.Group();
@@ -584,7 +621,7 @@ class PlayerModels {
     group.add(visualGroup);
 
     // 1. Atletik V-Taper Torso (Kaleci Forması)
-    const torsoData = this.createAthleticTorso(colorHex, 1, 'KALECİ', true, 'kit_club');
+    const torsoData = this.createAthleticTorso(colorHex, 1, 'KALECİ', true, kitStyle);
     visualGroup.add(torsoData.group);
 
     // 2. Anatomik Kafa & Saç Bandı
@@ -632,7 +669,7 @@ class PlayerModels {
     lElbow.position.set(0, -0.24, -0.03);
     leftArmGroup.add(lElbow);
 
-    const leftGlove = this.createGoalkeeperGlove(true, 0x00ff88);
+    const leftGlove = this.createGoalkeeperGlove(true, 0x00ff88, activeGloveStyle);
     leftGlove.position.y = -0.55;
     leftArmGroup.add(leftGlove);
     visualGroup.add(leftArmGroup);
@@ -648,7 +685,7 @@ class PlayerModels {
     rElbow.position.set(0, -0.24, -0.03);
     rightArmGroup.add(rElbow);
 
-    const rightGlove = this.createGoalkeeperGlove(false, 0x00ff88);
+    const rightGlove = this.createGoalkeeperGlove(false, 0x00ff88, activeGloveStyle);
     rightGlove.position.y = -0.55;
     rightArmGroup.add(rightGlove);
     visualGroup.add(rightArmGroup);

@@ -85,10 +85,10 @@ class Game {
     this.camera = new THREE.PerspectiveCamera(55, this.width / this.height, 0.1, 200);
     this.setCameraBehindBall();
 
-    // 3. Renderer
+    // 3. Renderer (Mac/Retina ekranlarda donmayı önleyen optimize 1.25 DPR)
     this.renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
     this.renderer.setSize(this.width, this.height);
-    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.25));
     this.renderer.shadowMap.enabled = true;
     this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
@@ -383,7 +383,8 @@ class Game {
     const cosmetics = {
       hair: (this.career && this.career.player) ? this.career.player.equippedHair : 'hair_fade',
       boot: (this.career && this.career.player) ? this.career.player.equippedBoot : 'boot_copa',
-      kit: (this.career && this.career.player) ? this.career.player.equippedKit : 'kit_club'
+      kit: (this.career && this.career.player) ? this.career.player.equippedKit : 'kit_club',
+      gloves: (this.career && this.career.player) ? this.career.player.equippedGloves : 'gloves_standard'
     };
 
     if (isGK) {
@@ -392,8 +393,8 @@ class Game {
       this.gkMouseY = 0.5;
       this.setCameraGoalkeeperView();
 
-      // Kaleciyi oluştur (Kullanıcının forması)
-      this.playerModels.createGoalkeeper(clubColor);
+      // Kaleciyi oluştur (Kullanıcının forması ve eldivenleri)
+      this.playerModels.createGoalkeeper(clubColor, cosmetics.gloves, cosmetics.kit);
 
       // Rakip Forveti Topun arkasına koy
       const footOffsetX = (this.currentFoot === 'R') ? -0.65 : 0.65;
@@ -430,7 +431,7 @@ class Game {
       }
     } else {
       // OYUNCU FORVET İSE (ŞUT ÇEKEN):
-      this.playerModels.createGoalkeeper(0x27ae60);
+      this.playerModels.createGoalkeeper(0x27ae60, 'gloves_standard', 'kit_club');
       this.playerModels.clearDefenders();
 
       // Oyuncumuz seçilen vuruş ayağına göre topun sol-arka ya da sağ-arkasında durur
@@ -1499,8 +1500,20 @@ class Game {
     const targetY = dirY * 2.5;
 
     const dragDistance = Math.hypot(dx, dragY);
-    const power = THREE.MathUtils.clamp(22 + (dragDistance / 14), 23, 34);
-    const curl = this.currentFalso;
+
+    // Ekipman (Krampon & Top) Stat Güçlendirmeleri
+    const bonusStats = (this.career && typeof this.career.getPlayerBonusStats === 'function')
+      ? this.career.getPlayerBonusStats()
+      : { shotPower: 0, curve: 0, ballSpeed: 0, trivela: 0 };
+
+    const powerBonus = (bonusStats.shotPower || 0) + (bonusStats.ballSpeed || 0) * 0.5;
+    const curveBonus = (bonusStats.curve || 0) + (bonusStats.trivela || 0) * 0.6;
+    const powerMultiplier = 1 + (powerBonus / 100);
+    const curlMultiplier = 1 + (curveBonus / 100);
+
+    const basePower = 22 + (dragDistance / 14);
+    const power = THREE.MathUtils.clamp(basePower * powerMultiplier, 23, 44);
+    const curl = this.currentFalso * curlMultiplier;
     const isTrivela = this.isTrivelaActive();
 
     if (this.crosshair) this.crosshair.material.opacity = 0;
@@ -1891,12 +1904,23 @@ class Game {
     }
   }
 
+  applyCosmetics() {
+    if (!this.career || !this.career.player) return;
+    if (this.ball && this.career.player.equippedBall) {
+      this.ball.setBallStyle(this.career.player.equippedBall);
+    }
+    if (this.currentScenario) {
+      this.setupScenario(this.currentScenario);
+    }
+  }
+
   onResize() {
     this.width = window.innerWidth;
     this.height = window.innerHeight;
     this.camera.aspect = this.width / this.height;
     this.camera.updateProjectionMatrix();
     this.renderer.setSize(this.width, this.height);
+    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.25));
   }
 
   // ANA RENDER DÖNGÜSÜ (60-120 FPS)

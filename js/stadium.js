@@ -513,8 +513,9 @@ class Stadium {
     const mainLight = new THREE.DirectionalLight(0xffffff, 0.9);
     mainLight.position.set(15, 35, 30);
     mainLight.castShadow = true;
-    mainLight.shadow.mapSize.width = 2048;
-    mainLight.shadow.mapSize.height = 2048;
+    mainLight.shadow.mapSize.width = 1024;
+    mainLight.shadow.mapSize.height = 1024;
+    mainLight.shadow.bias = -0.0005;
     mainLight.shadow.camera.near = 0.5;
     mainLight.shadow.camera.far = 100;
     mainLight.shadow.camera.left = -25;
