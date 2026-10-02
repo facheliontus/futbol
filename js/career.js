@@ -673,22 +673,91 @@ const STORE_CATALOG = {
 };
 
 // ==========================================================
-// OYUNCU TOPLULUĞU LİDERLİK TABLOSU VERİLERİ (ONLINE SITE PLAYERS)
+// LİG REFERANS RAKİPLERİ (Yetersiz gerçek oyuncu varken tablo dolgusu)
 // ==========================================================
-const BASE_LEADERBOARD = [
-  { name: 'TrivelaMaster_99', club: 'Chamartin B (Madrid Beyaz)', ovr: 89, money: 34500000, country: '🇹🇷', isIcon: false },
-  { name: 'KadıköyBoğası_FB', club: 'Sarı Kanarya SK', ovr: 88, money: 29800000, country: '🇹🇷', isIcon: false },
-  { name: 'AslanYürek_GS', club: 'Sarı Kırmızı Aslanlar', ovr: 88, money: 28500000, country: '🇹🇷', isIcon: false },
-  { name: 'PanterKaleci_34', club: 'Kara Kartal JK', ovr: 87, money: 24200000, country: '🇹🇷', isIcon: false },
-  { name: 'FalsoKralı_Arda', club: 'Chamartin B (Madrid Beyaz)', ovr: 86, money: 21500000, country: '🇹🇷', isIcon: false },
-  { name: 'KuzeyRüzgarı_61', club: 'Karadeniz Fırtınası', ovr: 85, money: 18400000, country: '🇹🇷', isIcon: false },
-  { name: 'SniperKemal_10', club: 'Man Blue (Mavi Gökler)', ovr: 85, money: 17200000, country: '🇹🇷', isIcon: false },
-  { name: 'BuzAdam_90', club: 'Bavyera Kırmızı (Isar FC)', ovr: 84, money: 15600000, country: '🇹🇷', isIcon: false },
-  { name: 'GöztepeTayfa_35', club: 'Göztepe Sahil SK', ovr: 83, money: 12800000, country: '🇹🇷', isIcon: false },
-  { name: 'GeceKartalı_06', club: 'Başkent Kırmızı Kara', ovr: 82, money: 9500000, country: '🇹🇷', isIcon: false },
-  { name: 'Rövaşata_Emre', club: 'Katalonya Blaugrana', ovr: 81, money: 8200000, country: '🇹🇷', isIcon: false },
-  { name: 'ÇölFırtınası_ADS', club: 'Mavi Şimşekler ADS', ovr: 80, money: 6700000, country: '🇹🇷', isIcon: false }
+const BENCHMARK_LEAGUE_PLAYERS = [
+  { id: 'bot_1', name: 'Chamartin Yıldızı', club: 'Chamartin B (Madrid Beyaz)', ovr: 86, money: 18500000, country: '🇪🇸', isRealPlayer: false },
+  { id: 'bot_2', name: 'Man Blue Forveti', club: 'Man Blue (Mavi Gökler)', ovr: 85, money: 16200000, country: '🏴󠁧󠁢󠁥󠁮󠁧󠁿', isRealPlayer: false },
+  { id: 'bot_3', name: 'Bavyera Santraforu', club: 'Bavyera Kırmızı (Isar FC)', ovr: 84, money: 14000000, country: '🇩🇪', isRealPlayer: false },
+  { id: 'bot_4', name: 'Katalan 10 Numara', club: 'Katalonya Blaugrana', ovr: 83, money: 11500000, country: '🇪🇸', isRealPlayer: false },
+  { id: 'bot_5', name: 'Lombardiya Kaptanı', club: 'Lombardiya Mavi', ovr: 82, money: 9000000, country: '🇮🇹', isRealPlayer: false }
 ];
+
+// ==========================================================
+// ANTİ-HİLE VE VERİ BÜTÜNLÜĞÜ MOTORU (ANTI-CHEAT ENGINE)
+// İncele (DevTools / Console / LocalStorage) Manipülasyon Koruması
+// ==========================================================
+class AntiCheatEngine {
+  static SECRET_SALT = 'fc_pro_2026_quaresma_trivela_#992';
+
+  // HMAC tarzı tuzlanmış kriptografik imza üretimi
+  static computeSignature(player, matchIdx, season) {
+    if (!player) return '';
+    const mVal = Number(player._rawMoney !== undefined ? player._rawMoney : player.money) || 0;
+    const raw = `${player.id || ''}_${player.name || ''}_${player.overall || 75}_${mVal}_${player.wage || 15000}_${matchIdx || 0}_${season || 1}_${player.totalCareerGoals || 0}_${player.totalCareerSaves || 0}_${this.SECRET_SALT}`;
+    let hash = 0x811c9dc5;
+    for (let i = 0; i < raw.length; i++) {
+      hash ^= raw.charCodeAt(i);
+      hash = Math.imul ? Math.imul(hash, 0x01000193) : ((hash * 0x01000193) & 0xffffffff);
+    }
+    return (hash >>> 0).toString(16);
+  }
+
+  // Matematiksel olarak kazanılabilecek azami meşru bakiye tavanı
+  static getMaxLegitimateMoney(player, matchIdx, season) {
+    const totalMatches = Math.max(0, ((season || 1) - 1) * 6 + (matchIdx || 0));
+    const maxStarting = 660000;
+    const maxMatchEarnings = 600000; // En üst lig haftalık maaş + gol primi + MOTM
+    const maxGoals = (player && player.totalCareerGoals) || 0;
+    const maxSaves = (player && player.totalCareerSaves) || 0;
+    return maxStarting + (totalMatches * maxMatchEarnings) + (maxGoals * 20000) + (maxSaves * 10000) + 500000;
+  }
+
+  // Hileli değerleri tespit et ve meşru sınıra geri çek
+  static sanitizeAndVerify(player, matchIdx, season, savedSig) {
+    if (!player) return false;
+    let tampered = false;
+    const maxAllowed = this.getMaxLegitimateMoney(player, matchIdx, season);
+    let currentMoney = Number(player._rawMoney !== undefined ? player._rawMoney : player.money) || 0;
+
+    // 1. Sayısal kontrol
+    if (isNaN(currentMoney) || !isFinite(currentMoney) || currentMoney < 0) {
+      currentMoney = 50000;
+      tampered = true;
+    }
+
+    // 2. Matematiksel tavan aşımı kontrolü (Arkadaşın inceleden 999999999 yapması durumunda anında yakalar!)
+    if (currentMoney > maxAllowed || currentMoney > 150000000) {
+      console.warn(`[ANTI-CHEAT GÜVENLİK] Hileli bakiye (€${currentMoney.toLocaleString()}) tespit edildi! Meşru tavan (€${maxAllowed.toLocaleString()}) değerine sıfırlandı.`);
+      currentMoney = maxAllowed;
+      tampered = true;
+    }
+
+    // 3. İmza kontrolü (LocalStorage manipülasyonu)
+    if (savedSig) {
+      const expectedSig = this.computeSignature(player, matchIdx, season);
+      if (savedSig !== expectedSig) {
+        console.warn(`[ANTI-CHEAT GÜVENLİK] Veri imzası uyuşmazlığı tespit edildi! Kayıt dosyası dışarıdan değiştirilmiş.`);
+        tampered = true;
+        currentMoney = Math.min(currentMoney, maxAllowed);
+      }
+    }
+
+    // 4. Yetenek OVR kontrolü
+    if (player.overall > 99 || player.overall < 60) {
+      player.overall = 75;
+      tampered = true;
+    }
+
+    if (player._rawMoney !== undefined) {
+      player._rawMoney = currentMoney;
+    } else {
+      player.money = currentMoney;
+    }
+
+    return tampered;
+  }
+}
 
 class CareerManager {
   constructor() {
@@ -697,6 +766,9 @@ class CareerManager {
     this.currentMatchIndex = 0;
     this.matchesPerSeason = 6;
     this.currentMatch = null;
+    this._inLegitTransaction = false;
+    this.cloudLeaderboardId = 'ff808181a09d98f701a0fbb2a1f55f53';
+    this.cachedCloudPlayers = [];
     this.seasonStats = {
       matches: 0,
       goals: 0,
@@ -719,6 +791,7 @@ class CareerManager {
     const startingMoney = startingWage * 3; // Başlangıç birikimi
 
     this.player = {
+      id: 'p_' + Math.random().toString(36).substr(2, 9) + '_' + Date.now().toString(36),
       name: name.trim() || 'Yıldız Oyuncu',
       position: position, // 'ST' (Forvet), 'GK' (Kaleci), 'CAM' (Orta Saha)
       preferredFoot: preferredFoot || 'R', // 'R' (Sağ Ayak), 'L' (Sol Ayak)
@@ -740,7 +813,9 @@ class CareerManager {
     this.season = 1;
     this.currentMatchIndex = 0;
     this.resetSeasonStats();
+    this._attachSecurityWatchdog();
     this.saveProfile();
+    this.syncWithGlobalCloud();
   }
 
   setPreferredFoot(foot) {
@@ -749,11 +824,56 @@ class CareerManager {
     this.saveProfile();
   }
 
+  // Konsol ve incele üzerinden money manipülasyonunu engelleyen bekçi
+  _attachSecurityWatchdog() {
+    if (!this.player) return;
+    const self = this;
+    const rawVal = Number(this.player._rawMoney !== undefined ? this.player._rawMoney : this.player.money) || 0;
+    this.player._rawMoney = rawVal;
+
+    try {
+      delete this.player.money;
+    } catch (e) {}
+
+    Object.defineProperty(this.player, 'money', {
+      get() {
+        return self.player._rawMoney;
+      },
+      set(val) {
+        if (!self._inLegitTransaction) {
+          console.error('[SECURITY ANTI-CHEAT] "İncele" veya F12 konsol üzerinden hileli para değiştirme engellendi!');
+          if (window.uiManager && typeof window.uiManager.showSecurityToast === 'function') {
+            window.uiManager.showSecurityToast('🛡️ HİLE ENGELİ: "İncele" veya konsol ile sınırsız para hilesi yapılamaz!');
+          }
+          return;
+        }
+        if (typeof val !== 'number' || isNaN(val) || !isFinite(val) || val < 0) return;
+        const maxLegit = AntiCheatEngine.getMaxLegitimateMoney(self.player, self.currentMatchIndex, self.season);
+        self.player._rawMoney = Math.min(Math.round(val), maxLegit);
+      },
+      enumerable: true,
+      configurable: false
+    });
+  }
+
+  // Meşru oyun içi kazanç/harcama işlemlerini onaylayan sarmalayıcı
+  _executeTransaction(action) {
+    this._inLegitTransaction = true;
+    try {
+      action();
+    } finally {
+      this._inLegitTransaction = false;
+    }
+  }
+
   loadProfile() {
     try {
       const data = localStorage.getItem('fc_career_player');
       if (data) {
         this.player = JSON.parse(data);
+        if (!this.player.id) {
+          this.player.id = 'p_' + Math.random().toString(36).substr(2, 9) + '_' + Date.now().toString(36);
+        }
         if (!this.player.preferredFoot) this.player.preferredFoot = 'R';
         if (this.player.money === undefined) this.player.money = 50000;
         if (!this.player.purchasedItems) this.player.purchasedItems = ['ball_pro', 'boot_copa', 'hair_fade', 'kit_club'];
@@ -766,6 +886,22 @@ class CareerManager {
         this.currentMatchIndex = parseInt(localStorage.getItem('fc_career_match_idx')) || 0;
         const stats = localStorage.getItem('fc_career_season_stats');
         if (stats) this.seasonStats = JSON.parse(stats);
+
+        // Anti-Cheat & İncele Manipülasyon Doğrulaması
+        const savedSig = localStorage.getItem('fc_career_sig');
+        const wasTampered = AntiCheatEngine.sanitizeAndVerify(this.player, this.currentMatchIndex, this.season, savedSig);
+        if (wasTampered) {
+          console.warn('[SECURITY] Hileli profil tespit edildi ve düzeltildi!');
+          this.saveProfile();
+          setTimeout(() => {
+            if (window.uiManager && typeof window.uiManager.showSecurityToast === 'function') {
+              window.uiManager.showSecurityToast('🛡️ Hileli bakiye meşru seviyeye çekildi ve kayıt dosyası korumaya alındı!');
+            }
+          }, 1200);
+        }
+
+        this._attachSecurityWatchdog();
+        setTimeout(() => this.syncWithGlobalCloud(), 1500);
       }
     } catch (e) {
       console.warn("Kayıt yüklenemedi:", e);
@@ -774,7 +910,16 @@ class CareerManager {
 
   saveProfile() {
     if (!this.player) return;
-    localStorage.setItem('fc_career_player', JSON.stringify(this.player));
+    AntiCheatEngine.sanitizeAndVerify(this.player, this.currentMatchIndex, this.season);
+
+    // Güvenlik imzası oluştur ve kaydet
+    const sig = AntiCheatEngine.computeSignature(this.player, this.currentMatchIndex, this.season);
+    localStorage.setItem('fc_career_sig', sig);
+
+    localStorage.setItem('fc_career_player', JSON.stringify({
+      ...this.player,
+      money: this.player._rawMoney !== undefined ? this.player._rawMoney : this.player.money
+    }));
     localStorage.setItem('fc_career_season', this.season.toString());
     localStorage.setItem('fc_career_match_idx', this.currentMatchIndex.toString());
     localStorage.setItem('fc_career_season_stats', JSON.stringify(this.seasonStats));
@@ -950,7 +1095,9 @@ class CareerManager {
     const motmBonus = (matchRating >= 8.5) ? 25000 : 0;
 
     const totalEarnedThisMatch = baseWage + goalBonus + saveBonus + winBonus + cleanSheetBonus + motmBonus;
-    this.player.money += totalEarnedThisMatch;
+    this._executeTransaction(() => {
+      this.player.money += totalEarnedThisMatch;
+    });
 
     const summary = {
       matchNum: this.currentMatch.matchNumber,
@@ -980,6 +1127,7 @@ class CareerManager {
 
     this.currentMatchIndex++;
     this.saveProfile();
+    this.syncWithGlobalCloud();
 
     const isSeasonEnd = this.currentMatchIndex >= this.matchesPerSeason;
     return { summary, isSeasonEnd };
@@ -1011,11 +1159,14 @@ class CareerManager {
       };
     }
 
-    // Satın Al
-    this.player.money -= item.price;
+    // Satın Al (Anti-cheat korumalı işlem)
+    this._executeTransaction(() => {
+      this.player.money -= item.price;
+    });
     this.player.purchasedItems.push(itemId);
     this.equipItem(category, itemId);
     this.saveProfile();
+    this.syncWithGlobalCloud();
 
     return {
       success: true,
@@ -1039,24 +1190,152 @@ class CareerManager {
   }
 
   // ==========================================================
-  // LİDERLİK TABLOSU (LEADERBOARD: EN ÇOK PARA, EN ÇOK OVERALL, HEPSİ)
+  // GERÇEK BULUT LİDERLİK TABLOSU SENKRONİZASYONU (GLOBAL CLOUD SYNC)
+  // Sitedeki gerçek oyuncuları birleştirir, botları geriye atar!
+  // ==========================================================
+  async syncWithGlobalCloud() {
+    if (!this.player) return;
+    try {
+      const payload = {
+        id: this.player.id,
+        name: this.player.name,
+        club: this.getCurrentClub().name,
+        ovr: this.player.overall,
+        money: this.player.money,
+        matches: (this.season - 1) * this.matchesPerSeason + this.currentMatchIndex,
+        goals: this.player.totalCareerGoals || 0,
+        saves: this.player.totalCareerSaves || 0,
+        position: this.player.position,
+        country: '🇹🇷',
+        lastSeen: Date.now(),
+        isRealPlayer: true
+      };
+
+      // 1. Vercel Serverless API dene
+      let res = await fetch('/api/leaderboard', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ player: payload })
+      }).catch(() => null);
+
+      if (res && res.ok) {
+        return;
+      }
+
+      // 2. Doğrudan genel bulut nesnesine senkronize et (Cloud fallback)
+      const cloudUrl = `https://api.restful-api.dev/objects/${this.cloudLeaderboardId}`;
+      const cloudRes = await fetch(cloudUrl);
+      if (cloudRes.ok) {
+        const cloudData = await cloudRes.json();
+        let players = (cloudData.data && Array.isArray(cloudData.data.players)) ? cloudData.data.players : [];
+
+        const idx = players.findIndex(p => p.id === payload.id || p.name === payload.name);
+        if (idx >= 0) {
+          players[idx] = { ...players[idx], ...payload };
+        } else {
+          players.push(payload);
+        }
+
+        // Hileli kayıtları filtrele ve sınırla
+        players = players
+          .filter(p => p.money <= 200000000 && p.ovr <= 99)
+          .slice(-60);
+
+        await fetch(cloudUrl, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            name: 'PRO_FOOTBALL_3D_GLOBAL_LEADERBOARD',
+            data: {
+              version: 1,
+              lastUpdated: Date.now(),
+              players: players
+            }
+          })
+        });
+      }
+    } catch (err) {
+      console.warn('Bulut senkronizasyonu arka planda ertelendi:', err);
+    }
+  }
+
+  async fetchGlobalLeaderboard(filter = 'money') {
+    let cloudPlayers = [];
+    try {
+      // 1. Vercel API üzerinden oku
+      let res = await fetch('/api/leaderboard').catch(() => null);
+      if (res && res.ok) {
+        const json = await res.json();
+        if (json.success && Array.isArray(json.players)) {
+          cloudPlayers = json.players;
+        }
+      } else {
+        // 2. Doğrudan bulut nesnesinden oku
+        const cloudRes = await fetch(`https://api.restful-api.dev/objects/${this.cloudLeaderboardId}`);
+        if (cloudRes.ok) {
+          const cloudData = await cloudRes.json();
+          if (cloudData.data && Array.isArray(cloudData.data.players)) {
+            cloudPlayers = cloudData.data.players;
+          }
+        }
+      }
+    } catch (e) {
+      console.warn("Bulut liderlik okuma hatası, yerel önbellek kullanılıyor:", e);
+    }
+
+    if (cloudPlayers.length > 0) {
+      this.cachedCloudPlayers = cloudPlayers;
+      try {
+        localStorage.setItem('fc_cached_cloud_players', JSON.stringify(cloudPlayers));
+      } catch (e) {}
+    } else {
+      const localCached = localStorage.getItem('fc_cached_cloud_players');
+      if (localCached) {
+        try { this.cachedCloudPlayers = JSON.parse(localCached); } catch (e) {}
+      }
+    }
+
+    return this.getLeaderboard(filter);
+  }
+
+  // ==========================================================
+  // LİDERLİK TABLOSU (LEADERBOARD: GERÇEK OYUNCULAR + SIRALAMA)
   // ==========================================================
   getLeaderboard(filter = 'money') {
     if (!this.player) return [];
     const club = this.getCurrentClub();
 
-    // Kullanıcının oyuncusunu ekle
+    // 1. Canlı Oyuncu Kaydı (SEN)
     const userEntry = {
+      id: this.player.id,
       name: `${this.player.name} (SEN)`,
       club: club.name,
       ovr: this.player.overall,
       money: this.player.money,
       country: '🇹🇷',
-      isUser: true
+      isUser: true,
+      isRealPlayer: true
     };
 
-    const combinedList = [...BASE_LEADERBOARD, userEntry];
+    // 2. Buluttan gelen diğer gerçek oyuncular
+    const otherRealPlayers = (this.cachedCloudPlayers || [])
+      .filter(p => p.id !== this.player.id && p.name !== this.player.name)
+      .map(p => ({
+        ...p,
+        isUser: false,
+        isRealPlayer: true
+      }));
 
+    // 3. Birleştir
+    let combinedList = [userEntry, ...otherRealPlayers];
+
+    // Eğer sitede henüz az sayıda gerçek oyuncu varsa (örneğin sadece 2 kişi),
+    // tablonun tam dolgun gözükmesi için lig rakipleri de eklenir
+    if (combinedList.length < 8) {
+      combinedList = [...combinedList, ...BENCHMARK_LEAGUE_PLAYERS];
+    }
+
+    // Filtreleme ve sıralama
     if (filter === 'money') {
       // En Çok Para (En zengin futbolcular)
       combinedList.sort((a, b) => b.money - a.money);

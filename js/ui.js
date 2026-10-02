@@ -239,6 +239,13 @@ class UIManager {
       });
     }
 
+    const btnRefreshLeaderboard = document.getElementById('btn-refresh-leaderboard');
+    if (btnRefreshLeaderboard) {
+      btnRefreshLeaderboard.addEventListener('click', () => {
+        this.renderLeaderboard(this.currentLeaderboardFilter);
+      });
+    }
+
     // 13. Liderlik Tablosu Filtre Sekmeleri (Para, OVR, Hepsi)
     const lbTabs = document.querySelectorAll('.lb-tab-btn');
     lbTabs.forEach(tab => {
@@ -466,7 +473,6 @@ class UIManager {
   renderLeaderboard(filter = 'money') {
     const listContainer = document.getElementById('leaderboard-list');
     if (!listContainer) return;
-    listContainer.innerHTML = '';
 
     const headerScoreEl = document.getElementById('lb-header-score');
     if (headerScoreEl) {
@@ -475,7 +481,35 @@ class UIManager {
       else headerScoreEl.innerText = 'BİRLEŞİK PUAN';
     }
 
-    const leaderboardData = this.career.getLeaderboard(filter);
+    // 1. Anında gösterim (Cache / Yerel kayıtlar - UI asla donmaz)
+    const cachedData = this.career.getLeaderboard(filter);
+    this._renderLeaderboardRows(cachedData, filter);
+
+    // 2. Canlı Bulut Senkronizasyonu (Gerçek oyuncular anında çekilir)
+    const statusEl = document.getElementById('lb-live-status');
+    if (statusEl) {
+      statusEl.innerHTML = '<span class="lb-live-dot" style="background:#f1c40f; box-shadow:0 0 10px #f1c40f;"></span> BULUT VERİSİ ÇEKİLİYOR...';
+    }
+
+    this.career.fetchGlobalLeaderboard(filter).then(freshData => {
+      if (freshData && this.currentLeaderboardFilter === filter) {
+        this._renderLeaderboardRows(freshData, filter);
+        if (statusEl) {
+          statusEl.innerHTML = '<span class="lb-live-dot"></span> CANLI BULUT VERİSİ (GERÇEK OYUNCULAR)';
+        }
+      }
+    }).catch(e => {
+      console.warn("Liderlik canlı veri alınamadı:", e);
+      if (statusEl) {
+        statusEl.innerHTML = '<span class="lb-live-dot" style="background:#38bdf8;"></span> YEREL / ÇEVRİMDIŞI MOD';
+      }
+    });
+  }
+
+  _renderLeaderboardRows(leaderboardData, filter) {
+    const listContainer = document.getElementById('leaderboard-list');
+    if (!listContainer) return;
+    listContainer.innerHTML = '';
 
     leaderboardData.forEach(entry => {
       const row = document.createElement('div');
@@ -503,6 +537,9 @@ class UIManager {
       }
 
       const userTag = entry.isUser ? '<span class="lb-user-badge">SEN</span>' : '';
+      const realTag = entry.isRealPlayer 
+        ? (!entry.isUser ? '<span class="lb-real-tag">🟢 CANLI OYUNCU</span>' : '')
+        : '<span class="lb-bot-tag">🤖 LİG RAKİBİ</span>';
 
       row.innerHTML = `
         <div class="lb-col-rank">
@@ -511,7 +548,7 @@ class UIManager {
         <div class="lb-col-player">
           <span class="lb-player-flag">${entry.country || '⚽'}</span>
           <div class="lb-player-names">
-            <span class="lb-player-title">${entry.name} ${userTag}</span>
+            <span class="lb-player-title">${entry.name} ${userTag} ${realTag}</span>
             <span class="lb-player-club">${entry.club}</span>
           </div>
         </div>
@@ -522,6 +559,29 @@ class UIManager {
 
       listContainer.appendChild(row);
     });
+  }
+
+  // ANTİ-HİLE VE GÜVENLİK TOAST BİLDİRİMİ
+  showSecurityToast(message) {
+    const existing = document.querySelector('.security-alert-toast');
+    if (existing) existing.remove();
+
+    const toast = document.createElement('div');
+    toast.className = 'security-alert-toast';
+    toast.innerHTML = `
+      <span style="font-size:1.5rem;">🛡️</span>
+      <div>
+        <div style="color:#fef08a; font-size:0.75rem; font-weight:900; letter-spacing:0.5px; margin-bottom:2px;">GÜVENLİK & ANTİ-HİLE</div>
+        <div style="font-size:0.85rem; line-height:1.2;">${message}</div>
+      </div>
+    `;
+    document.body.appendChild(toast);
+
+    setTimeout(() => {
+      toast.style.opacity = '0';
+      toast.style.transition = 'opacity 0.4s ease';
+      setTimeout(() => toast.remove(), 400);
+    }, 3800);
   }
 
   // TRANSFER PAZARI VE KULÜP TEKLİFLERİNİ GÖSTER
