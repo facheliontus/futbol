@@ -1223,9 +1223,54 @@ class CareerManager {
   }
 
   // ==========================================================
+  // TURNUVA MAÇI SENARYOLARI OLUŞTUR
+  // ==========================================================
+  generateTournamentMatch(homeName, awayName, stageTitle) {
+    let scenarios = [];
+    if (this.player && this.player.position === 'GK') {
+      const pool = [
+        { type: 'penalty', title: `${stageTitle} - Kritik Penaltı!`, distance: 11, spotX: 0, wall: 0, desc: 'Turnuva kader anı! [A/D] ile yere atla veya [A/D + Space] ile 90\'a uzan!' },
+        { type: 'freekick', title: `${stageTitle} - Baraj Üstü Frikik`, distance: 22, spotX: -4.5, wall: 4, desc: 'Kritik dakikalar! Barajın üstünden süzülen topu 90\'dan çıkar!' },
+        { type: 'freekick', title: `${stageTitle} - 26 Metre Sert Şut`, distance: 26, spotX: 5.5, wall: 4, desc: 'Rakip yıldız sağdan köşeye sert vuruyor! Zamanlamayı ayarla ve tokatla!' },
+        { type: 'penalty', title: `${stageTitle} - Seri Penaltı Kurtarışı!`, distance: 11, spotX: 0, wall: 0, desc: 'Büyük kupaya giden yolda son penaltı! Devleş ve kurtar!' }
+      ];
+      scenarios = pool;
+    } else {
+      const pool = [
+        { type: 'freekick', title: `${stageTitle} - 20 Metre Ceza Yayı Karşıdan`, distance: 20, spotX: 0, wall: 4, desc: 'Harika bir frikik fırsatı! Barajı aşırtıp 90\'a as!' },
+        { type: 'freekick', title: `${stageTitle} - 24 Metre Sol Çapraz`, distance: 24, spotX: -6.0, wall: 4, desc: 'Sol çaprazdan ters köşeye öldürücü kavis gönder!' },
+        { type: 'freekick', title: `${stageTitle} - 28 Metre Füze Şut`, distance: 28, spotX: 3.5, wall: 5, desc: 'Uzak mesafe! Mermi hızında bir vuruşla kaleciyi çaresiz bırak!' },
+        { type: 'penalty', title: `${stageTitle} - Tarihi Penaltı Vuruşu!`, distance: 11, spotX: 0, wall: 0, desc: 'Kupanın kaderi bu vuruşa bağlı! Çatala mermiyi gönder!' }
+      ];
+      scenarios = pool;
+    }
+
+    const targetAwayGoals = Math.floor(Math.random() * 2);
+
+    this.currentMatch = {
+      isTournament: true,
+      stageTitle: stageTitle,
+      matchNumber: stageTitle,
+      homeTeam: homeName,
+      awayTeam: awayName,
+      scenarios: scenarios,
+      currentScenarioIdx: 0,
+      goalsThisMatch: 0,
+      assistsThisMatch: 0,
+      savesThisMatch: 0,
+      matchScoreHome: 0,
+      matchScoreAway: 0,
+      targetAwayGoals: targetAwayGoals,
+      awayGoalsConceded: 0
+    };
+
+    return this.currentMatch;
+  }
+
+  // ==========================================================
   // MAÇ SONU: MAAŞ, PRİMLER VE KAZANÇ HESAPLAMA
   // ==========================================================
-  finishMatch() {
+  finishMatch(isTournament = false) {
     if (!this.currentMatch) return null;
     this.seasonStats.matches++;
 
@@ -1262,7 +1307,7 @@ class CareerManager {
     // MAAŞ & PRİM KAZANÇLARI (HAFTALIK MAAŞ SİSTEMİ)
     // ========================================================
     // Her maç performans primi alınır; tam haftalık maaş ise 2 maçta bir (haftalık periyotta) yatar!
-    const isPayday = (this.currentMatchIndex % 2 === 1) || (this.currentMatchIndex + 1 >= this.matchesPerSeason);
+    const isPayday = isTournament ? false : ((this.currentMatchIndex % 2 === 1) || (this.currentMatchIndex + 1 >= this.matchesPerSeason));
     const weeklyWage = this.player.wage || 25000;
     const baseWage = isPayday ? weeklyWage : 0;
 
@@ -1270,11 +1315,11 @@ class CareerManager {
     const bonusStats = this.getPlayerBonusStats();
     const wageMultiplier = 1 + ((bonusStats.wageBonus || 0) / 100);
 
-    const goalBonus = this.currentMatch.goalsThisMatch * 15000;
-    const saveBonus = this.currentMatch.savesThisMatch * 12000;
-    const winBonus = isWin ? 35000 : (isDraw ? 10000 : 0);
-    const cleanSheetBonus = (awayScore === 0) ? 30000 : 0;
-    const motmBonus = (matchRating >= 8.5) ? 25000 : 0;
+    const goalBonus = this.currentMatch.goalsThisMatch * (isTournament ? 25000 : 15000);
+    const saveBonus = this.currentMatch.savesThisMatch * (isTournament ? 20000 : 12000);
+    const winBonus = isWin ? (isTournament ? 75000 : 35000) : (isDraw ? 15000 : 0);
+    const cleanSheetBonus = (awayScore === 0) ? (isTournament ? 50000 : 30000) : 0;
+    const motmBonus = (matchRating >= 8.5) ? (isTournament ? 40000 : 25000) : 0;
 
     const baseEarned = baseWage + goalBonus + saveBonus + winBonus + cleanSheetBonus + motmBonus;
     const totalEarnedThisMatch = Math.round(baseEarned * wageMultiplier);
@@ -1283,6 +1328,7 @@ class CareerManager {
     });
 
     const summary = {
+      isTournament: isTournament,
       matchNum: this.currentMatch.matchNumber,
       homeTeam: this.currentMatch.homeTeam,
       awayTeam: this.currentMatch.awayTeam,
@@ -1308,11 +1354,13 @@ class CareerManager {
       }
     };
 
-    this.currentMatchIndex++;
+    if (!isTournament) {
+      this.currentMatchIndex++;
+    }
     this.saveProfile();
     this.syncWithGlobalCloud();
 
-    const isSeasonEnd = this.currentMatchIndex >= this.matchesPerSeason;
+    const isSeasonEnd = !isTournament && (this.currentMatchIndex >= this.matchesPerSeason);
     return { summary, isSeasonEnd };
   }
 
@@ -1838,6 +1886,233 @@ class CareerManager {
     this.resetSeasonStats();
     this.saveProfile();
   }
+
+  // ==========================================================
+  // KUPA VE TURNUVA SİSTEMİ (DATA-DRIVEN TOURNAMENT ENGINE)
+  // ==========================================================
+  initTournament(tournId = 'world_cup') {
+    const config = TOURNAMENTS_CONFIG[tournId] || TOURNAMENTS_CONFIG['world_cup'];
+    const currentClub = this.getCurrentClub();
+
+    // Takımları oluştur
+    const teams = config.teams.map(t => {
+      if (t.id === 'my_club') {
+        return {
+          ...t,
+          name: currentClub.name,
+          flag: currentClub.badge,
+          ovr: this.player ? this.player.overall : 78
+        };
+      }
+      return { ...t };
+    });
+
+    const standings = teams.map(t => ({
+      ...t,
+      played: 0,
+      won: 0,
+      drawn: 0,
+      lost: 0,
+      gf: 0,
+      ga: 0,
+      gd: 0,
+      pts: 0
+    }));
+
+    this.activeTournament = {
+      id: config.id,
+      name: config.name,
+      badge: config.badge,
+      type: config.type,
+      groupName: config.groupName,
+      stages: config.stages,
+      currentStageIdx: 0,
+      teams: teams,
+      standings: standings,
+      prizeMoney: config.prizeMoney,
+      trophyId: config.trophyId,
+      trophyName: config.trophyName,
+      status: 'in_progress', // 'in_progress', 'won', 'eliminated'
+      knockoutTree: [
+        { stage: 'Çeyrek Final', userMatch: { home: teams[0].name, away: 'Hollanda 🇳🇱', played: false, winner: null } },
+        { stage: 'Yarı Final', userMatch: { home: teams[0].name, away: 'Fransa 🇫🇷', played: false, winner: null } },
+        { stage: 'BÜYÜK FİNAL', userMatch: { home: teams[0].name, away: 'Brezilya 🇧🇷', played: false, winner: null } }
+      ]
+    };
+
+    this.saveTournament();
+    return this.activeTournament;
+  }
+
+  saveTournament() {
+    if (this.activeTournament) {
+      try {
+        localStorage.setItem('fc_active_tournament', JSON.stringify(this.activeTournament));
+      } catch (e) {}
+    }
+  }
+
+  loadTournament() {
+    try {
+      const data = localStorage.getItem('fc_active_tournament');
+      if (data) {
+        this.activeTournament = JSON.parse(data);
+      }
+    } catch (e) {}
+    if (!this.activeTournament) {
+      this.initTournament('world_cup');
+    }
+    return this.activeTournament;
+  }
+
+  getTournamentData() {
+    if (!this.activeTournament) {
+      this.loadTournament();
+    }
+    // Sıralama: En yüksek Puan, ardından Averaj
+    this.activeTournament.standings.sort((a, b) => b.pts - a.pts || b.gd - a.gd || b.gf - a.gf);
+    return this.activeTournament;
+  }
+
+  recordTournamentMatchResult(myScore, oppScore) {
+    if (!this.activeTournament) this.initTournament('world_cup');
+    const tourn = this.activeTournament;
+    const stageIdx = tourn.currentStageIdx;
+    const isWin = myScore > oppScore;
+    const isDraw = myScore === oppScore;
+
+    if (stageIdx < 3) {
+      // Grup Aşaması Maçı
+      const userTeam = tourn.standings.find(t => t.isUserTeam) || tourn.standings[0];
+      const otherTeams = tourn.standings.filter(t => !t.isUserTeam);
+      const currentOpp = otherTeams[stageIdx] || otherTeams[0];
+
+      // Kullanıcı skorunu işle
+      userTeam.played++;
+      userTeam.gf += myScore;
+      userTeam.ga += oppScore;
+      userTeam.gd = userTeam.gf - userTeam.ga;
+      if (isWin) { userTeam.won++; userTeam.pts += 3; }
+      else if (isDraw) { userTeam.drawn++; userTeam.pts += 1; }
+      else { userTeam.lost++; }
+
+      // Rakip skoru işle
+      currentOpp.played++;
+      currentOpp.gf += oppScore;
+      currentOpp.ga += myScore;
+      currentOpp.gd = currentOpp.gf - currentOpp.ga;
+      if (isWin) { currentOpp.lost++; }
+      else if (isDraw) { currentOpp.drawn++; currentOpp.pts += 1; }
+      else { currentOpp.won++; currentOpp.pts += 3; }
+
+      // Gruptaki diğer maçın simülasyonu
+      const remaining = otherTeams.filter(t => t.id !== currentOpp.id);
+      if (remaining.length >= 2) {
+        const s1 = Math.floor(Math.random() * 3);
+        const s2 = Math.floor(Math.random() * 3);
+        remaining[0].played++; remaining[0].gf += s1; remaining[0].ga += s2; remaining[0].gd = remaining[0].gf - remaining[0].ga;
+        remaining[1].played++; remaining[1].gf += s2; remaining[1].ga += s1; remaining[1].gd = remaining[1].gf - remaining[1].ga;
+        if (s1 > s2) remaining[0].pts += 3;
+        else if (s1 === s2) { remaining[0].pts += 1; remaining[1].pts += 1; }
+        else remaining[1].pts += 3;
+      }
+
+      tourn.currentStageIdx++;
+      if (tourn.currentStageIdx === 3) {
+        // Grup bitti! İlk 2'ye girdi mi kontrol et
+        tourn.standings.sort((a, b) => b.pts - a.pts || b.gd - a.gd);
+        const rank = tourn.standings.findIndex(t => t.isUserTeam);
+        if (rank > 1) {
+          tourn.status = 'eliminated';
+          this.saveTournament();
+          return { status: 'eliminated', msg: 'Gruptan çıkamadın! Turnuvaya veda ettin.' };
+        }
+      }
+      this.saveTournament();
+      return { status: 'advanced_group', currentStage: tourn.stages[tourn.currentStageIdx] };
+    } else {
+      // Eleme Turları (Knockout: Çeyrek / Yarı / Final)
+      const knockoutIdx = stageIdx - 3;
+      if (!isWin) {
+        tourn.status = 'eliminated';
+        this.saveTournament();
+        return { status: 'eliminated', msg: 'Eleme turunda mağlup olarak elendin!' };
+      }
+
+      if (tourn.knockoutTree[knockoutIdx]) {
+        tourn.knockoutTree[knockoutIdx].userMatch.played = true;
+        tourn.knockoutTree[knockoutIdx].userMatch.winner = tourn.knockoutTree[knockoutIdx].userMatch.home;
+      }
+
+      tourn.currentStageIdx++;
+      if (tourn.currentStageIdx >= tourn.stages.length) {
+        // ŞAMPİYON OLUNDU! KUPA KALDIRILDI!
+        tourn.status = 'won';
+        if (this.player) {
+          if (!this.player.trophies) this.player.trophies = [];
+          if (!this.player.trophies.includes(tourn.trophyId)) {
+            this.player.trophies.push(tourn.trophyId);
+          }
+          this._executeTransaction(() => {
+            this.player.money += tourn.prizeMoney;
+          });
+        }
+        if (window.gameSound) window.gameSound.playTrophyFanfare();
+        this.saveProfile();
+        this.saveTournament();
+        this.syncWithGlobalCloud();
+        return {
+          status: 'champion',
+          trophyName: tourn.trophyName,
+          prize: tourn.prizeMoney,
+          msg: `🏆 ŞAMPİYON! ${tourn.trophyName} KUPASINI MÜZENE GÖTÜRDÜN VE €${tourn.prizeMoney.toLocaleString('tr-TR')} KAZANDIN!`
+        };
+      }
+
+      this.saveTournament();
+      return { status: 'advanced_knockout', currentStage: tourn.stages[tourn.currentStageIdx] };
+    }
+  }
 }
+
+// ==========================================================
+// KUPA VE TURNUVA MİMARİSİ (TOURNAMENTS CONFIG DATABASE)
+// ==========================================================
+const TOURNAMENTS_CONFIG = {
+  world_cup: {
+    id: 'world_cup',
+    name: '2026 DÜNYA KUPASI',
+    badge: '🏆',
+    type: 'international',
+    groupName: 'Grup J',
+    teams: [
+      { id: 'turkey', name: 'Türkiye', flag: '🇹🇷', ovr: 82, isUserTeam: true },
+      { id: 'brazil', name: 'Brezilya', flag: '🇧🇷', ovr: 88 },
+      { id: 'morocco', name: 'Fas', flag: '🇲🇦', ovr: 81 },
+      { id: 'japan', name: 'Japonya', flag: '🇯🇵', ovr: 79 }
+    ],
+    stages: ['Grup Maçı 1', 'Grup Maçı 2', 'Grup Maçı 3', 'Çeyrek Final', 'Yarı Final', 'BÜYÜK FİNAL'],
+    prizeMoney: 25000000,
+    trophyId: 'trophy_world_cup',
+    trophyName: 'FIFA Altın Dünya Kupası'
+  },
+  champions_league: {
+    id: 'champions_league',
+    name: 'UEFA DEVLER LİGİ',
+    badge: '⭐',
+    type: 'club',
+    groupName: 'Grup H',
+    teams: [
+      { id: 'my_club', name: 'Kulübün', flag: '🦁', ovr: 80, isUserTeam: true },
+      { id: 'realmadrid', name: 'Chamartin B (Madrid)', flag: '👑', ovr: 96 },
+      { id: 'mancity', name: 'Man Blue (Mavi Gökler)', flag: '🚢', ovr: 95 },
+      { id: 'juventus', name: 'Piemonte Siyah Beyaz', flag: '🦓', ovr: 90 }
+    ],
+    stages: ['Grup Maçı 1', 'Grup Maçı 2', 'Grup Maçı 3', 'Yarı Final', 'DEVLER LİGİ FİNALİ'],
+    prizeMoney: 18000000,
+    trophyId: 'trophy_ucl',
+    trophyName: 'UEFA Devler Ligi Kupası'
+  }
+};
 
 window.careerManager = new CareerManager();

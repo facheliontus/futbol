@@ -33,48 +33,60 @@ class SoundEngine {
     return this.muted;
   }
 
-  // ŞUT / TOPA VURUŞ SESİ (Derin Bas ve Sert Vuruş Darbesi)
+  // ŞUT / TOPA VURUŞ SESİ (3 KATMANLI SES MİMARİSİ: SUB-BASS + DERİ TOKADI + HAVA HIZI)
   playKick(power = 1) {
     if (this.muted) return;
     this.ensureContext();
     if (!this.ctx) return;
 
     const now = this.ctx.currentTime;
+    const clampedPower = Math.min(Math.max(power, 0.7), 1.6);
     
-    // Sub-bass vuruş
-    const osc = this.ctx.createOscillator();
-    const gain = this.ctx.createGain();
+    // KATMAN 1: Derin Sub-Bass Göğüs Vuruşu (55Hz -> 28Hz)
+    const subOsc = this.ctx.createOscillator();
+    const subGain = this.ctx.createGain();
+    subOsc.type = 'sine';
+    subOsc.frequency.setValueAtTime(65 * clampedPower, now);
+    subOsc.frequency.exponentialRampToValueAtTime(26, now + 0.18);
+    subGain.gain.setValueAtTime(0.95 * clampedPower, now);
+    subGain.gain.exponentialRampToValueAtTime(0.001, now + 0.26);
+    subOsc.connect(subGain);
+    subGain.connect(this.ctx.destination);
+    subOsc.start(now);
+    subOsc.stop(now + 0.28);
 
-    osc.type = 'triangle';
-    osc.frequency.setValueAtTime(140 * power, now);
-    osc.frequency.exponentialRampToValueAtTime(32, now + 0.16);
+    // KATMAN 2: Krampon & Deri Temas Tokadı (Orta Frekans Tranzient)
+    const snapOsc = this.ctx.createOscillator();
+    const snapGain = this.ctx.createGain();
+    snapOsc.type = 'triangle';
+    snapOsc.frequency.setValueAtTime(240 * clampedPower, now);
+    snapOsc.frequency.exponentialRampToValueAtTime(45, now + 0.12);
+    snapGain.gain.setValueAtTime(0.8 * clampedPower, now);
+    snapGain.gain.exponentialRampToValueAtTime(0.001, now + 0.14);
+    snapOsc.connect(snapGain);
+    snapGain.connect(this.ctx.destination);
+    snapOsc.start(now);
+    snapOsc.stop(now + 0.16);
 
-    gain.gain.setValueAtTime(0.85 * Math.min(power, 1.2), now);
-    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.22);
-
-    osc.connect(gain);
-    gain.connect(this.ctx.destination);
-
-    osc.start(now);
-    osc.stop(now + 0.25);
-
-    // Krampon temas çıtırtısı (gürültü geçişi)
-    const bufferSize = this.ctx.sampleRate * 0.05;
+    // KATMAN 3: Havanın Sıkışması ve Kumaş Sürtünme Hışırtısı (Cloth / Air Burst)
+    const bufferSize = Math.floor(this.ctx.sampleRate * 0.09);
     const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
     const data = buffer.getChannelData(0);
     for (let i = 0; i < bufferSize; i++) {
-      data[i] = (Math.random() * 2 - 1) * Math.exp(-i / (bufferSize * 0.2));
+      data[i] = (Math.random() * 2 - 1) * Math.exp(-i / (bufferSize * 0.25));
     }
     const noise = this.ctx.createBufferSource();
     noise.buffer = buffer;
 
     const filter = this.ctx.createBiquadFilter();
-    filter.type = 'lowpass';
-    filter.frequency.value = 1200;
+    filter.type = 'bandpass';
+    filter.frequency.setValueAtTime(1400, now);
+    filter.frequency.exponentialRampToValueAtTime(400, now + 0.08);
+    filter.Q.value = 2.5;
 
     const noiseGain = this.ctx.createGain();
-    noiseGain.gain.setValueAtTime(0.6 * power, now);
-    noiseGain.gain.exponentialRampToValueAtTime(0.001, now + 0.08);
+    noiseGain.gain.setValueAtTime(0.7 * clampedPower, now);
+    noiseGain.gain.exponentialRampToValueAtTime(0.001, now + 0.09);
 
     noise.connect(filter);
     filter.connect(noiseGain);
@@ -394,6 +406,86 @@ class SoundEngine {
 
     osc.start(now);
     osc.stop(now + 0.12);
+  }
+
+  // MEMNUN SEYİRCİ & ALKIŞ UĞULTUSU (Başarılı Pas, Çalım veya Kritik Kurtarışta)
+  playPleasedCrowd() {
+    if (this.muted) return;
+    this.ensureContext();
+    if (!this.ctx) return;
+
+    const now = this.ctx.currentTime;
+    const dur = 1.6;
+
+    const bufferSize = Math.floor(this.ctx.sampleRate * dur);
+    const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+    const data = buffer.getChannelData(0);
+    for (let i = 0; i < bufferSize; i++) {
+      data[i] = (Math.random() * 2 - 1) * 0.5;
+    }
+
+    const noise = this.ctx.createBufferSource();
+    noise.buffer = buffer;
+
+    const filter = this.ctx.createBiquadFilter();
+    filter.type = 'bandpass';
+    filter.frequency.setValueAtTime(650, now);
+    filter.frequency.linearRampToValueAtTime(1100, now + 0.5);
+    filter.frequency.exponentialRampToValueAtTime(450, now + dur);
+    filter.Q.value = 1.8;
+
+    const gain = this.ctx.createGain();
+    gain.gain.setValueAtTime(0.01, now);
+    gain.gain.linearRampToValueAtTime(0.4, now + 0.3);
+    gain.gain.setValueAtTime(0.4, now + 0.9);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + dur);
+
+    noise.connect(filter);
+    filter.connect(gain);
+    gain.connect(this.ctx.destination);
+
+    noise.start(now);
+  }
+
+  // KUPA ŞAMPİYONLUK FANFARI (Turnuva Zaferi / Büyük Kupa Kaldırma Marşı)
+  playTrophyFanfare() {
+    if (this.muted) return;
+    this.ensureContext();
+    if (!this.ctx) return;
+
+    const now = this.ctx.currentTime;
+    // Görkemli Pirinç Üflemeli Majör Akor Notasyonları: C4, E4, G4, C5
+    const notes = [
+      { f: 261.63, start: 0.00, dur: 0.25 }, // Do
+      { f: 329.63, start: 0.22, dur: 0.25 }, // Mi
+      { f: 392.00, start: 0.44, dur: 0.35 }, // Sol
+      { f: 523.25, start: 0.75, dur: 1.10 }, // Yüksek Do (Uzun Zafer Sesi)
+      { f: 659.25, start: 0.90, dur: 0.95 }  // Yüksek Mi (Harmonik Zirve)
+    ];
+
+    notes.forEach(n => {
+      const osc = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(n.f, now + n.start);
+
+      gain.gain.setValueAtTime(0.001, now + n.start);
+      gain.gain.linearRampToValueAtTime(0.35, now + n.start + 0.05);
+      gain.gain.setValueAtTime(0.35, now + n.start + n.dur - 0.1);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + n.start + n.dur);
+
+      osc.connect(gain);
+      gain.connect(this.ctx.destination);
+
+      osc.start(now + n.start);
+      osc.stop(now + n.start + n.dur + 0.05);
+    });
+
+    // Arkadan büyük şampiyonluk alkışı
+    setTimeout(() => {
+      this.playGoalCheer();
+    }, 400);
   }
 }
 

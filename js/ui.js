@@ -14,9 +14,11 @@ class UIManager {
     this.signingModal = document.getElementById('signing-modal');
     this.storeModal = document.getElementById('store-modal');
     this.leaderboardModal = document.getElementById('leaderboard-modal');
+    this.tournamentModal = document.getElementById('tournament-modal');
     this.currentStoreCategory = 'balls';
     this.currentLeaderboardFilter = 'money';
     this.currentTransferTier = 'all';
+    this.currentTournamentType = 'world_cup';
 
     this.initEvents();
   }
@@ -367,6 +369,18 @@ class UIManager {
           }
         }
       }
+      // [K] -> Turnuva & Kupa Ekranı
+      else if (e.code === 'KeyK' || e.key === 'k' || e.key === 'K') {
+        e.preventDefault();
+        if (this.tournamentModal) {
+          if (this.tournamentModal.classList.contains('hidden')) {
+            this.renderTournament(this.currentTournamentType);
+            this.tournamentModal.classList.remove('hidden');
+          } else {
+            this.tournamentModal.classList.add('hidden');
+          }
+        }
+      }
       // [Escape] -> Açık olan tüm modalları kapat
       else if (e.code === 'Escape' || e.key === 'Escape') {
         document.querySelectorAll('.modal-overlay:not(.hidden)').forEach(modal => {
@@ -383,6 +397,33 @@ class UIManager {
         tab.classList.add('active');
         this.currentTransferTier = tab.dataset.tier;
         this.renderTransferHub(this.currentTransferTier);
+      });
+    });
+
+    // Turnuva Modal Aç / Kapat & Sekmeler
+    const btnOpenTourn = document.getElementById('btn-open-tournament');
+    const btnCloseTourn = document.getElementById('btn-close-tournament');
+
+    if (btnOpenTourn && this.tournamentModal) {
+      btnOpenTourn.addEventListener('click', () => {
+        this.renderTournament(this.currentTournamentType);
+        this.tournamentModal.classList.remove('hidden');
+      });
+    }
+
+    if (btnCloseTourn && this.tournamentModal) {
+      btnCloseTourn.addEventListener('click', () => {
+        this.tournamentModal.classList.add('hidden');
+      });
+    }
+
+    const tournTabs = document.querySelectorAll('.tourn-tab-btn');
+    tournTabs.forEach(tab => {
+      tab.addEventListener('click', () => {
+        tournTabs.forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+        this.currentTournamentType = tab.dataset.tourn;
+        this.renderTournament(this.currentTournamentType);
       });
     });
   }
@@ -479,7 +520,30 @@ class UIManager {
     this.updatePlayerHUD();
 
     const btnNext = document.getElementById('btn-next-match');
-    btnNext.innerText = isSeasonEnd ? '🏆 SEZONU TAMAMLA & TRANSFER TEKLİFLERİNE GEÇ' : 'SONRAKİ MAÇA GEÇ ➔';
+    if (summary.isTournament) {
+      btnNext.innerText = '🏆 TURNUVA EKRANINA DÖN ➔';
+      btnNext.onclick = () => {
+        this.matchSummaryModal.classList.add('hidden');
+        if (this.tournamentModal) {
+          this.tournamentModal.classList.remove('hidden');
+          this.renderTournament(this.currentTournamentType);
+        }
+      };
+      if (summary.tournResult && summary.tournResult.msg) {
+        setTimeout(() => alert(summary.tournResult.msg), 400);
+      }
+    } else {
+      btnNext.innerText = isSeasonEnd ? '🏆 SEZONU TAMAMLA & TRANSFER TEKLİFLERİNE GEÇ' : 'SONRAKİ MAÇA GEÇ ➔';
+      btnNext.onclick = () => {
+        this.matchSummaryModal.classList.add('hidden');
+        if (this.isPendingSeasonEnd) {
+          this.isPendingSeasonEnd = false;
+          this.game.onSeasonFinished();
+        } else {
+          this.startNextMatch();
+        }
+      };
+    }
 
     this.matchSummaryModal.classList.remove('hidden');
   }
@@ -974,6 +1038,248 @@ class UIManager {
       }
     };
     requestAnimationFrame(anim);
+  }
+
+  // ==========================================================
+  // TURNUVA VE KUPA MODU (DÜNYA KUPASI & DEVLER LİGİ & MÜZE)
+  // ==========================================================
+  renderTournament(tournType = 'world_cup') {
+    const container = document.getElementById('tourn-content-view');
+    if (!container) return;
+    container.innerHTML = '';
+
+    const titleEl = document.getElementById('tourn-title-text');
+    const badgeEl = document.getElementById('tourn-status-badge');
+
+    // 1. KUPA DOLABI (MÜZE) GÖRÜNÜMÜ
+    if (tournType === 'cabinet') {
+      if (titleEl) titleEl.innerText = '🏛️ KULÜP KUPA DOLABI & MÜZE';
+      if (badgeEl) {
+        badgeEl.innerText = '🌟 KAZANILAN ZAFERLER';
+        badgeEl.style.borderColor = '#ffd700';
+        badgeEl.style.color = '#ffd700';
+      }
+
+      const grid = document.createElement('div');
+      grid.className = 'trophy-cabinet-grid';
+
+      const allTrophies = [
+        { id: 'trophy_world_cup', name: 'FIFA Altın Dünya Kupası', icon: '🏆', desc: '2026 Dünya Kupası Şampiyonu! Dünyanın zirvesindesin.', reward: '€25.000.000' },
+        { id: 'trophy_ucl', name: 'UEFA Devler Ligi Kupası', icon: '⭐', desc: 'Avrupa Şampiyonu! Kıtanın en büyük kulüplerini dize getirdin.', reward: '€18.000.000' },
+        { id: 'trophy_superlig', name: 'Süper Lig Şampiyonluk Kupası', icon: '🥇', desc: 'Lig Maratonu Şampiyonluğu!', reward: '€10.000.000' },
+        { id: 'trophy_golden_boot', name: 'Avrupa Altın Ayakkabı', icon: '👟', desc: 'Sezonun Gol Kralı! Kaleleri fethettin.', reward: '€5.000.000' }
+      ];
+
+      const userTrophies = (this.career.player && this.career.player.trophies) ? this.career.player.trophies : [];
+
+      allTrophies.forEach(t => {
+        const isUnlocked = userTrophies.includes(t.id);
+        const card = document.createElement('div');
+        card.className = `trophy-card ${isUnlocked ? 'unlocked' : 'locked'}`;
+        card.innerHTML = `
+          <div class="trophy-icon">${t.icon}</div>
+          <div class="trophy-title">${t.name}</div>
+          <div class="trophy-desc">${t.desc}</div>
+          <div class="trophy-reward-badge">${isUnlocked ? '🏆 KAZANILDI' : '🔒 KİLİTLİ'} (${t.reward})</div>
+        `;
+        grid.appendChild(card);
+      });
+
+      container.appendChild(grid);
+      return;
+    }
+
+    // 2. TURNUVA AŞAMASI (DÜNYA KUPASI VEYA ŞAMPİYONLAR LİGİ)
+    let tourn = this.career.activeTournament;
+    if (!tourn || tourn.id !== tournType) {
+      tourn = this.career.loadTournament(tournType);
+    }
+
+    if (titleEl) titleEl.innerText = `${tourn.badge || '🏆'} ${tourn.name}`;
+    if (badgeEl) {
+      if (tourn.status === 'won') {
+        badgeEl.innerText = '🏆 ŞAMPİYON! KUPA MÜZEDE';
+        badgeEl.style.borderColor = '#00ff88';
+        badgeEl.style.color = '#00ff88';
+      } else if (tourn.status === 'eliminated') {
+        badgeEl.innerText = '❌ TURNUVAYA VEDA EDİLDİ';
+        badgeEl.style.borderColor = '#ff3366';
+        badgeEl.style.color = '#ff3366';
+      } else {
+        badgeEl.innerText = `⚔️ ${tourn.stages[tourn.currentStageIdx]} (${tourn.currentStageIdx + 1}/${tourn.stages.length})`;
+        badgeEl.style.borderColor = '#ffd700';
+        badgeEl.style.color = '#ffd700';
+      }
+    }
+
+    // A) Grup Puan Tablosu
+    const tableTitle = document.createElement('div');
+    tableTitle.style.cssText = 'display:flex; justify-content:space-between; align-items:center;';
+    tableTitle.innerHTML = `
+      <h3 style="font-size:1.05rem; color:#ffd700; margin:0; font-weight:800;">📊 ${tourn.groupName || 'Grup Aşaması'} Puan Tablosu</h3>
+      <span style="font-size:0.75rem; color:#94a3b8; font-weight:700;">(İlk 2 sıradaki takım eleme turlarına çıkar)</span>
+    `;
+    container.appendChild(tableTitle);
+
+    const tableWrapper = document.createElement('div');
+    tableWrapper.style.overflowX = 'auto';
+
+    let tableHtml = `
+      <table class="tourn-table">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th style="text-align:left;">Takım</th>
+            <th>OVR</th>
+            <th>O</th>
+            <th>G</th>
+            <th>B</th>
+            <th>M</th>
+            <th>AG</th>
+            <th>YG</th>
+            <th>AV</th>
+            <th style="color:#ffd700;">PTS</th>
+          </tr>
+        </thead>
+        <tbody>
+    `;
+
+    tourn.standings.forEach((team, idx) => {
+      const isUser = !!team.isUserTeam || team.id === 'my_club';
+      const isTop2 = idx < 2;
+      tableHtml += `
+        <tr class="${isUser ? 'user-row' : ''} ${isTop2 ? 'advancing' : ''}">
+          <td style="font-weight:800;">${idx + 1}</td>
+          <td style="text-align:left; font-weight:700;">${team.flag || '🏳️'} ${team.name} ${isUser ? '<span style="font-size:0.7rem; color:#00ff88; margin-left:4px;">(SEN)</span>' : ''}</td>
+          <td><span style="background:rgba(255,255,255,0.1); padding:0.15rem 0.4rem; border-radius:6px; font-size:0.75rem;">${team.ovr || 80}</span></td>
+          <td>${team.played}</td>
+          <td>${team.won}</td>
+          <td>${team.drawn}</td>
+          <td>${team.lost}</td>
+          <td>${team.gf}</td>
+          <td>${team.ga}</td>
+          <td>${team.gd > 0 ? '+' + team.gd : team.gd}</td>
+          <td style="font-weight:900; color:#ffd700; font-size:0.95rem;">${team.pts}</td>
+        </tr>
+      `;
+    });
+
+    tableHtml += `
+        </tbody>
+      </table>
+    `;
+    tableWrapper.innerHTML = tableHtml;
+    container.appendChild(tableWrapper);
+
+    // B) Eleme Ağacı (Knockout Bracket)
+    const bracketTitle = document.createElement('h3');
+    bracketTitle.style.cssText = 'font-size:1.05rem; color:#ffd700; margin:0.5rem 0 0 0; font-weight:800;';
+    bracketTitle.innerText = '⚔️ ELEME TURLARI & FİNAL YOLU';
+    container.appendChild(bracketTitle);
+
+    const bracketGrid = document.createElement('div');
+    bracketGrid.className = 'tourn-bracket-grid';
+
+    (tourn.knockoutTree || []).forEach((ko, koIdx) => {
+      const stageGlobalIdx = 3 + koIdx;
+      const isCurrentStage = (tourn.currentStageIdx === stageGlobalIdx && tourn.status === 'in_progress');
+      const isPlayed = tourn.currentStageIdx > stageGlobalIdx || (tourn.status === 'won' && ko.userMatch.played);
+
+      const bCard = document.createElement('div');
+      bCard.className = `tourn-bracket-card ${isCurrentStage ? 'current' : ''}`;
+      bCard.innerHTML = `
+        <div class="tourn-bracket-stage">${ko.stage}</div>
+        <div class="tourn-bracket-teams">
+          <span>${ko.userMatch.home}</span>
+          <span style="color:#ffd700; font-weight:900;">VS</span>
+          <span>${ko.userMatch.away}</span>
+        </div>
+        <div class="tourn-bracket-status" style="color: ${isPlayed ? '#00ff88' : (isCurrentStage ? '#ffd700' : '#94a3b8')};">
+          ${isPlayed ? '✅ KAZANILDI' : (isCurrentStage ? '🔥 ŞU ANKİ TUR' : '⏳ BEKLENİYOR')}
+        </div>
+      `;
+      bracketGrid.appendChild(bCard);
+    });
+    container.appendChild(bracketGrid);
+
+    // C) Maç Başlatma / Aksiyon Kartı
+    const actionCard = document.createElement('div');
+    actionCard.style.cssText = 'background: rgba(15, 23, 42, 0.9); border: 1px solid rgba(241, 196, 15, 0.3); border-radius: 12px; padding: 1.2rem; text-align: center; margin-top: 0.5rem; display: flex; flex-direction: column; align-items: center; gap: 0.8rem;';
+
+    if (tourn.status === 'won') {
+      actionCard.innerHTML = `
+        <div style="font-size: 2.5rem;">🏆</div>
+        <div style="font-size: 1.25rem; font-weight: 900; color: #ffd700;">ŞAMPİYONLUK KUPASI MÜZENİ SÜSLÜYOR!</div>
+        <div style="font-size: 0.9rem; color: #cbd5e1;">Bu prestijli turnuvayı şampiyon olarak tamamlayarak tarihe geçtin.</div>
+        <button id="btn-restart-tournament" class="btn-primary" style="background: linear-gradient(135deg, #00f2fe, #4facfe); max-width: 320px;">
+          🔄 TURNUVAYI YENİDEN BAŞLAT
+        </button>
+      `;
+    } else if (tourn.status === 'eliminated') {
+      actionCard.innerHTML = `
+        <div style="font-size: 2.5rem;">💔</div>
+        <div style="font-size: 1.25rem; font-weight: 900; color: #ff3366;">TURNUVADAN ELENDİNİZ</div>
+        <div style="font-size: 0.9rem; color: #cbd5e1;">Mücadele takdire şayandı. Yeni bir turnuva başlatıp kupaya koş!</div>
+        <button id="btn-restart-tournament" class="btn-primary" style="background: linear-gradient(135deg, #ff416c, #ff4b2b); max-width: 320px;">
+          🔄 YENİ TURNUVA BAŞLAT
+        </button>
+      `;
+    } else {
+      const currentStageName = tourn.stages[tourn.currentStageIdx] || 'Turnuva Maçı';
+      let oppTeamName = 'Brezilya 🇧🇷';
+      if (tourn.currentStageIdx < 3) {
+        const others = tourn.teams.filter(t => !t.isUserTeam && t.id !== 'my_club');
+        const opp = others[tourn.currentStageIdx] || others[0];
+        oppTeamName = `${opp.name} ${opp.flag || ''}`;
+      } else {
+        const koMatch = tourn.knockoutTree[tourn.currentStageIdx - 3];
+        oppTeamName = koMatch ? koMatch.userMatch.away : 'Dünya Karması 🌍';
+      }
+
+      actionCard.innerHTML = `
+        <div style="font-size: 0.85rem; font-weight: 800; color: #94a3b8; text-transform: uppercase; letter-spacing: 1px;">SIRADAKİ EŞLEŞME</div>
+        <div style="font-size: 1.35rem; font-weight: 900; color: #ffffff;">
+          ${tourn.teams.find(t => t.isUserTeam || t.id === 'my_club')?.name || 'Takımın'} 
+          <span style="color: #ffd700; margin: 0 0.5rem;">VS</span> 
+          ${oppTeamName}
+        </div>
+        <div style="font-size: 0.85rem; color: #00ff88; font-weight: 700;">🎯 Aşama: ${currentStageName}</div>
+        <button id="btn-start-tourn-action" class="btn-primary" style="background: linear-gradient(135deg, #f1c40f, #e67e22); font-size: 1.1rem; padding: 0.85rem 2rem; max-width: 360px; box-shadow: 0 0 20px rgba(241, 196, 15, 0.4);">
+          ⚽ ${currentStageName.toUpperCase()} MAÇINA BAŞLA
+        </button>
+      `;
+    }
+
+    container.appendChild(actionCard);
+
+    // Buton Dinleyicileri
+    const btnRestart = document.getElementById('btn-restart-tournament');
+    if (btnRestart) {
+      btnRestart.addEventListener('click', () => {
+        this.career.initTournament(tournType);
+        this.renderTournament(tournType);
+      });
+    }
+
+    const btnStartAction = document.getElementById('btn-start-tourn-action');
+    if (btnStartAction) {
+      btnStartAction.addEventListener('click', () => {
+        this.tournamentModal.classList.add('hidden');
+        let oppTeamName = 'Brezilya 🇧🇷';
+        if (tourn.currentStageIdx < 3) {
+          const others = tourn.teams.filter(t => !t.isUserTeam && t.id !== 'my_club');
+          const opp = others[tourn.currentStageIdx] || others[0];
+          oppTeamName = `${opp.name} ${opp.flag || ''}`;
+        } else {
+          const koMatch = tourn.knockoutTree[tourn.currentStageIdx - 3];
+          oppTeamName = koMatch ? koMatch.userMatch.away : 'Dünya Karması 🌍';
+        }
+        const stageTitle = tourn.stages[tourn.currentStageIdx] || 'Turnuva Maçı';
+        if (this.game && this.game.startTournamentMatch) {
+          this.game.startTournamentMatch(oppTeamName, stageTitle);
+        }
+      });
+    }
   }
 }
 

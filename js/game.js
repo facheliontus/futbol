@@ -71,6 +71,18 @@ class Game {
     this.aimLine = null;
     this.crosshair = null;
 
+    // Gamepad (HTML5 Gamepad API) & Konsol İkonografi Durumu
+    this.hasGamepad = false;
+    this.activeGamepadIndex = 0;
+    this.aimX = 0;
+    this.aimY = 1.2;
+    this.shotPowerCharge = 0;
+    this.lastGpButtons = {};
+
+    // Turnuva Maçı Bayrakları
+    this.isTournamentMatch = false;
+    this.tournamentStageTitle = '';
+
     this.initThree();
     this.initInputs();
   }
@@ -414,10 +426,7 @@ class Game {
         this.gkReticleGroup.position.set(0, 1.25, 0.4);
       }
 
-      const hintEl = document.getElementById('hud-control-hint');
-      if (hintEl) {
-        hintEl.innerHTML = `🧤 <b>KALECİ KONTROLÜ:</b> [A] Sol Alt | [D] Sağ Alt | [A+Space] Sol Üst (90) | [D+Space] Sağ Üst (90) | [Space] Zıpla | [Fare] Refleks Hamlesi`;
-      }
+      this.updateControlHint();
       const fBar = document.querySelector('.falso-control-bar');
       if (fBar) fBar.style.display = 'none';
 
@@ -461,10 +470,7 @@ class Game {
         this.gkReticleGroup.visible = false;
       }
 
-      const hintEl = document.getElementById('hud-control-hint');
-      if (hintEl) {
-        hintEl.innerHTML = `🎯 <b>FRİKİK / PENALTI:</b> Fareyle sol tık basılı tutup çekerek nişan al, bırak! | [T] Ayak | [G] Vuruş Tipi | [C] Kamera | [Q/E] Falso`;
-      }
+      this.updateControlHint();
       const fBar = document.querySelector('.falso-control-bar');
       if (fBar) fBar.style.display = 'flex';
 
@@ -538,10 +544,7 @@ class Game {
     const fBar = document.querySelector('.falso-control-bar');
     if (fBar) fBar.style.display = 'flex';
 
-    const hintEl = document.getElementById('hud-control-hint');
-    if (hintEl) {
-      hintEl.innerHTML = `🏃 <b>WASD:</b> Koş | [Shift] Depar | ⚡ <b>[E/V]:</b> Çalım At | 🎯 <b>[Boşluk/X]:</b> Pas Ver | 💣 <b>Fare:</b> Şut Çek | 🔄 <b>Fare:</b> Kamerayı Çevir`;
-    }
+    this.updateControlHint();
   }
 
   // CO-OP PASI GÖNDER (Pasör Ekranı)
@@ -1425,6 +1428,20 @@ class Game {
     if (retryBtn) {
       retryBtn.addEventListener('click', () => this.retryCurrentScenario());
     }
+
+    // Gamepad (HTML5 Gamepad API) Olay Dinleyicileri
+    window.addEventListener('gamepadconnected', (e) => {
+      this.hasGamepad = true;
+      this.activeGamepadIndex = e.gamepad.index;
+      this.showGoalBanner(`🎮 OYUN KOLU BAĞLANDI: ${e.gamepad.id.split('(')[0]}`);
+      this.updateControlHint();
+    });
+
+    window.addEventListener('gamepaddisconnected', () => {
+      this.hasGamepad = false;
+      this.showGoalBanner("🎮 OYUN KOLU BAĞLANTISI KESİLDİ");
+      this.updateControlHint();
+    });
   }
 
   // FALSO AYARLAMA
@@ -1881,8 +1898,234 @@ class Game {
   onMatchFinished() {
     clearTimeout(this.advanceTimer);
     clearTimeout(this.shotSafetyTimer);
-    const { summary, isSeasonEnd } = this.career.finishMatch();
+
+    if (this.isTournamentMatch) {
+      this.isTournamentMatch = false;
+      const tournRes = this.career.recordTournamentMatchResult(
+        this.career.currentMatch.matchScoreHome,
+        this.career.currentMatch.matchScoreAway
+      );
+      const { summary } = this.career.finishMatch(true);
+      summary.isTournament = true;
+      summary.tournResult = tournRes;
+      window.uiManager.showMatchSummaryModal(summary, false);
+      return;
+    }
+
+    const { summary, isSeasonEnd } = this.career.finishMatch(false);
     window.uiManager.showMatchSummaryModal(summary, isSeasonEnd);
+  }
+
+  // TURNUVA MAÇINI BAŞLAT
+  startTournamentMatch(oppName, stageTitle) {
+    this.isTournamentMatch = true;
+    this.tournamentStageTitle = stageTitle;
+    const tourn = this.career.getTournamentData();
+    let userTeamName = 'Türkiye 🇹🇷';
+    if (tourn.type === 'international') {
+      const uTeam = tourn.teams.find(t => t.isUserTeam) || tourn.teams[0];
+      userTeamName = `${uTeam.name} ${uTeam.flag}`;
+    } else {
+      const curClub = this.career.getCurrentClub();
+      userTeamName = `${curClub.name} ${curClub.badge}`;
+    }
+
+    const match = this.career.generateTournamentMatch(userTeamName, oppName, stageTitle);
+    
+    document.getElementById('hud-team-home').innerText = match.homeTeam;
+    document.getElementById('hud-team-away').innerText = match.awayTeam;
+    document.getElementById('hud-score-display').innerText = '0 - 0';
+
+    if (window.gameSound) window.gameSound.playWhistle(false);
+
+    const firstScenario = match.scenarios[0];
+    this.setupScenario(firstScenario);
+  }
+
+  // KENNEY & KONSOL İKONOGRAFİ GÜNCELLEMESİ
+  updateControlHint() {
+    const hintEl = document.getElementById('hud-control-hint');
+    if (!hintEl) return;
+
+    if (this.hasGamepad) {
+      if (this.isHumanGoalkeeper()) {
+        hintEl.innerHTML = `🎮 <span class="gamepad-badge btn-a">A</span> Sol Alt | <span class="gamepad-badge btn-b">B</span> Sağ Alt | <span class="gamepad-badge btn-x">X</span> Refleks | 🕹️ Sol Analog Eldiven Pozisyonu`;
+      } else if (this.isCoopMatch) {
+        hintEl.innerHTML = `🎮 🕹️ Sol Analog Koş | <span class="gamepad-badge btn-a">A</span> Pas | <span class="gamepad-badge btn-x">X</span> Şut | <span class="gamepad-badge btn-b">B</span> Çalım | <span class="gamepad-badge btn-trigger">RT</span> Depar`;
+      } else {
+        hintEl.innerHTML = `🎮 <span class="gamepad-badge btn-x">X</span> / <span class="gamepad-badge btn-trigger">RT</span> Basılı Tut & Bırak (Şut) | 🕹️ Sol Analog Nişan | <span class="gamepad-badge btn-trigger">LB/RB</span> Falso | <span class="gamepad-badge btn-y">Y</span> Kamera`;
+      }
+    } else {
+      if (this.isHumanGoalkeeper()) {
+        hintEl.innerHTML = `🧤 <b>KALECİ:</b> <kbd>A</kbd> Sol Alt | <kbd>D</kbd> Sağ Alt | <kbd>A</kbd>+<kbd>Space</kbd> Sol Üst | <kbd>D</kbd>+<kbd>Space</kbd> Sağ Üst | <kbd>Space</kbd> Zıpla | 🖱️ Refleks`;
+      } else if (this.isCoopMatch) {
+        hintEl.innerHTML = `🏃 <kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> Koş | <kbd>Shift</kbd> Depar | 👟 <kbd>E</kbd>/<kbd>V</kbd> Çalım | 🎯 <kbd>Space</kbd>/<kbd>X</kbd> Pas | ⚽ 🖱️ Şut`;
+      } else {
+        hintEl.innerHTML = `⚽ <b>FRİKİK / PENALTI:</b> Fareyle sol tık basılı tutup çekerek nişan al, bırak! | <kbd>T</kbd> Ayak | <kbd>G</kbd> Vuruş Tipi | <kbd>C</kbd> Kamera | <kbd>Q</kbd>/<kbd>E</kbd> Falso`;
+      }
+    }
+  }
+
+  // GAMEPAD GİRDİLERİNİ TARA & İŞLE (HTML5 Gamepad API)
+  pollGamepad(dt) {
+    if (!navigator.getGamepads) return;
+    const gamepads = navigator.getGamepads();
+    const gp = gamepads[this.activeGamepadIndex] || gamepads[0];
+    if (!gp) return;
+
+    if (!this.hasGamepad) {
+      this.hasGamepad = true;
+      this.updateControlHint();
+    }
+
+    const deadzone = 0.22;
+    const axisX = Math.abs(gp.axes[0]) > deadzone ? gp.axes[0] : 0;
+    const axisY = Math.abs(gp.axes[1]) > deadzone ? gp.axes[1] : 0;
+
+    if (this.isCoopMatch) {
+      this.keys['KeyA'] = axisX < -0.3;
+      this.keys['KeyD'] = axisX > 0.3;
+      this.keys['KeyW'] = axisY < -0.3;
+      this.keys['KeyS'] = axisY > 0.3;
+    } else if (this.isHumanGoalkeeper()) {
+      if (axisX !== 0 || axisY !== 0) {
+        this.gkMouseX = THREE.MathUtils.clamp((this.gkMouseX || 0) + axisX * dt * 2.5, -1, 1);
+        this.gkMouseY = THREE.MathUtils.clamp((this.gkMouseY || 0.5) - axisY * dt * 2.5, 0, 1);
+        this.playerModels.setGoalkeeperManualPosition(this.gkMouseX, this.gkMouseY, false);
+        if (this.gkReticleGroup) {
+          const targetX = this.gkMouseX * 3.4;
+          const targetY = 0.25 + this.gkMouseY * 2.15;
+          this.gkReticleGroup.position.set(targetX, targetY, 0.4);
+        }
+      }
+    } else {
+      if (!this.shotCooldown && (axisX !== 0 || axisY !== 0)) {
+        this.aimX = THREE.MathUtils.clamp(this.aimX + axisX * dt * 5.0, -3.5, 3.5);
+        this.aimY = THREE.MathUtils.clamp(this.aimY - axisY * dt * 3.5, 0.2, 2.4);
+        if (this.crosshair) {
+          this.crosshair.position.set(this.aimX, this.aimY, 0.05);
+          this.crosshair.material.opacity = 0.85;
+        }
+      }
+    }
+
+    const btnA = gp.buttons[0]?.pressed;
+    const btnB = gp.buttons[1]?.pressed;
+    const btnX = gp.buttons[2]?.pressed;
+    const btnY = gp.buttons[3]?.pressed;
+    const btnLB = gp.buttons[4]?.pressed;
+    const btnRB = gp.buttons[5]?.pressed;
+    const btnRT = gp.buttons[7]?.pressed;
+
+    if (btnY && !this.lastGpButtons.btnY) {
+      this.cycleCamera();
+    }
+    if (btnLB && !this.lastGpButtons.btnLB) {
+      this.adjustFalso(-0.3);
+    }
+    if (btnRB && !this.lastGpButtons.btnRB) {
+      this.adjustFalso(0.3);
+    }
+
+    if (this.isHumanGoalkeeper()) {
+      if (btnA && !this.lastGpButtons.btnA) {
+        this.performGoalkeeperDive(-1, 0.45, 'Sol Alt');
+      } else if (btnB && !this.lastGpButtons.btnB) {
+        this.performGoalkeeperDive(1, 0.45, 'Sağ Alt');
+      } else if (btnX && !this.lastGpButtons.btnX) {
+        this.handleGoalkeeperDiveAction();
+      }
+    } else if (this.isCoopMatch) {
+      if (btnA && !this.lastGpButtons.btnA) {
+        if (this.triggerCoopPass && this.hasBallPossession) {
+          const target = this.myRole === 'host' ? new THREE.Vector3(0, 0, 11) : new THREE.Vector3(0, 0, 18);
+          this.triggerCoopPass(target, 0.85, 1.8, 0);
+        }
+      } else if (btnX && !this.lastGpButtons.btnX) {
+        this.triggerCoopShot(0, 1.2, 28, this.currentFalso);
+      }
+    } else {
+      if ((btnX || btnRT) && !this.shotCooldown) {
+        this.shotPowerCharge = Math.min(1.0, this.shotPowerCharge + dt * 1.6);
+      } else if (!btnX && !btnRT && (this.lastGpButtons.btnX || this.lastGpButtons.btnRT) && !this.shotCooldown) {
+        const pwrRatio = Math.max(0.35, this.shotPowerCharge);
+        this.executeGamepadShot(pwrRatio);
+        this.shotPowerCharge = 0;
+      }
+    }
+
+    this.lastGpButtons = { btnA, btnB, btnX, btnY, btnLB, btnRB, btnRT };
+  }
+
+  // GAMEPAD İLE ŞUT ÇEKME
+  executeGamepadShot(powerRatio = 0.7) {
+    const kickCheck = this.isBallInKickRange();
+    if (!kickCheck.canKick) {
+      this.showGoalBanner("⚠️ TOP AYAKTA DEĞİL!");
+      return;
+    }
+
+    if (this.shotCooldown) return;
+    this.shotCooldown = true;
+    this.hasBallPossession = false;
+
+    const dirX = THREE.MathUtils.clamp((this.aimX || 0) / 3.2, -1.6, 1.6);
+    const dirY = THREE.MathUtils.clamp((this.aimY || 1.2) / 1.8, 0.25, 2.2);
+    const targetX = dirX * 4.6;
+    const targetY = dirY * 2.5;
+
+    const bonusStats = (this.career && typeof this.career.getPlayerBonusStats === 'function')
+      ? this.career.getPlayerBonusStats()
+      : { shotPower: 0, curve: 0, ballSpeed: 0, trivela: 0 };
+
+    const powerBonus = (bonusStats.shotPower || 0) + (bonusStats.ballSpeed || 0) * 0.5;
+    const curveBonus = (bonusStats.curve || 0) + (bonusStats.trivela || 0) * 0.6;
+    const powerMult = 1 + (powerBonus / 100);
+    const curlMultiplier = 1 + (curveBonus / 100);
+
+    const basePower = 24 + powerRatio * 16;
+    const power = THREE.MathUtils.clamp(basePower * powerMult, 23, 44);
+    const curl = this.currentFalso * curlMultiplier;
+    const isTrivela = this.isTrivelaActive();
+
+    if (this.crosshair) this.crosshair.material.opacity = 0;
+
+    clearTimeout(this.shotSafetyTimer);
+    this.shotSafetyTimer = setTimeout(() => {
+      if (this.shotCooldown) {
+        this.advanceScenarioAfterDelay(400);
+      }
+    }, 4200);
+
+    const animCallback = () => {
+      this.ball.shoot(dirX, dirY, power, curl, isTrivela, this.currentFoot, this.shotType);
+      this.updateSpeedHUD(power);
+
+      if (window.onlineManager && window.onlineManager.isOnlineMatch) {
+        window.onlineManager.sendShot(dirX, dirY, power, curl, isTrivela, this.currentFoot, this.shotType);
+      }
+
+      if (this.currentScenario && this.currentScenario.type === 'freekick') {
+        this.playerModels.triggerWallJump();
+      }
+
+      if (!window.onlineManager || !window.onlineManager.isOnlineMatch) {
+        const flightDuration = (this.currentScenario ? this.currentScenario.distance : 20) / power;
+        setTimeout(() => {
+          this.playerModels.triggerGoalkeeperDive(targetX, targetY, 0, flightDuration * 0.95);
+        }, 260);
+      }
+    };
+
+    if (kickCheck.type === 'volley') {
+      this.playerModels.triggerVolleyAnimation(animCallback);
+    } else if (kickCheck.type === 'header') {
+      this.playerModels.triggerHeaderAnimation(animCallback);
+    } else if (isTrivela) {
+      this.playerModels.triggerTrivelaAnimation(animCallback, null, this.currentFoot);
+    } else {
+      this.playerModels.triggerKickAnimation(animCallback, null, this.currentFoot);
+    }
   }
 
   // SEZON BİTTİĞİNDE TRANSFER TEKLİFLERİNİ AÇ
@@ -1933,6 +2176,11 @@ class Game {
 
     // Ani fps düşüşlerinde patlamayı önlemek için dt'yi sınırla
     dt = Math.min(dt, 0.1) * this.timeScale;
+
+    // Gamepad (HTML5 Gamepad API) kontrollerini tara
+    if (this.pollGamepad) {
+      this.pollGamepad(dt);
+    }
 
     // Yalnızca Co-op 2 Kişilik Eşli Hücum modunda serbest hareket ve defanslar çalışır
     if (this.isCoopMatch) {

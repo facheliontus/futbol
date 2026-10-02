@@ -18,6 +18,9 @@ class Stadium {
     this.createStands();
     this.createLights();
     this.createBanners();
+    this.createSkyline();
+    this.createFloodlightTowers();
+    this.createCrowdFlashes();
   }
 
   // Çim Sahayı ve Saha Çizgilerini Oluştur
@@ -530,6 +533,158 @@ class Stadium {
     this.scene.add(goalFillLight);
   }
 
+  // STADYUM ARKASI GECE ŞEHİR SİLÜETİ (Metropolitan Skyline & Skyscrapers)
+  createSkyline() {
+    const skylineGroup = new THREE.Group();
+
+    // Gece bina pencereleri dokusu (PBR Procedural Night Windows)
+    const winCanvas = document.createElement('canvas');
+    winCanvas.width = 256;
+    winCanvas.height = 512;
+    const wctx = winCanvas.getContext('2d');
+    wctx.fillStyle = '#080d1a';
+    wctx.fillRect(0, 0, 256, 512);
+
+    const windowColors = ['#fef08a', '#38bdf8', '#fbbf24', '#ffffff', '#0ea5e9'];
+    for (let y = 10; y < 500; y += 12) {
+      for (let x = 10; x < 246; x += 14) {
+        if (Math.random() > 0.45) {
+          wctx.fillStyle = windowColors[Math.floor(Math.random() * windowColors.length)];
+          wctx.globalAlpha = 0.5 + Math.random() * 0.5;
+          wctx.fillRect(x, y, 7, 7);
+        }
+      }
+    }
+    wctx.globalAlpha = 1.0;
+
+    const winTex = new THREE.CanvasTexture(winCanvas);
+    winTex.wrapS = THREE.RepeatWrapping;
+    winTex.wrapT = THREE.RepeatWrapping;
+
+    const buildingMat = new THREE.MeshBasicMaterial({ map: winTex });
+    const beaconMat = new THREE.MeshBasicMaterial({ color: 0xff1744 });
+
+    // 1. Kuzey Kale Arkası Gökdelenleri (Z: -48 to -65)
+    for (let i = -6; i <= 6; i++) {
+      const bWidth = 10 + Math.random() * 8;
+      const bDepth = 10 + Math.random() * 8;
+      const bHeight = 35 + Math.random() * 45;
+      const bX = i * 14 + (Math.random() - 0.5) * 4;
+      const bZ = -52 - (Math.abs(i) * 3) - Math.random() * 10;
+
+      const bGeo = new THREE.BoxGeometry(bWidth, bHeight, bDepth);
+      const bMesh = new THREE.Mesh(bGeo, buildingMat);
+      bMesh.position.set(bX, bHeight / 2 - 2, bZ);
+      skylineGroup.add(bMesh);
+
+      // Çatı Kırmızı Uçak Uyarı İkaz Işığı (Aviation Beacon)
+      const beaconGeo = new THREE.SphereGeometry(0.65, 8, 8);
+      const beacon = new THREE.Mesh(beaconGeo, beaconMat);
+      beacon.position.set(bX, bHeight - 1.5, bZ);
+      skylineGroup.add(beacon);
+    }
+
+    // 2. Doğu & Batı Yan Tribün Arkası Gökdelenleri
+    [-68, 68].forEach(sideX => {
+      for (let j = -2; j <= 5; j++) {
+        const bWidth = 12 + Math.random() * 6;
+        const bHeight = 28 + Math.random() * 38;
+        const bDepth = 12 + Math.random() * 8;
+        const bZ = j * 16 + (Math.random() - 0.5) * 5;
+
+        const bGeo = new THREE.BoxGeometry(bWidth, bHeight, bDepth);
+        const bMesh = new THREE.Mesh(bGeo, buildingMat);
+        bMesh.position.set(sideX, bHeight / 2 - 2, bZ);
+        skylineGroup.add(bMesh);
+      }
+    });
+
+    this.scene.add(skylineGroup);
+  }
+
+  // 4 KÖŞE PROJEKTÖR DİREKLERİ & IŞIK HUZMESİ KONİLERİ (Volumetric Floodlight Towers)
+  createFloodlightTowers() {
+    const towerMat = new THREE.MeshStandardMaterial({ color: 0x334155, metalness: 0.8, roughness: 0.3 });
+    const lampMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
+    const beamMat = new THREE.MeshBasicMaterial({
+      color: 0xe0f7fa,
+      transparent: true,
+      opacity: 0.08,
+      side: THREE.DoubleSide,
+      depthWrite: false
+    });
+
+    const towerPositions = [
+      { x: -38, z: -10, rotY: -Math.PI / 4 },
+      { x: 38, z: -10, rotY: Math.PI / 4 },
+      { x: -38, z: 62, rotY: -Math.PI * 0.75 },
+      { x: 38, z: 62, rotY: Math.PI * 0.75 }
+    ];
+
+    towerPositions.forEach(t => {
+      const towerGroup = new THREE.Group();
+      towerGroup.position.set(t.x, 0, t.z);
+
+      // Ana Çelik Kafes Kolon
+      const poleGeo = new THREE.CylinderGeometry(0.4, 0.75, 26, 8);
+      const pole = new THREE.Mesh(poleGeo, towerMat);
+      pole.position.y = 13;
+      towerGroup.add(pole);
+
+      // Üst Projektör Paneli
+      const headGeo = new THREE.BoxGeometry(4.5, 3.2, 0.6);
+      const head = new THREE.Mesh(headGeo, towerMat);
+      head.position.set(0, 26, 0);
+      head.rotation.y = t.rotY;
+      head.rotation.x = 0.35; // Sahaya doğru eğik
+      towerGroup.add(head);
+
+      // Projektör Lambaları (Parlak Beyaz Işık Matrisi)
+      for (let lx = -1.6; lx <= 1.6; lx += 0.8) {
+        for (let ly = -1.0; ly <= 1.0; ly += 0.7) {
+          const bulb = new THREE.Mesh(new THREE.PlaneGeometry(0.6, 0.5), lampMat);
+          bulb.position.set(lx, 26 + ly, 0.32);
+          bulb.rotation.y = t.rotY;
+          bulb.rotation.x = 0.35;
+          towerGroup.add(bulb);
+        }
+      }
+
+      // Hacimsel Işık Huzmesi Konisi (Volumetric Light Beam)
+      const coneGeo = new THREE.ConeGeometry(18, 42, 16, 1, true);
+      const cone = new THREE.Mesh(coneGeo, beamMat);
+      cone.position.set(0, 14, 12);
+      cone.rotation.x = -Math.PI / 3;
+      cone.rotation.y = t.rotY;
+      towerGroup.add(cone);
+
+      this.scene.add(towerGroup);
+    });
+  }
+
+  // TARAFTAR FLAŞ PATLAMALARI (Photographer & Crowd Flashbulbs)
+  createCrowdFlashes() {
+    this.flashMeshes = [];
+    const flashMat = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0 });
+
+    for (let i = 0; i < 18; i++) {
+      const flashMesh = new THREE.Mesh(new THREE.SphereGeometry(0.35, 6, 6), flashMat.clone());
+      const standChoice = Math.random();
+      if (standChoice < 0.5) {
+        // Kuzey Kale Arkası Tribünü
+        flashMesh.position.set((Math.random() - 0.5) * 58, 4 + Math.random() * 10, -9.2);
+      } else if (standChoice < 0.75) {
+        // Sol Tribün
+        flashMesh.position.set(-34, 4 + Math.random() * 10, Math.random() * 50);
+      } else {
+        // Sağ Tribün
+        flashMesh.position.set(34, 4 + Math.random() * 10, Math.random() * 50);
+      }
+      this.scene.add(flashMesh);
+      this.flashMeshes.push(flashMesh);
+    }
+  }
+
   // Ağ Sarsılma Efekti (Gol olduğunda ağ arkaya doğru esner)
   animateNetImpact() {
     if (!this.netMesh) return;
@@ -545,10 +700,21 @@ class Stadium {
     }, 20);
   }
 
-  // Her Kare LED Reklam Panosu Kayan Akış Animasyonu
+  // Her Kare Güncelleme: LED Reklam ve Taraftar Flaşları
   update(dt) {
     if (this.bannerTex) {
-      this.bannerTex.offset.x -= dt * 0.12; // Sürekli pürüzsüz sağdan sola akan LED şerit
+      this.bannerTex.offset.x -= dt * 0.12; // Sürekli pürüzsüz akan LED şerit
+    }
+
+    // Rastgele taraftar kamera flaşları (Crowd Flash Bulbs)
+    if (this.flashMeshes && this.flashMeshes.length > 0) {
+      if (Math.random() < 0.08) {
+        const randMesh = this.flashMeshes[Math.floor(Math.random() * this.flashMeshes.length)];
+        randMesh.material.opacity = 1.0;
+        setTimeout(() => {
+          if (randMesh && randMesh.material) randMesh.material.opacity = 0;
+        }, 60);
+      }
     }
   }
 }

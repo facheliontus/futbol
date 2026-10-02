@@ -36,6 +36,7 @@
       </div>
 
       <div class="hud-actions">
+        <button id="btn-open-tournament" class="hud-btn tournament-btn" title="Kupa & Turnuva Modu (Dünya Kupası & Devler Ligi)">🏆 TURNUVA</button>
         <button id="btn-open-transfers" class="hud-btn transfer-hub-btn" title="İstediğin Kulüple Transfer Görüşmesi Yap">🤝 TRANSFER OL</button>
         <button id="btn-open-store" class="hud-btn store-btn" title="Kariyer Mağazası (Top, Krampon, Saç, Forma)">🛒 MAĞAZA</button>
         <button id="btn-open-leaderboard" class="hud-btn leaderboard-btn" title="Dünya Liderlik Sıralaması (Kısayol: L Tuşu)">🏆 LİDERLİK <span class="key-hint">L</span></button>
@@ -468,6 +469,34 @@
 
       <!-- Kulüpler Listesi Izgarası -->
       <div id="transfer-hub-clubs-grid" class="transfer-hub-grid">
+        <!-- JavaScript ile dinamik doldurulur -->
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL 10: KUPA VE TURNUVA SİSTEMİ (DÜNYA KUPASI & ŞAMPİYONLAR LİGİ) -->
+  <div id="tournament-modal" class="modal-overlay hidden">
+    <div class="modal-container tournament-modal-container">
+      <div class="modal-header-row">
+        <div class="modal-header-info">
+          <div style="display: flex; align-items: center; gap: 0.8rem; flex-wrap: wrap;">
+            <h2 class="modal-title" style="text-align: left; margin: 0;" id="tourn-title-text">🏆 2026 DÜNYA KUPASI</h2>
+            <span id="tourn-status-badge" class="lb-live-badge" style="border-color:#ffd700; color:#ffd700;">⚔️ GRUP AŞAMASI (1/3)</span>
+          </div>
+          <p class="modal-subtitle" style="text-align: left; margin: 0.2rem 0 0 0;">Milli takımınla veya kulübünle kupa serüvenine başla, eleme turlarını geç ve müzene kupayı ekle!</p>
+        </div>
+        <button id="btn-close-tournament" class="modal-close-btn" title="Kapat">✕</button>
+      </div>
+
+      <!-- Turnuva Sekmeleri -->
+      <div class="store-tabs">
+        <button class="tourn-tab-btn active" data-tourn="world_cup">🏆 DÜNYA KUPASI 2026</button>
+        <button class="tourn-tab-btn" data-tourn="champions_league">⭐ UEFA DEVLER LİGİ</button>
+        <button class="tourn-tab-btn" data-tourn="cabinet">🏛️ KUPA DOLABI (MÜZE)</button>
+      </div>
+
+      <!-- Turnuva İçerik Alanı -->
+      <div id="tourn-content-view" class="tourn-content-view">
         <!-- JavaScript ile dinamik doldurulur -->
       </div>
     </div>

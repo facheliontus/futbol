@@ -2143,3 +2143,235 @@ body, html {
   }
 }
 
+/* ==========================================================
+   TURNUVA & KUPA MODALİ, KUPA MÜZESİ VE KONTROL İKONLARI
+   ========================================================== */
+.tournament-btn {
+  background: linear-gradient(135deg, rgba(241, 196, 15, 0.2), rgba(230, 126, 34, 0.25)) !important;
+  border-color: #f1c40f !important;
+  color: #ffd700 !important;
+  font-weight: 800 !important;
+  text-shadow: 0 0 8px rgba(241, 196, 15, 0.5);
+  box-shadow: 0 0 12px rgba(241, 196, 15, 0.2);
+  transition: all 0.2s ease;
+}
+.tournament-btn:hover {
+  background: linear-gradient(135deg, #f1c40f, #e67e22) !important;
+  color: #000 !important;
+  transform: translateY(-2px);
+  box-shadow: 0 0 18px rgba(241, 196, 15, 0.6);
+}
+
+.tournament-modal-container {
+  max-width: 960px;
+  max-height: 88vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  padding: 1.8rem;
+  background: linear-gradient(160deg, #0b1528, #050b14);
+  border: 1px solid rgba(241, 196, 15, 0.35);
+  box-shadow: 0 25px 70px rgba(0, 0, 0, 0.95), 0 0 35px rgba(241, 196, 15, 0.15);
+}
+
+.tourn-content-view {
+  overflow-y: auto;
+  padding-right: 0.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.2rem;
+}
+
+.tourn-tab-btn {
+  flex: 1;
+  padding: 0.75rem 1rem;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #94a3b8;
+  font-weight: 800;
+  font-size: 0.9rem;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.tourn-tab-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: #ffffff;
+}
+.tourn-tab-btn.active {
+  background: linear-gradient(135deg, rgba(241, 196, 15, 0.25), rgba(230, 126, 34, 0.35));
+  border-color: #f1c40f;
+  color: #ffd700;
+  box-shadow: 0 0 12px rgba(241, 196, 15, 0.25);
+}
+
+/* Turnuva Puan Tablosu */
+.tourn-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: rgba(15, 23, 42, 0.7);
+  border-radius: 10px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+.tourn-table th {
+  background: rgba(0, 0, 0, 0.4);
+  color: #94a3b8;
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  padding: 0.7rem 0.6rem;
+  text-align: center;
+}
+.tourn-table td {
+  padding: 0.7rem 0.6rem;
+  text-align: center;
+  font-size: 0.85rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+}
+.tourn-table tr.user-row {
+  background: rgba(0, 255, 136, 0.1);
+  font-weight: 800;
+  color: #00ff88;
+}
+.tourn-table tr.advancing td:first-child {
+  border-left: 4px solid #00ff88;
+}
+
+/* Bracket Grid */
+.tourn-bracket-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1rem;
+}
+.tourn-bracket-card {
+  background: rgba(15, 23, 42, 0.8);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  padding: 0.8rem;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+.tourn-bracket-card.current {
+  border-color: #f1c40f;
+  box-shadow: 0 0 15px rgba(241, 196, 15, 0.2);
+}
+.tourn-bracket-stage {
+  font-size: 0.75rem;
+  font-weight: 800;
+  color: #ffd700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+.tourn-bracket-teams {
+  font-size: 0.9rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+.tourn-bracket-status {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #94a3b8;
+}
+
+/* Trophy Cabinet */
+.trophy-cabinet-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+  gap: 1.2rem;
+}
+.trophy-card {
+  background: rgba(15, 23, 42, 0.8);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  padding: 1.2rem;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.6rem;
+  transition: all 0.3s ease;
+}
+.trophy-card.unlocked {
+  background: linear-gradient(145deg, rgba(241, 196, 15, 0.15), rgba(15, 23, 42, 0.85));
+  border-color: rgba(241, 196, 15, 0.5);
+  box-shadow: 0 0 25px rgba(241, 196, 15, 0.2);
+}
+.trophy-card.locked {
+  opacity: 0.45;
+  filter: grayscale(0.9);
+}
+.trophy-icon {
+  font-size: 3.2rem;
+  line-height: 1;
+}
+.trophy-title {
+  font-size: 0.95rem;
+  font-weight: 800;
+  color: #ffffff;
+}
+.trophy-desc {
+  font-size: 0.78rem;
+  color: #94a3b8;
+  line-height: 1.3;
+}
+.trophy-reward-badge {
+  font-size: 0.75rem;
+  font-weight: 800;
+  color: #ffd700;
+  background: rgba(241, 196, 15, 0.15);
+  padding: 0.25rem 0.6rem;
+  border-radius: 20px;
+  border: 1px solid rgba(241, 196, 15, 0.3);
+}
+
+/* Kenney-Style Input & Gamepad Prompts */
+kbd, .kbd-badge {
+  display: inline-block;
+  padding: 0.15rem 0.45rem;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, monospace;
+  font-size: 0.72rem;
+  font-weight: 800;
+  line-height: 1.2;
+  color: #ffffff;
+  background: #1e293b;
+  border: 1px solid #475569;
+  border-bottom: 2px solid #334155;
+  border-radius: 4px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+  margin: 0 0.15rem;
+  vertical-align: baseline;
+}
+.gamepad-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.35rem;
+  height: 1.35rem;
+  border-radius: 50%;
+  font-size: 0.72rem;
+  font-weight: 900;
+  color: #ffffff;
+  margin: 0 0.2rem;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.5);
+  text-shadow: 0 1px 2px rgba(0,0,0,0.8);
+  border: 1px solid rgba(255,255,255,0.4);
+}
+.gamepad-badge.btn-a { background: #22c55e; }
+.gamepad-badge.btn-b { background: #ef4444; }
+.gamepad-badge.btn-x { background: #3b82f6; }
+.gamepad-badge.btn-y { background: #eab308; }
+.gamepad-badge.btn-trigger {
+  border-radius: 5px;
+  width: auto;
+  padding: 0 0.35rem;
+  background: #475569;
+}
+
+
