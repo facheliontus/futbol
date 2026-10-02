@@ -1,42 +1,29 @@
 // ==========================================================
-// TOP FİZİĞİ, ÇİFT KALE GOL VE ÇARPIŞMALAR (physics.js)
-// Away Goal Z=-38 & Home Goal Z=+38 Destekli Arcade Top Motoru
+// TOP FİZİĞİ, FALSO (MAGNUS ETKİSİ) VE ÇARPIŞMALAR (physics.js)
 // ==========================================================
-
-const BALL_STATE = {
-  FREE: 'FREE',
-  CONTROLLED: 'CONTROLLED',
-  PASSING: 'PASSING',
-  SHOOTING: 'SHOOTING',
-  LOOSE: 'LOOSE',
-  GOAL: 'GOAL'
-};
 
 class BallPhysics {
   constructor(scene) {
     this.scene = scene;
     this.radius = 0.22; // FIFA 5 numara top yarıçapı
     this.mass = 0.43;   // kg
-    this.maxSpeed = 38.0; // Maksimum top hızı (m/s)
 
     // Fizik Sabitleri
     this.gravity = -9.81;
-    this.dragCoeff = 0.010;
-    this.magnusCoeff = 0.009;
-    this.bounceCoeff = 0.65;
+    this.dragCoeff = 0.010; // Hava sürtünmesi
+    this.magnusCoeff = 0.009; // Falso kuvvet çarpanı
+    this.bounceCoeff = 0.65; // Yerden sekme katsayısı
 
     // Durum Değişkenleri
-    this.state = BALL_STATE.FREE;
-    this.position = new THREE.Vector3(0, this.radius, 0);
+    this.position = new THREE.Vector3(0, this.radius, 11);
     this.velocity = new THREE.Vector3(0, 0, 0);
-    this.spin = new THREE.Vector3(0, 0, 0);
+    this.spin = new THREE.Vector3(0, 0, 0); // x: topspin/dip, y: side curl (falso), z: roll
     this.isMoving = false;
     this.hasScored = false;
     this.hasHitPost = false;
     this.hasBeenSaved = false;
     this.hasHitWall = false;
     this.hasTriggeredEnd = false;
-    this.owner = null;
 
     // 3D Nesneler
     this.mesh = null;
@@ -48,6 +35,7 @@ class BallPhysics {
   }
 
   createBall() {
+    // Klasik Futbol Topu Dokusu (Pentagon & Hexagon Doku)
     const canvas = document.createElement('canvas');
     canvas.width = 512;
     canvas.height = 256;
@@ -56,6 +44,7 @@ class BallPhysics {
     ctx.fillStyle = '#f8fafc';
     ctx.fillRect(0, 0, 512, 256);
 
+    // Siyah beşgenler
     ctx.fillStyle = '#0f172a';
     const drawPentagon = (cx, cy, r) => {
       ctx.beginPath();
@@ -70,6 +59,7 @@ class BallPhysics {
       ctx.fill();
     };
 
+    // Doku üzerine futbol panelleri dağıt
     const spots = [
       [64, 64], [192, 64], [320, 64], [448, 64],
       [128, 160], [256, 160], [384, 160], [512, 160],
@@ -77,6 +67,7 @@ class BallPhysics {
     ];
     spots.forEach(([x, y]) => drawPentagon(x, y, 24));
 
+    // Dikiş çizgileri
     ctx.strokeStyle = '#94a3b8';
     ctx.lineWidth = 2;
     for (let x = 0; x < 512; x += 64) {
@@ -87,6 +78,7 @@ class BallPhysics {
     }
 
     const ballTexture = new THREE.CanvasTexture(canvas);
+
     const geo = new THREE.SphereGeometry(this.radius, 32, 32);
     const mat = new THREE.MeshStandardMaterial({
       map: ballTexture,
@@ -125,42 +117,46 @@ class BallPhysics {
     }
   }
 
-  // Topu Belirli Bir Konuma Sıfırla (Varsayılan Santra: 0, 0.22, 0)
-  reset(pos = new THREE.Vector3(0, this.radius, 0)) {
+  // Topu Belirli Bir Konuma Sıfırla
+  reset(pos = new THREE.Vector3(0, this.radius, 11)) {
     this.position.copy(pos);
-    this.position.y = Math.max(this.radius, this.position.y);
     this.velocity.set(0, 0, 0);
     this.spin.set(0, 0, 0);
-    this.state = BALL_STATE.FREE;
     this.isMoving = false;
     this.hasScored = false;
     this.hasHitPost = false;
     this.hasBeenSaved = false;
     this.hasHitWall = false;
     this.hasTriggeredEnd = false;
-    this.owner = null;
 
     this.isPass = false;
     this.onPassArrival = null;
 
-    if (this.mesh) {
-      this.mesh.position.copy(this.position);
-      this.mesh.rotation.set(0, 0, 0);
-    }
-    if (this.shadow) {
-      this.shadow.position.set(this.position.x, 0.015, this.position.z);
-      this.shadow.scale.set(1, 1, 1);
-    }
+    this.mesh.position.copy(this.position);
+    this.mesh.rotation.set(0, 0, 0);
+    this.shadow.position.set(this.position.x, 0.015, this.position.z);
+    this.shadow.scale.set(1, 1, 1);
 
     this.trail = [];
     this.trailMeshes.forEach(m => m.material.opacity = 0);
   }
 
-  // PAS / ORTA ATEŞLEME
-  passTo(targetPos, flightDuration = 0.85, arcHeight = 0.2, curl = 0, onArrival = null) {
-    this.state = BALL_STATE.PASSING;
+  // TOPU YUMUŞATARAK STOP ETME (First Touch / Top Tutma)
+  cushionTrap(receiverPos) {
+    this.isMoving = false;
+    this.isPass = false;
+    this.velocity.set(0, 0, 0);
+    this.spin.set(0, 0, 0);
+    this.position.set(receiverPos.x, this.radius, receiverPos.z);
+    if (this.mesh) this.mesh.position.copy(this.position);
+    if (this.shadow) this.shadow.position.set(this.position.x, 0.015, this.position.z);
+    this.trail = [];
+    this.trailMeshes.forEach(m => m.material.opacity = 0);
+  }
+
+  // PAS / ORTA ATEŞLEME (Co-op 2 Kişilik Eşli Hücum İçin)
+  passTo(targetPos, flightDuration = 1.1, arcHeight = 1.8, curl = 0, onArrival = null) {
     this.isPass = true;
-    this.owner = null;
     this.onPassArrival = onArrival;
     this.passTargetPos = targetPos.clone();
 
@@ -172,6 +168,7 @@ class BallPhysics {
 
     this.curveAccelX = curl * 10.5;
 
+    // Hedefe tam iniş için ilk hız:
     const vx = toTarget.x / flightDuration - (0.5 * this.curveAccelX * flightDuration);
     let vy = (toTarget.y - this.position.y - 0.5 * this.gravity * flightDuration * flightDuration) / flightDuration;
     if (arcHeight > 0) {
@@ -180,11 +177,9 @@ class BallPhysics {
     const vz = toTarget.z / flightDuration;
 
     this.velocity.set(vx, vy, vz);
-    if (this.velocity.length() > this.maxSpeed) {
-      this.velocity.setLength(this.maxSpeed);
-    }
     this.flightTime = flightDuration;
     this.elapsedFlight = 0;
+
     this.spin.set(8, curl * 20, 0);
 
     this.isMoving = true;
@@ -199,40 +194,50 @@ class BallPhysics {
     }
   }
 
-  // ŞUT ATEŞLEME (targetZ: -38 Away kalesi veya +38 Home kalesi)
-  shoot(dirX, dirY, power = 26, curl = 0, targetZ = -38) {
-    this.state = BALL_STATE.SHOOTING;
+  // ŞUT ATEŞLEME (Gelişmiş Roberto Carlos / Beckham Falso Fiziği)
+  shoot(dirX, dirY, power = 25, curl = 0) {
     this.isPass = false;
-    this.owner = null;
     this.onPassArrival = null;
+    // dirX: -1.5 ile +1.5 arası (Kalenin dışına ve köşelere serbestçe nişan)
+    // dirY: 0.1 (Yerden) ile 2.2 (Direk üstü ve 90'a aşırtma)
+    // power: 20 - 34 m/s (~72 - 122 km/h)
+    // curl: -1.0 (SOLA KAVİS) ile +1.0 (SAĞA KAVİS)
 
-    // Hedef X ve Y
-    const targetX = dirX * 3.8;
-    const targetY = Math.min(2.4, Math.max(0.1, dirY * 2.2));
+    // Hedef nokta: Tam olarak nişan alınan koordinat
+    const targetX = dirX * 4.6;
+    const targetY = dirY * 2.5;
+    const targetZ = 0; // Kale çizgisi
 
+    // Kaleye olan mesafe ve uçuş süresi (T)
     const toTarget = new THREE.Vector3(targetX - this.position.x, targetY - this.position.y, targetZ - this.position.z);
     const distance = toTarget.length();
-    const flightTime = Math.max(0.4, distance / power);
+    const flightTime = distance / power;
 
+    // Falso İvmesi (X ekseninde çekiş):
+    // curl < 0 (Sola Kavis): İvme sola doğru negatif (sol kaleye çeker)
+    // curl > 0 (Sağa Kavis): İvme sağa doğru pozitif (sağ kaleye çeker)
     this.curveAccelX = curl * 10.5;
 
+    // Hedefe tam oturması için ilk fırlatma açısı (Offset launch):
+    // Top barajın dışından başlatılır ve falso ile hedefe kıvrılır!
     const vx = (targetX - this.position.x) / flightTime - (0.5 * this.curveAccelX * flightTime);
+
+    // Baraj üzerinden aşırtma ve çatala dalış (Dipping Arc):
     let vy = (targetY - this.position.y - 0.5 * this.gravity * flightTime * flightTime) / flightTime;
     if (dirY > 0.45) {
-      vy += (dirY - 0.45) * 1.8;
+      vy += (dirY - 0.45) * 2.5; // Baraj üzerinden yükselme itişi
     }
+
     const vz = toTarget.z / flightTime;
 
     this.velocity.set(vx, vy, vz);
-    if (this.velocity.length() > this.maxSpeed) {
-      this.velocity.setLength(this.maxSpeed);
-    }
     this.flightTime = flightTime;
     this.elapsedFlight = 0;
 
+    // Topun dönüş hızı (Görsel ve fiziksel spin)
     this.spin.set(
-      (dirY > 0.5) ? 14 : 0,
-      curl * 20,
+      (dirY > 0.5) ? 15 : 0, // Topspin
+      curl * 20,            // Yanal falso dönüşü
       0
     );
 
@@ -248,16 +253,14 @@ class BallPhysics {
     }
   }
 
-  // FİZİK GÜNCELLEMESİ (Her Kare)
+  // FİZİK GÜNCELLEMESİ (Her Kare Çağrılır)
   update(dt, stadium, playerModels, onGoal, onMiss, onSave, onPostHit, onWallHit, onStopped) {
     if (!this.isMoving) return;
-    dt = Math.min(dt, 0.05);
     this.elapsedFlight += dt;
 
-    // Pas Varış Kontrolü
+    // Co-op Pas Varış / İniş Kontrolü
     if (this.isPass && this.elapsedFlight >= this.flightTime) {
       this.isPass = false;
-      this.state = BALL_STATE.LOOSE;
       if (this.onPassArrival) {
         const cb = this.onPassArrival;
         this.onPassArrival = null;
@@ -265,41 +268,38 @@ class BallPhysics {
       }
     }
 
-    // 1. Falso ve İvme
-    this.velocity.x += (this.curveAccelX || 0) * dt;
+    // 1. GERÇEK FALSO İVMESİ (Kullanıcı sola dediyse top sola, sağa dediyse sağa kıvrılır)
+    this.velocity.x += this.curveAccelX * dt;
 
-    // 2. Yerçekimi ve Sürtünme
+    // Topspin ile kaleye yaklaşırken aniden aşağı düşüş (Dip)
+    if (this.spin.x > 0 && this.position.z < 12) {
+      this.velocity.y -= (this.spin.x * 0.35) * dt;
+    }
+
+    // 2. Yerçekimi ve Hava Sürtünmesi
     this.velocity.y += this.gravity * dt;
     this.velocity.multiplyScalar(1 - this.dragCoeff * dt);
-
-    if (this.velocity.length() > this.maxSpeed) {
-      this.velocity.setLength(this.maxSpeed);
-    }
 
     // 3. Konum Güncellemesi
     this.position.addScaledVector(this.velocity, dt);
 
-    // 4. Dönüş Görseli
-    if (this.mesh) {
-      this.mesh.rotation.x += this.velocity.z * dt * 3.5;
-      this.mesh.rotation.y += this.spin.y * dt * 0.8;
-      this.mesh.rotation.z -= this.velocity.x * dt * 3.5;
-    }
+    // 4. Top Kendi Etrafında Dönüşü (Görsel Animasyon)
+    this.mesh.rotation.x += this.velocity.z * dt * 3.5;
+    this.mesh.rotation.y += this.spin.y * dt * 0.8;
+    this.mesh.rotation.z -= this.velocity.x * dt * 3.5;
 
-    // 5. Zemin Çarpışması
+    // 5. Zemin Çarpışması (Sekme ve Yuvarlanma)
     if (this.position.y <= this.radius) {
       this.position.y = this.radius;
       if (Math.abs(this.velocity.y) > 0.8) {
         this.velocity.y = -this.velocity.y * this.bounceCoeff;
         this.velocity.x *= 0.85;
         this.velocity.z *= 0.85;
-        this.state = BALL_STATE.LOOSE;
       } else {
         this.velocity.y = 0;
-        this.velocity.multiplyScalar(0.94);
+        this.velocity.multiplyScalar(0.95);
         if (this.velocity.lengthSq() < 0.15) {
           this.isMoving = false;
-          this.state = BALL_STATE.FREE;
           if (!this.hasTriggeredEnd) {
             this.hasTriggeredEnd = true;
             if (onStopped) onStopped();
@@ -308,107 +308,157 @@ class BallPhysics {
         }
       }
     }
-    this.position.y = Math.max(this.radius, this.position.y);
 
-    if (this.mesh) this.mesh.position.copy(this.position);
+    this.mesh.position.copy(this.position);
 
-    // Zemin Gölgesi
-    if (this.shadow) {
-      this.shadow.position.x = this.position.x;
-      this.shadow.position.z = this.position.z;
-      const heightFactor = Math.max(0.1, 1 - (this.position.y / 7));
-      this.shadow.scale.set(heightFactor, heightFactor, 1);
-      this.shadow.material.opacity = 0.45 * heightFactor;
-    }
+    // Gölge Boyutu ve Konumu
+    this.shadow.position.x = this.position.x;
+    this.shadow.position.z = this.position.z;
+    const heightFactor = Math.max(0.1, 1 - (this.position.y / 7));
+    this.shadow.scale.set(heightFactor, heightFactor, 1);
+    this.shadow.material.opacity = 0.45 * heightFactor;
 
-    // Trail Kuyruk
+    // 6. Trail (Kuyruk İzi) Güncelle
     this.updateTrail();
 
-    const goalAwayZ = stadium ? (stadium.goalAwayZ || -38) : -38;
-    const goalHomeZ = stadium ? (stadium.goalHomeZ || 38) : 38;
-    const halfW = 3.66;
-    const goalH = 2.44;
-    const postR = 0.08;
+    // 7. BARAJ ÇARPIŞMA KONTROLÜ
+    if (playerModels && playerModels.wall.length > 0 && !this.hasScored && !this.hasHitWall) {
+      for (const def of playerModels.wall) {
+        const defPos = def.group.position;
+        const distXZ = Math.hypot(this.position.x - defPos.x, this.position.z - defPos.z);
+        const currentDefHeight = def.group.position.y + 1.85;
 
-    // 6. DİREK ÇARPIŞMALARI (Her iki kalede)
-    if (!this.hasHitPost) {
-      [goalAwayZ, goalHomeZ].forEach(gZ => {
-        if (Math.abs(this.position.z - gZ) < 0.28) {
-          // Sol & Sağ Direk
-          if ((Math.hypot(this.position.x - (-halfW), this.position.z - gZ) < postR + this.radius ||
-               Math.hypot(this.position.x - halfW, this.position.z - gZ) < postR + this.radius) &&
-               this.position.y <= goalH) {
-            this.hasHitPost = true;
-            this.velocity.x *= -0.9;
-            this.velocity.z *= -0.7;
-            if (window.gameSound) window.gameSound.playCrossbar();
-            if (onPostHit) onPostHit();
-          }
-          // Üst Direk
-          if (Math.abs(this.position.x) <= halfW && Math.abs(this.position.y - goalH) < postR + this.radius) {
-            this.hasHitPost = true;
-            this.velocity.y = -Math.abs(this.velocity.y) * 0.85;
-            this.velocity.z *= -0.7;
-            if (window.gameSound) window.gameSound.playCrossbar();
-            if (onPostHit) onPostHit();
-          }
+        if (distXZ < 0.38 && this.position.y >= def.group.position.y && this.position.y <= currentDefHeight) {
+          this.hasHitWall = true;
+          this.velocity.x += (Math.random() - 0.5) * 5;
+          this.velocity.z = Math.abs(this.velocity.z) * 0.35 + 2.0;
+          this.velocity.y = Math.abs(this.velocity.y) * 0.4 + 2.0;
+          if (window.gameSound) window.gameSound.playKick(0.6);
+          if (onWallHit) onWallHit();
+
+          setTimeout(() => {
+            if (!this.hasScored && !this.hasTriggeredEnd) {
+              this.hasTriggeredEnd = true;
+              if (onMiss) onMiss();
+            }
+          }, 1500);
+          break;
         }
-      });
+      }
     }
 
-    // 7. GOL TESPİTİ (Away & Home Çift Kale)
-    if (!this.hasScored && !this.hasBeenSaved) {
-      // Away Kale (Z <= -38): Kullanıcı Gol Attı!
-      if (this.position.z <= goalAwayZ && this.position.z >= goalAwayZ - 2.4) {
-        if (Math.abs(this.position.x) < halfW - 0.05 && this.position.y < goalH - 0.05 && this.position.y > 0) {
+    // 8. KALECİ ELDİVENİ / KURTARIŞ ÇARPIŞMASI (Adil ve Tatmin Edici Boyut)
+    if (playerModels && !this.hasBeenSaved && !this.hasScored) {
+      const gkBounds = playerModels.getGoalkeeperGlovesBounds();
+      if (gkBounds) {
+        const dLeft = this.position.distanceTo(gkBounds.leftGlove);
+        const dRight = this.position.distanceTo(gkBounds.rightGlove);
+        const dMid = gkBounds.glovesMid ? this.position.distanceTo(gkBounds.glovesMid) : 999;
+        const dBody = this.position.distanceTo(gkBounds.bodyCenter);
+
+        // İnsan kaleci kontrol ederken refleksler ve fare etkileşimi için adil ve tatmin edici kurtarış penceresi
+        const isHuman = !!gkBounds.isPlayerGK;
+        const gloveThreshold = isHuman ? 0.65 : 0.30;
+        const bodyThreshold = isHuman ? 0.75 : 0.42;
+
+        if (dLeft < gloveThreshold || dRight < gloveThreshold || dMid < gloveThreshold || (dBody < bodyThreshold && this.position.z < 1.0)) {
+          this.hasBeenSaved = true;
+          this.hasTriggeredEnd = true;
+          this.velocity.x += (Math.random() - 0.5) * 7;
+          this.velocity.y = Math.abs(this.velocity.y) * 0.4 + 3;
+          this.velocity.z = Math.abs(this.velocity.z) * 0.6 + 2.0;
+          if (window.gameSound) window.gameSound.playSave();
+          if (onSave) onSave();
+        }
+      }
+    }
+
+    // 9. DİREKLER VE ÜST DİREK ÇARPIŞMASI (Gerçekçi 7cm Yarıçap)
+    if (!this.hasHitPost && stadium) {
+      const halfW = stadium.goalWidth / 2;
+      const h = stadium.goalHeight;
+      const postR = 0.07; // Gerçek FIFA direk yarıçapı
+
+      if (Math.abs(this.position.z - stadium.goalZ) < 0.28) {
+        // Sol direk kontrolü
+        const dLeftPost = Math.hypot(this.position.x - (-halfW), this.position.z - stadium.goalZ);
+        if (dLeftPost < postR + this.radius && this.position.y <= h) {
+          this.hasHitPost = true;
+          this.velocity.x = Math.abs(this.velocity.x) * 1.1 + 2;
+          this.velocity.z = Math.abs(this.velocity.z) * 0.8 + 1;
+          if (window.gameSound) window.gameSound.playCrossbar();
+          if (onPostHit) onPostHit();
+
+          setTimeout(() => {
+            if (!this.hasScored && !this.hasTriggeredEnd) {
+              this.hasTriggeredEnd = true;
+              if (onMiss) onMiss();
+            }
+          }, 1400);
+        }
+
+        // Sağ direk kontrolü
+        const dRightPost = Math.hypot(this.position.x - halfW, this.position.z - stadium.goalZ);
+        if (dRightPost < postR + this.radius && this.position.y <= h) {
+          this.hasHitPost = true;
+          this.velocity.x = -Math.abs(this.velocity.x) * 1.1 - 2;
+          this.velocity.z = Math.abs(this.velocity.z) * 0.8 + 1;
+          if (window.gameSound) window.gameSound.playCrossbar();
+          if (onPostHit) onPostHit();
+
+          setTimeout(() => {
+            if (!this.hasScored && !this.hasTriggeredEnd) {
+              this.hasTriggeredEnd = true;
+              if (onMiss) onMiss();
+            }
+          }, 1400);
+        }
+
+        // Üst direk kontrolü (Crossbar)
+        if (Math.abs(this.position.x) <= halfW && Math.abs(this.position.y - h) < postR + this.radius) {
+          this.hasHitPost = true;
+          this.velocity.y = -Math.abs(this.velocity.y) * 0.85;
+          this.velocity.z = Math.abs(this.velocity.z) * 0.7 + 1;
+          if (window.gameSound) window.gameSound.playCrossbar();
+          if (onPostHit) onPostHit();
+
+          setTimeout(() => {
+            if (!this.hasScored && !this.hasTriggeredEnd) {
+              this.hasTriggeredEnd = true;
+              if (onMiss) onMiss();
+            }
+          }, 1400);
+        }
+      }
+    }
+
+    // 10. GOL TESPİTİ (Kale Çizgisini Geçme)
+    if (!this.hasScored && stadium) {
+      const halfW = stadium.goalWidth / 2;
+      const h = stadium.goalHeight;
+
+      if (this.position.z <= stadium.goalZ && this.position.z >= stadium.goalZ - stadium.goalDepth) {
+        if (Math.abs(this.position.x) < halfW - 0.05 && this.position.y < h - 0.05 && this.position.y > 0) {
           this.hasScored = true;
           this.hasTriggeredEnd = true;
-          this.state = BALL_STATE.GOAL;
-          if (stadium?.animateNetImpact) stadium.animateNetImpact('away');
-          this.velocity.multiplyScalar(0.2); // Filede sönümlen
+          stadium.animateNetImpact();
+          this.velocity.multiplyScalar(0.2); // Filede dur
           if (window.gameSound) {
             window.gameSound.playNet();
             window.gameSound.playWhistle(true);
             window.gameSound.playGoalCheer();
           }
-          if (onGoal) onGoal('home');
-          return;
-        }
-      }
-
-      // Home Kale (Z >= 38): Rakip Gol Attı!
-      if (this.position.z >= goalHomeZ && this.position.z <= goalHomeZ + 2.4) {
-        if (Math.abs(this.position.x) < halfW - 0.05 && this.position.y < goalH - 0.05 && this.position.y > 0) {
-          this.hasScored = true;
-          this.hasTriggeredEnd = true;
-          this.state = BALL_STATE.GOAL;
-          if (stadium?.animateNetImpact) stadium.animateNetImpact('home');
-          this.velocity.multiplyScalar(0.2);
-          if (window.gameSound) {
-            window.gameSound.playNet();
-            window.gameSound.playWhistle(true);
-            window.gameSound.playGoalCheer();
-          }
-          if (onGoal) onGoal('away');
-          return;
+          if (onGoal) onGoal();
         }
       }
     }
 
-    // 8. SAHA DIŞI (AUT / KAÇTI) TESPİTİ
-    if (!this.hasScored && !this.hasTriggeredEnd) {
-      if (this.position.z < goalAwayZ - 3.5 || this.position.z > goalHomeZ + 3.5) {
-        this.hasTriggeredEnd = true;
-        this.isMoving = false;
-        if (window.gameSound) window.gameSound.playCrowdMiss();
-        if (onMiss) onMiss();
-      }
-    }
-
-    // 9. TAÇ ÇİZGİSİ YANSIMASI / SINIR KORUMASI (X = ±27.5)
-    if (Math.abs(this.position.x) > 27.5) {
-      this.position.x = Math.sign(this.position.x) * 27.4;
-      this.velocity.x = -this.velocity.x * 0.5; // Reklam panosundan sekme
+    // 11. OUT / KAÇAN TOP TESPİTİ (Kale arkasına düşme)
+    if (!this.hasScored && !this.hasBeenSaved && !this.hasTriggeredEnd && this.position.z < -1.5) {
+      this.hasTriggeredEnd = true;
+      this.isMoving = false;
+      if (window.gameSound) window.gameSound.playCrowdMiss();
+      if (onMiss) onMiss();
     }
   }
 
