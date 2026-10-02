@@ -672,16 +672,7 @@ const STORE_CATALOG = {
   ]
 };
 
-// ==========================================================
-// LİG REFERANS RAKİPLERİ (Yetersiz gerçek oyuncu varken tablo dolgusu)
-// ==========================================================
-const BENCHMARK_LEAGUE_PLAYERS = [
-  { id: 'bot_1', name: 'Chamartin Yıldızı', club: 'Chamartin B (Madrid Beyaz)', ovr: 86, money: 18500000, country: '🇪🇸', isRealPlayer: false },
-  { id: 'bot_2', name: 'Man Blue Forveti', club: 'Man Blue (Mavi Gökler)', ovr: 85, money: 16200000, country: '🏴󠁧󠁢󠁥󠁮󠁧󠁿', isRealPlayer: false },
-  { id: 'bot_3', name: 'Bavyera Santraforu', club: 'Bavyera Kırmızı (Isar FC)', ovr: 84, money: 14000000, country: '🇩🇪', isRealPlayer: false },
-  { id: 'bot_4', name: 'Katalan 10 Numara', club: 'Katalonya Blaugrana', ovr: 83, money: 11500000, country: '🇪🇸', isRealPlayer: false },
-  { id: 'bot_5', name: 'Lombardiya Kaptanı', club: 'Lombardiya Mavi', ovr: 82, money: 9000000, country: '🇮🇹', isRealPlayer: false }
-];
+
 
 // ==========================================================
 // ANTİ-HİLE VE VERİ BÜTÜNLÜĞÜ MOTORU (ANTI-CHEAT ENGINE)
@@ -900,8 +891,14 @@ class CareerManager {
           }, 1200);
         }
 
+        // Eski bot önbelleğini temizle (Yalnızca gerçek oyuncular kalır)
+        try {
+          localStorage.removeItem('fc_cached_cloud_players');
+          this.cachedCloudPlayers = [];
+        } catch (e) {}
+
         this._attachSecurityWatchdog();
-        setTimeout(() => this.syncWithGlobalCloud(), 1500);
+        this.syncWithGlobalCloud();
       }
     } catch (e) {
       console.warn("Kayıt yüklenemedi:", e);
@@ -1229,6 +1226,9 @@ class CareerManager {
         const cloudData = await cloudRes.json();
         let players = (cloudData.data && Array.isArray(cloudData.data.players)) ? cloudData.data.players : [];
 
+        // Kesinlikle botları ve sahteleri temizle (Yalnızca gerçek insanlar!)
+        players = players.filter(p => p && p.isRealPlayer !== false && !String(p.id).startsWith('bot_'));
+
         const idx = players.findIndex(p => p.id === payload.id || p.name === payload.name);
         if (idx >= 0) {
           players[idx] = { ...players[idx], ...payload };
@@ -1236,10 +1236,8 @@ class CareerManager {
           players.push(payload);
         }
 
-        // Hileli kayıtları filtrele ve sınırla
-        players = players
-          .filter(p => p.money <= 200000000 && p.ovr <= 99)
-          .slice(-60);
+        // Hileli kayıtları sınırla
+        players = players.filter(p => p.money <= 200000000 && p.ovr <= 99);
 
         await fetch(cloudUrl, {
           method: 'PUT',
@@ -1247,19 +1245,27 @@ class CareerManager {
           body: JSON.stringify({
             name: 'PRO_FOOTBALL_3D_GLOBAL_LEADERBOARD',
             data: {
-              version: 1,
+              version: 2,
               lastUpdated: Date.now(),
               players: players
             }
           })
         });
+
+        this.cachedCloudPlayers = players;
+        try {
+          localStorage.setItem('fc_cached_cloud_players', JSON.stringify(players));
+        } catch (e) {}
       }
     } catch (err) {
-      console.warn('Bulut senkronizasyonu arka planda ertelendi:', err);
+      console.warn('Bulut senkronizasyonu hatası:', err);
     }
   }
 
   async fetchGlobalLeaderboard(filter = 'money') {
+    // 1. Önce güncel profilimizi buluta yaz
+    await this.syncWithGlobalCloud();
+
     let cloudPlayers = [];
     try {
       // 1. Vercel API üzerinden oku
@@ -1267,20 +1273,20 @@ class CareerManager {
       if (res && res.ok) {
         const json = await res.json();
         if (json.success && Array.isArray(json.players)) {
-          cloudPlayers = json.players;
+          cloudPlayers = json.players.filter(p => p && p.isRealPlayer !== false && !String(p.id).startsWith('bot_'));
         }
       } else {
         // 2. Doğrudan bulut nesnesinden oku
-        const cloudRes = await fetch(`https://api.restful-api.dev/objects/${this.cloudLeaderboardId}`);
+        const cloudRes = await fetch(`https://api.restful-api.dev/objects/${this.cloudLeaderboardId}?t=${Date.now()}`);
         if (cloudRes.ok) {
           const cloudData = await cloudRes.json();
           if (cloudData.data && Array.isArray(cloudData.data.players)) {
-            cloudPlayers = cloudData.data.players;
+            cloudPlayers = cloudData.data.players.filter(p => p && p.isRealPlayer !== false && !String(p.id).startsWith('bot_'));
           }
         }
       }
     } catch (e) {
-      console.warn("Bulut liderlik okuma hatası, yerel önbellek kullanılıyor:", e);
+      console.warn("Bulut liderlik okuma hatası:", e);
     }
 
     if (cloudPlayers.length > 0) {
@@ -1291,7 +1297,10 @@ class CareerManager {
     } else {
       const localCached = localStorage.getItem('fc_cached_cloud_players');
       if (localCached) {
-        try { this.cachedCloudPlayers = JSON.parse(localCached); } catch (e) {}
+        try {
+          const parsed = JSON.parse(localCached);
+          this.cachedCloudPlayers = (Array.isArray(parsed) ? parsed : []).filter(p => p && p.isRealPlayer !== false && !String(p.id).startsWith('bot_'));
+        } catch (e) {}
       }
     }
 
@@ -1299,7 +1308,8 @@ class CareerManager {
   }
 
   // ==========================================================
-  // LİDERLİK TABLOSU (LEADERBOARD: GERÇEK OYUNCULAR + SIRALAMA)
+  // LİDERLİK TABLOSU (LEADERBOARD: YALNIZCA GERÇEK OYUNCULAR)
+  // Sıfır Bot! Oyunu 2 kişi oynadıysa tam 2 kişi görünür!
   // ==========================================================
   getLeaderboard(filter = 'money') {
     if (!this.player) return [];
@@ -1317,25 +1327,19 @@ class CareerManager {
       isRealPlayer: true
     };
 
-    // 2. Buluttan gelen diğer gerçek oyuncular
+    // 2. Buluttan veya WebRTC'den gelen diğer GERÇEK oyuncular (Asla bot yok!)
     const otherRealPlayers = (this.cachedCloudPlayers || [])
-      .filter(p => p.id !== this.player.id && p.name !== this.player.name)
+      .filter(p => p && p.id !== this.player.id && p.name !== this.player.name && p.isRealPlayer !== false && !String(p.id).startsWith('bot_'))
       .map(p => ({
         ...p,
         isUser: false,
         isRealPlayer: true
       }));
 
-    // 3. Birleştir
+    // 3. Birleştir: YALNIZCA GERÇEK OYUNCULAR!
     let combinedList = [userEntry, ...otherRealPlayers];
 
-    // Eğer sitede henüz az sayıda gerçek oyuncu varsa (örneğin sadece 2 kişi),
-    // tablonun tam dolgun gözükmesi için lig rakipleri de eklenir
-    if (combinedList.length < 8) {
-      combinedList = [...combinedList, ...BENCHMARK_LEAGUE_PLAYERS];
-    }
-
-    // Filtreleme ve sıralama
+    // Sıralama
     if (filter === 'money') {
       // En Çok Para (En zengin futbolcular)
       combinedList.sort((a, b) => b.money - a.money);
@@ -1355,6 +1359,37 @@ class CareerManager {
       rank: index + 1,
       ...entry
     }));
+  }
+
+  // WebRTC P2P üzerinden gelen gerçek arkadaş verisini liderliğe ekle
+  addOrUpdateOnlinePeer(peerProfile) {
+    if (!peerProfile || !peerProfile.name) return;
+    if (this.player && (peerProfile.id === this.player.id || peerProfile.name === this.player.name)) return;
+
+    if (!this.cachedCloudPlayers) this.cachedCloudPlayers = [];
+    const cleanPeer = {
+      id: peerProfile.id || 'peer_' + Date.now(),
+      name: peerProfile.name,
+      club: peerProfile.club || 'Sarı Kanarya SK',
+      ovr: Math.max(60, Math.min(99, parseInt(peerProfile.ovr) || 75)),
+      money: Math.max(0, parseInt(peerProfile.money) || 50000),
+      country: '🇹🇷',
+      isRealPlayer: true,
+      lastSeen: Date.now()
+    };
+
+    const idx = this.cachedCloudPlayers.findIndex(p => p.id === cleanPeer.id || p.name === cleanPeer.name);
+    if (idx >= 0) {
+      this.cachedCloudPlayers[idx] = cleanPeer;
+    } else {
+      this.cachedCloudPlayers.push(cleanPeer);
+    }
+
+    try {
+      localStorage.setItem('fc_cached_cloud_players', JSON.stringify(this.cachedCloudPlayers));
+    } catch (e) {}
+
+    this.syncWithGlobalCloud();
   }
 
   // ==========================================================

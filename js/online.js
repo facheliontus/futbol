@@ -238,12 +238,21 @@ class OnlineManager {
       this.isOnlineMatch = true;
       console.log('Online P2P Bağlantısı Kuruldu!');
 
-      // İsim ve Oyun Modu Bilgisini Gönder
+      // İsim, Oyun Modu ve Kariyer Bilgisini Gönder
+      const p = window.careerManager && window.careerManager.player;
       this.send({
         type: 'handshake',
         name: this.localPlayerName,
         isHost: this.isHost,
-        gameMode: this.gameMode
+        gameMode: this.gameMode,
+        careerProfile: p ? {
+          id: p.id,
+          name: p.name,
+          club: window.careerManager.getCurrentClub().name,
+          ovr: p.overall,
+          money: p.money,
+          isRealPlayer: true
+        } : null
       });
 
       this.updateStatusText("RAKİP BAĞLANDI! MAÇ BAŞLIYOR...", "success");
@@ -281,6 +290,9 @@ class OnlineManager {
         if (!this.isHost && data.gameMode) {
           this.gameMode = data.gameMode;
           this.maxRounds = (this.gameMode === 'coop') ? 6 : 5;
+        }
+        if (data.careerProfile && window.careerManager) {
+          window.careerManager.addOrUpdateOnlinePeer(data.careerProfile);
         }
         break;
 

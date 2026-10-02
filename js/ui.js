@@ -511,6 +511,17 @@ class UIManager {
     if (!listContainer) return;
     listContainer.innerHTML = '';
 
+    if (!leaderboardData || leaderboardData.length === 0) {
+      listContainer.innerHTML = `
+        <div style="text-align: center; padding: 3rem 1rem; color: #94a3b8;">
+          <div style="font-size: 2.2rem; margin-bottom: 0.5rem;">⚽</div>
+          <div style="font-weight: 800; font-size: 1.05rem; color: #f8fafc;">Henüz kayıtlı başka oyuncu yok</div>
+          <div style="font-size: 0.85rem; margin-top: 0.3rem;">Oyuna ilk başlayan sensin! Arkadaşına linki at, anında buraya gelsin!</div>
+        </div>
+      `;
+      return;
+    }
+
     leaderboardData.forEach(entry => {
       const row = document.createElement('div');
       row.className = 'lb-row';
@@ -536,10 +547,7 @@ class UIManager {
         scoreDisplay = `⭐ ${compositeScore}P`;
       }
 
-      const userTag = entry.isUser ? '<span class="lb-user-badge">SEN</span>' : '';
-      const realTag = entry.isRealPlayer 
-        ? (!entry.isUser ? '<span class="lb-real-tag">🟢 CANLI OYUNCU</span>' : '')
-        : '<span class="lb-bot-tag">🤖 LİG RAKİBİ</span>';
+      const userTag = entry.isUser ? '<span class="lb-user-badge">SEN</span>' : '<span class="lb-real-tag">🟢 CANLI OYUNCU</span>';
 
       row.innerHTML = `
         <div class="lb-col-rank">
@@ -548,7 +556,7 @@ class UIManager {
         <div class="lb-col-player">
           <span class="lb-player-flag">${entry.country || '⚽'}</span>
           <div class="lb-player-names">
-            <span class="lb-player-title">${entry.name} ${userTag} ${realTag}</span>
+            <span class="lb-player-title">${entry.name} ${userTag}</span>
             <span class="lb-player-club">${entry.club}</span>
           </div>
         </div>
@@ -559,6 +567,12 @@ class UIManager {
 
       listContainer.appendChild(row);
     });
+
+    // Gerçek oyuncu sayısı bilgilendirme bandı
+    const infoStrip = document.createElement('div');
+    infoStrip.style.cssText = 'text-align: center; padding: 0.8rem 1rem; color: #94a3b8; font-size: 0.82rem; border-top: 1px solid rgba(255,255,255,0.06); margin-top: 0.4rem;';
+    infoStrip.innerHTML = `👥 <b>Sitede oynayan toplam ${leaderboardData.length} gerçek oyuncu listelenmektedir.</b> (Sıfır bot)`;
+    listContainer.appendChild(infoStrip);
   }
 
   // ANTİ-HİLE VE GÜVENLİK TOAST BİLDİRİMİ
