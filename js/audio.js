@@ -83,6 +83,93 @@ class SoundEngine {
     noise.start(now);
   }
 
+  // TRİVELA KAMÇILAMA & DÖNÜŞ SESİ (Ricardo Quaresma Dış Ayak Dilimi)
+  playTrivelaWhip(power = 1) {
+    if (this.muted) return;
+    this.ensureContext();
+    if (!this.ctx) return;
+
+    const now = this.ctx.currentTime;
+
+    // 1. Dış Ayak Darbesi (Tok, elastik deri vuruşu)
+    const kickOsc = this.ctx.createOscillator();
+    const kickGain = this.ctx.createGain();
+    kickOsc.type = 'sine';
+    kickOsc.frequency.setValueAtTime(180 * power, now);
+    kickOsc.frequency.exponentialRampToValueAtTime(38, now + 0.14);
+    kickGain.gain.setValueAtTime(0.95 * Math.min(power, 1.2), now);
+    kickGain.gain.exponentialRampToValueAtTime(0.001, now + 0.22);
+    kickOsc.connect(kickGain);
+    kickGain.connect(this.ctx.destination);
+    kickOsc.start(now);
+    kickOsc.stop(now + 0.24);
+
+    // 2. Havayı Yaran Kamçı Hışırtısı (Whip Swoosh - Sweep Bandpass Filter)
+    const bufferSize = Math.floor(this.ctx.sampleRate * 0.32);
+    const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+    const data = buffer.getChannelData(0);
+    for (let i = 0; i < bufferSize; i++) {
+      data[i] = (Math.random() * 2 - 1);
+    }
+    const noise = this.ctx.createBufferSource();
+    noise.buffer = buffer;
+
+    const filter = this.ctx.createBiquadFilter();
+    filter.type = 'bandpass';
+    filter.Q.value = 4.2;
+    // Frekans süpürmesi: 700Hz -> 3200Hz -> 600Hz (kamçılama rüzgarı)
+    filter.frequency.setValueAtTime(700, now);
+    filter.frequency.exponentialRampToValueAtTime(3400, now + 0.08);
+    filter.frequency.exponentialRampToValueAtTime(450, now + 0.3);
+
+    const whipGain = this.ctx.createGain();
+    whipGain.gain.setValueAtTime(0.001, now);
+    whipGain.gain.linearRampToValueAtTime(0.75 * power, now + 0.04);
+    whipGain.gain.exponentialRampToValueAtTime(0.001, now + 0.32);
+
+    noise.connect(filter);
+    filter.connect(whipGain);
+    whipGain.connect(this.ctx.destination);
+    noise.start(now);
+
+    // 3. Yüksek Frekanslı Burgu Harmonik Islığı (Late-Swerve Magnus Whistle)
+    const spinOsc = this.ctx.createOscillator();
+    const spinGain = this.ctx.createGain();
+    spinOsc.type = 'triangle';
+    spinOsc.frequency.setValueAtTime(420, now + 0.02);
+    spinOsc.frequency.linearRampToValueAtTime(880, now + 0.12);
+    spinOsc.frequency.linearRampToValueAtTime(260, now + 0.28);
+    spinGain.gain.setValueAtTime(0.001, now + 0.02);
+    spinGain.gain.linearRampToValueAtTime(0.22, now + 0.08);
+    spinGain.gain.exponentialRampToValueAtTime(0.001, now + 0.28);
+    spinOsc.connect(spinGain);
+    spinGain.connect(this.ctx.destination);
+    spinOsc.start(now + 0.02);
+    spinOsc.stop(now + 0.3);
+  }
+
+  // FÜZE / SERT ÜST VURUŞ SESİ (Patlama ve Derin Sub-Bass)
+  playPowerStrike(power = 1.2) {
+    if (this.muted) return;
+    this.ensureContext();
+    if (!this.ctx) return;
+
+    const now = this.ctx.currentTime;
+    const osc = this.ctx.createOscillator();
+    const gain = this.ctx.createGain();
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(190 * power, now);
+    osc.frequency.exponentialRampToValueAtTime(24, now + 0.25);
+    gain.gain.setValueAtTime(1.1, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.3);
+    osc.connect(gain);
+    gain.connect(this.ctx.destination);
+    osc.start(now);
+    osc.stop(now + 0.32);
+
+    this.playKick(power);
+  }
+
   // HAKEM DÜDÜĞÜ (İki frekanslı gerçekçi düdük titreşimi)
   playWhistle(isDouble = true) {
     if (this.muted) return;

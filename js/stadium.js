@@ -186,6 +186,57 @@ class Stadium {
     groundBack.position.set(0, 0.04, this.goalZ - this.goalDepth);
     this.scene.add(groundBack);
 
+    // SOL & SAĞ 90 KÖŞE EKLEM PARÇALARI (Cast Elbow Joint Flanges)
+    const elbowJointMat = new THREE.MeshStandardMaterial({
+      color: 0xeeeeee,
+      roughness: 0.2,
+      metalness: 0.75
+    });
+    const elbowGeo = new THREE.SphereGeometry(postRadius * 1.22, 16, 16);
+
+    // Sol 90 Köşe Eklem Manşonu
+    const leftElbow = new THREE.Mesh(elbowGeo, elbowJointMat);
+    leftElbow.position.set(-halfW, h, this.goalZ);
+    this.scene.add(leftElbow);
+
+    // Sağ 90 Köşe Eklem Manşonu
+    const rightElbow = new THREE.Mesh(elbowGeo, elbowJointMat);
+    rightElbow.position.set(halfW, h, this.goalZ);
+    this.scene.add(rightElbow);
+
+    // ZEMİN ANKRAJLARI & KİLİT FLANŞLARI (Turf Anchoring Brackets & Pins)
+    const anchorMat = new THREE.MeshStandardMaterial({
+      color: 0x222222,
+      roughness: 0.5,
+      metalness: 0.8
+    });
+    const anchorBaseGeo = new THREE.CylinderGeometry(postRadius * 1.55, postRadius * 1.75, 0.08, 16);
+    const boltGeo = new THREE.CylinderGeometry(0.015, 0.015, 0.04, 6);
+
+    // Sol Direk Zemin Ankrajı
+    const leftAnchor = new THREE.Mesh(anchorBaseGeo, anchorMat);
+    leftAnchor.position.set(-halfW, 0.04, this.goalZ);
+    this.scene.add(leftAnchor);
+    const leftBolt = new THREE.Mesh(boltGeo, elbowJointMat);
+    leftBolt.position.set(-halfW, 0.09, this.goalZ + 0.08);
+    this.scene.add(leftBolt);
+
+    // Sağ Direk Zemin Ankrajı
+    const rightAnchor = new THREE.Mesh(anchorBaseGeo, anchorMat);
+    rightAnchor.position.set(halfW, 0.04, this.goalZ);
+    this.scene.add(rightAnchor);
+    const rightBolt = new THREE.Mesh(boltGeo, elbowJointMat);
+    rightBolt.position.set(halfW, 0.09, this.goalZ + 0.08);
+    this.scene.add(rightBolt);
+
+    // Arka Zemin Sabitleme Kazıkları
+    const rearAnchorL = new THREE.Mesh(anchorBaseGeo, anchorMat);
+    rearAnchorL.position.set(-halfW, 0.03, this.goalZ - this.goalDepth);
+    this.scene.add(rearAnchorL);
+    const rearAnchorR = new THREE.Mesh(anchorBaseGeo, anchorMat);
+    rearAnchorR.position.set(halfW, 0.03, this.goalZ - this.goalDepth);
+    this.scene.add(rearAnchorR);
+
     // KALE AĞI (File Dokusu)
     const netCanvas = document.createElement('canvas');
     netCanvas.width = 128;

@@ -62,6 +62,11 @@ class Game {
     this.lastTime = performance.now();
     this.timeScale = 1.0; // Slow-motion efekti için
 
+    // Vuruş Ayağı, Şut Tipi ve Dinamik Kamera Modu
+    this.currentFoot = 'R'; // 'R' (Sağ Ayak), 'L' (Sol Ayak)
+    this.shotType = 'curve'; // 'curve' (İç Ayak / Plase), 'power' (Sert Üst / Füze), 'trivela' (Trivela 🌪️ Dış Ayak)
+    this.cameraMode = 'behind'; // 'behind' (Omuz Üstü Pro), 'broadcast' (TV Yayın), 'trivela_cam' (Trivela Takip), 'action' (Saha İçi)
+
     // Nişan Alma Eğrisi Çizgisi ve 3D Hedef Nişangahı
     this.aimLine = null;
     this.crosshair = null;
@@ -159,7 +164,7 @@ class Game {
     return false;
   }
 
-  // KAMERA KONUMLARI
+  // KAMERA KONUMLARI (4 Dinamik Kamera Modu)
   setCameraBehindBall() {
     if (!this.ball) return;
     this.cameraYaw = 0;
@@ -172,14 +177,32 @@ class Game {
     const normX = dirX / len;
     const normZ = dirZ / len;
 
-    this.camera.position.set(bPos.x + normX * 4.2, bPos.y + 1.85, bPos.z + normZ * 4.2);
-    this.camera.lookAt(0, 1.2, 0);
+    const shoulderOffset = (this.currentFoot === 'R') ? -0.55 : 0.55;
+
+    if (this.cameraMode === 'broadcast') {
+      // TV Canlı Yayın Kamerası (Tribün yüksek yayın açısı)
+      this.camera.position.set(bPos.x + 11.5, 7.8, bPos.z + 8.5);
+      this.camera.lookAt(0, 1.2, bPos.z * 0.35);
+    } else if (this.cameraMode === 'trivela_cam') {
+      // Trivela & Kavis Takip Kamerası (Topun dış kavisini ve falso kıvrılışını sinematik alttan takip eder)
+      const sideOffset = (this.currentFoot === 'R') ? -1.8 : 1.8;
+      this.camera.position.set(bPos.x + sideOffset, 0.75, bPos.z + 3.6);
+      this.camera.lookAt(0, 1.4, 0);
+    } else if (this.cameraMode === 'action') {
+      // Saha İçi Aksiyon Kamerası
+      this.camera.position.set(bPos.x, 1.4, bPos.z + 3.2);
+      this.camera.lookAt(0, 1.25, 0);
+    } else {
+      // Omuz Üstü Pro Kamera (Varsayılan - Seçilen vuruş ayağının arkasından hedefi tam gösterir)
+      this.camera.position.set(bPos.x + normX * 4.2 + shoulderOffset, bPos.y + 1.85, bPos.z + normZ * 4.2);
+      this.camera.lookAt(0, 1.2, 0);
+    }
+
     if (this.gkReticleGroup) this.gkReticleGroup.visible = false;
   }
 
   setCameraGoalkeeperView() {
     // Kaleci Modu: Kalenin üstünden ve arkasından geniş, ferah yayın açısı (FIFA Be-A-Pro Kamera)
-    // Kaleyi, direkleri, barajı ve şut çeken forveti mükemmel panoramik açıyla görür
     this.camera.position.set(0, 2.6, -3.4);
     this.camera.lookAt(0, 1.1, 14);
     if (this.gkReticleGroup) this.gkReticleGroup.visible = true;
@@ -188,8 +211,121 @@ class Game {
   setCameraFollowBall() {
     if (!this.ball) return;
     const bPos = this.ball.position;
-    this.camera.position.lerp(new THREE.Vector3(bPos.x * 0.4, bPos.y + 2.5, bPos.z + 4.8), 0.1);
-    this.camera.lookAt(bPos.x, Math.max(1.0, bPos.y), 0);
+
+    if (this.cameraMode === 'broadcast') {
+      this.camera.position.lerp(new THREE.Vector3(bPos.x * 0.5 + 9.5, 7.2, bPos.z * 0.6 + 6.0), 0.08);
+      this.camera.lookAt(bPos.x, Math.max(1.0, bPos.y), bPos.z * 0.3);
+    } else if (this.cameraMode === 'trivela_cam') {
+      // Trivela kavisini alttan sinematik takip
+      const sideOffset = (this.currentFoot === 'R') ? -1.2 : 1.2;
+      this.camera.position.lerp(new THREE.Vector3(bPos.x * 0.7 + sideOffset, Math.max(0.65, bPos.y * 0.5 + 0.4), bPos.z + 4.2), 0.12);
+      this.camera.lookAt(bPos.x, Math.max(1.2, bPos.y), 0);
+    } else if (this.cameraMode === 'action') {
+      this.camera.position.lerp(new THREE.Vector3(bPos.x * 0.4, Math.max(1.2, bPos.y + 0.8), bPos.z + 3.2), 0.12);
+      this.camera.lookAt(bPos.x, Math.max(1.0, bPos.y), 0);
+    } else {
+      // Omuz üstü takip
+      this.camera.position.lerp(new THREE.Vector3(bPos.x * 0.4, bPos.y + 2.4, bPos.z + 4.6), 0.1);
+      this.camera.lookAt(bPos.x, Math.max(1.0, bPos.y), 0);
+    }
+  }
+
+  // AYAK DEĞİŞTİR (Sağ / Sol)
+  toggleFoot() {
+    this.currentFoot = (this.currentFoot === 'R') ? 'L' : 'R';
+    if (this.career && this.career.player) {
+      this.career.setPreferredFoot(this.currentFoot);
+    }
+    this.repositionKickerStance();
+    if (!this.isHumanGoalkeeper() && !this.isCoopMatch) {
+      this.setCameraBehindBall();
+    }
+    this.updateHUDControls();
+    this.updateFalsoDisplay();
+  }
+
+  // ŞUT TİPİ DEĞİŞTİR (Plase / Füze / Trivela)
+  toggleShotType() {
+    if (this.shotType === 'curve') {
+      this.shotType = 'power';
+    } else if (this.shotType === 'power') {
+      this.shotType = 'trivela';
+    } else {
+      this.shotType = 'curve';
+    }
+    this.updateHUDControls();
+    this.updateFalsoDisplay();
+  }
+
+  // KAMERA AÇISI DEĞİŞTİR (4 Dinamik Kamera)
+  cycleCamera() {
+    if (this.cameraMode === 'behind') {
+      this.cameraMode = 'broadcast';
+    } else if (this.cameraMode === 'broadcast') {
+      this.cameraMode = 'trivela_cam';
+    } else if (this.cameraMode === 'trivela_cam') {
+      this.cameraMode = 'action';
+    } else {
+      this.cameraMode = 'behind';
+    }
+    if (!this.isHumanGoalkeeper() && !this.isCoopMatch) {
+      this.setCameraBehindBall();
+    }
+    this.updateHUDControls();
+  }
+
+  // TRİVELA AKTİF Mİ? (Dış Ayak Kavis Kontrolü)
+  isTrivelaActive() {
+    if (this.shotType === 'trivela') return true;
+    // Otomatik Trivela tespiti: Sağ ayakla sağa kavis veya sol ayakla sola kavis
+    if (this.currentFoot === 'R' && this.currentFalso > 0.15) return true;
+    if (this.currentFoot === 'L' && this.currentFalso < -0.15) return true;
+    return false;
+  }
+
+  // FORVETİN VURUŞ DURUŞUNU SEÇİLEN AYAĞA GÖRE AYARLA
+  repositionKickerStance() {
+    if (!this.playerModels || !this.playerModels.kicker || !this.ball) return;
+    const bPos = this.ball.position;
+    const footOffsetX = (this.currentFoot === 'R') ? -0.65 : 0.65;
+    const kickerPos = new THREE.Vector3(bPos.x + footOffsetX, 0.11, bPos.z + 1.85);
+    this.playerModels.kicker.group.position.copy(kickerPos);
+    this.playerModels.kicker.group.lookAt(0, 0, 0);
+  }
+
+  // HUD KONTROL BUTONLARINI GÜNCELLE
+  updateHUDControls() {
+    const footBtn = document.getElementById('btn-toggle-foot');
+    if (footBtn) {
+      footBtn.innerHTML = (this.currentFoot === 'R') ? '🦶 AYAK: SAĞ (T)' : '🦶 AYAK: SOL (T)';
+      footBtn.style.borderColor = (this.currentFoot === 'R') ? '#00f2fe' : '#f1c40f';
+    }
+
+    const shotBtn = document.getElementById('btn-toggle-shottype');
+    if (shotBtn) {
+      if (this.shotType === 'trivela' || this.isTrivelaActive()) {
+        shotBtn.innerHTML = '🌪️ TRİVELA (DIŞ) (G)';
+        shotBtn.style.borderColor = '#00ff88';
+        shotBtn.style.color = '#00ff88';
+      } else if (this.shotType === 'power') {
+        shotBtn.innerHTML = '⚡ FÜZE / SERT (G)';
+        shotBtn.style.borderColor = '#ff3366';
+        shotBtn.style.color = '#ff3366';
+      } else {
+        shotBtn.innerHTML = '🎯 PLASE / İÇ (G)';
+        shotBtn.style.borderColor = '#00f2fe';
+        shotBtn.style.color = '#00f2fe';
+      }
+    }
+
+    const camBtn = document.getElementById('btn-cycle-camera');
+    if (camBtn) {
+      let camName = 'OMUZ ÜSTÜ (C)';
+      if (this.cameraMode === 'broadcast') camName = 'TV YAYIN (C)';
+      else if (this.cameraMode === 'trivela_cam') camName = 'TRİVELA CAM (C)';
+      else if (this.cameraMode === 'action') camName = 'AKSİYON (C)';
+      camBtn.innerHTML = `🎥 ${camName}`;
+    }
   }
 
   // YENİ POZİSYON / SENARYO YÜKLE (FRİKİK VE PENALTI SET-PIECE)
@@ -204,6 +340,10 @@ class Game {
     const isGK = this.isHumanGoalkeeper();
     const club = this.career.getCurrentClub();
     const clubColor = parseInt(club.colors.primary.replace('#', '0x')) || 0xe74c3c;
+
+    if (this.career && this.career.player && this.career.player.preferredFoot) {
+      this.currentFoot = this.career.player.preferredFoot;
+    }
 
     // HUD Başlıklarını Güncelle
     document.getElementById('hud-scenario-title').innerText = scenario.title;
@@ -227,9 +367,10 @@ class Game {
       // Kaleciyi oluştur (Kullanıcının forması)
       this.playerModels.createGoalkeeper(clubColor);
 
-      // Rakip Forveti Topun 1.8m arkasına koy
-      const kickerPos = new THREE.Vector3(spotX, 0.11, distance + 1.8);
-      this.playerModels.createKicker(kickerPos, 0xe74c3c, 9);
+      // Rakip Forveti Topun arkasına koy
+      const footOffsetX = (this.currentFoot === 'R') ? -0.65 : 0.65;
+      const kickerPos = new THREE.Vector3(spotX + footOffsetX, 0.11, distance + 1.85);
+      this.playerModels.createKicker(kickerPos, 0xe74c3c, 9, 'RAKİP FORVET', this.currentFoot);
       if (this.playerModels.kicker && this.playerModels.kicker.group) {
         this.playerModels.kicker.group.lookAt(0, 0, 0);
       }
@@ -267,9 +408,16 @@ class Game {
       this.playerModels.createGoalkeeper(0x27ae60);
       this.playerModels.clearDefenders();
 
-      // Oyuncumuz topun hemen arkasında şuta hazır durur
-      const kickerPos = new THREE.Vector3(spotX, 0.11, distance + 1.8);
-      this.playerModels.createKicker(kickerPos, clubColor, this.career.player.jerseyNumber || 10);
+      // Oyuncumuz seçilen vuruş ayağına göre topun sol-arka ya da sağ-arkasında durur
+      const footOffsetX = (this.currentFoot === 'R') ? -0.65 : 0.65;
+      const kickerPos = new THREE.Vector3(spotX + footOffsetX, 0.11, distance + 1.85);
+      this.playerModels.createKicker(
+        kickerPos,
+        clubColor,
+        this.career.player.jerseyNumber || 10,
+        this.career.player.name || 'STAR',
+        this.currentFoot
+      );
       if (this.playerModels.kicker && this.playerModels.kicker.group) {
         this.playerModels.kicker.group.lookAt(0, 0, 0);
       }
@@ -291,10 +439,13 @@ class Game {
 
       const hintEl = document.getElementById('hud-control-hint');
       if (hintEl) {
-        hintEl.innerHTML = `🎯 <b>FRİKİK / PENALTI:</b> Fareyle sol tık basılı tutup çekerek nişan al, bırak! | [Q / Tekerlek / E] Falso | [R] Tekrar Vur`;
+        hintEl.innerHTML = `🎯 <b>FRİKİK / PENALTI:</b> Fareyle sol tık basılı tutup çekerek nişan al, bırak! | [T] Ayak | [G] Vuruş Tipi | [C] Kamera | [Q/E] Falso`;
       }
       const fBar = document.querySelector('.falso-control-bar');
       if (fBar) fBar.style.display = 'flex';
+
+      this.updateHUDControls();
+      this.updateFalsoDisplay();
     }
   }
 
@@ -1177,13 +1328,24 @@ class Game {
       if (e.code === 'KeyR') {
         this.retryCurrentScenario();
       }
+      if (e.code === 'KeyT') {
+        this.toggleFoot();
+      }
+      if (e.code === 'KeyG') {
+        this.toggleShotType();
+      }
+      if (e.code === 'KeyC') {
+        if (!this.isCoopMatch) {
+          this.cycleCamera();
+        }
+      }
       if (e.code === 'KeyQ') {
         this.adjustFalso(-0.25);
       }
       if (e.code === 'KeyE') {
         this.adjustFalso(0.25);
       }
-      if (e.code === 'Space' || e.code === 'KeyX' || e.code === 'KeyC') {
+      if (e.code === 'Space' || e.code === 'KeyX') {
         if (this.isCoopMatch) {
           this.handleQuickPassAction();
         }
@@ -1209,6 +1371,14 @@ class Game {
     const fReset = document.getElementById('btn-falso-reset');
     if (fReset) fReset.addEventListener('click', () => this.setFalso(0));
 
+    // Vuruş Ayağı, Şut Tipi ve Kamera Arayüz Butonları
+    const btnFoot = document.getElementById('btn-toggle-foot');
+    if (btnFoot) btnFoot.addEventListener('click', () => this.toggleFoot());
+    const btnShot = document.getElementById('btn-toggle-shottype');
+    if (btnShot) btnShot.addEventListener('click', () => this.toggleShotType());
+    const btnCam = document.getElementById('btn-cycle-camera');
+    if (btnCam) btnCam.addEventListener('click', () => this.cycleCamera());
+
     // Tam Ekran Butonu Bağlantısı
     const fsBtn = document.getElementById('btn-fullscreen');
     if (fsBtn) {
@@ -1229,6 +1399,7 @@ class Game {
 
   setFalso(val) {
     this.currentFalso = THREE.MathUtils.clamp(Math.round(val * 10) / 10, -1.2, 1.2);
+    this.updateHUDControls();
     this.updateFalsoDisplay();
     if (this.isAiming) {
       this.updateAimTrajectory();
@@ -1239,15 +1410,29 @@ class Game {
     const textEl = document.getElementById('falso-value-text');
     if (!textEl) return;
     const f = this.currentFalso;
-    if (Math.abs(f) < 0.05) {
+    const isTrivela = this.isTrivelaActive();
+
+    if (isTrivela) {
+      const footLabel = (this.currentFoot === 'R') ? 'SAĞ DIŞ (TRİVELA) [QUARESMA]' : 'SOL DIŞ (TRİVELA) [MODRIC]';
+      textEl.innerText = `🌪️ ${footLabel} (%${Math.round(Math.abs(f) * 100 || 80)})`;
+      textEl.style.color = "#00ff88";
+      textEl.style.textShadow = "0 0 12px rgba(0, 255, 136, 0.85)";
+    } else if (this.shotType === 'power') {
+      textEl.innerText = `⚡ SERT ÜST VURUŞ / FÜZE (DÜZ MERKEZ)`;
+      textEl.style.color = "#ff3366";
+      textEl.style.textShadow = "0 0 12px rgba(255, 51, 102, 0.85)";
+    } else if (Math.abs(f) < 0.05) {
       textEl.innerText = "DÜZ VURUŞ (FALSO YOK)";
       textEl.style.color = "#cbd5e1";
+      textEl.style.textShadow = "none";
     } else if (f < 0) {
       textEl.innerText = `⟲ SOLA KAVİS (%${Math.round(Math.abs(f) * 100)}) [ROBERTO CARLOS]`;
       textEl.style.color = "#00f2fe";
+      textEl.style.textShadow = "none";
     } else {
       textEl.innerText = `SAĞA KAVİS (%${Math.round(f * 100)}) [BECKHAM] ⟳`;
       textEl.style.color = "#f1c40f";
+      textEl.style.textShadow = "none";
     }
   }
 
@@ -1282,6 +1467,7 @@ class Game {
     const dragDistance = Math.hypot(dx, dragY);
     const power = THREE.MathUtils.clamp(22 + (dragDistance / 14), 23, 34);
     const curl = this.currentFalso;
+    const isTrivela = this.isTrivelaActive();
 
     if (this.crosshair) this.crosshair.material.opacity = 0;
 
@@ -1293,11 +1479,11 @@ class Game {
     }, 4200);
 
     const animCallback = () => {
-      this.ball.shoot(dirX, dirY, power, curl);
+      this.ball.shoot(dirX, dirY, power, curl, isTrivela, this.currentFoot, this.shotType);
       this.updateSpeedHUD(power);
 
       if (window.onlineManager && window.onlineManager.isOnlineMatch) {
-        window.onlineManager.sendShot(dirX, dirY, power, curl);
+        window.onlineManager.sendShot(dirX, dirY, power, curl, isTrivela, this.currentFoot, this.shotType);
       }
 
       if (this.currentScenario && this.currentScenario.type === 'freekick') {
@@ -1316,8 +1502,10 @@ class Game {
       this.playerModels.triggerVolleyAnimation(animCallback);
     } else if (kickCheck.type === 'header') {
       this.playerModels.triggerHeaderAnimation(animCallback);
+    } else if (isTrivela) {
+      this.playerModels.triggerTrivelaAnimation(this.currentFoot, animCallback);
     } else {
-      this.playerModels.triggerKickAnimation(animCallback);
+      this.playerModels.triggerKickAnimation(animCallback, null, this.currentFoot);
     }
   }
 
@@ -1419,11 +1607,27 @@ class Game {
     const targetY = dirY * 2.5;
     const targetZ = 0;
 
+    const isTrivela = this.isTrivelaActive();
+
+    // Nişan alırken forvetin gövdesini ve bakışını hedeflenen açıya gerçek zamanlı olarak çevir
+    if (this.playerModels && this.playerModels.kicker && this.playerModels.kicker.group) {
+      const aimAngle = Math.atan2(-targetX, -bPos.z);
+      this.playerModels.kicker.group.rotation.y = THREE.MathUtils.lerp(
+        this.playerModels.kicker.group.rotation.y,
+        aimAngle,
+        0.25
+      );
+    }
+
     // 3D Nişangahı hedef noktasına taşı ve göster
     if (this.crosshair) {
       this.crosshair.position.set(targetX, Math.max(0.1, targetY), 0.04);
       this.crosshair.material.opacity = 0.9;
-      if (Math.abs(this.currentFalso) > 0.1) {
+      if (isTrivela) {
+        this.crosshair.material.color.setHex(0x00ff88);
+      } else if (this.shotType === 'power') {
+        this.crosshair.material.color.setHex(0xff3366);
+      } else if (Math.abs(this.currentFalso) > 0.1) {
         this.crosshair.material.color.setHex(0xf1c40f);
       } else {
         this.crosshair.material.color.setHex(0x00f2fe);
@@ -1453,6 +1657,15 @@ class Game {
 
     this.aimLine.geometry.setFromPoints(points);
     this.aimLine.material.opacity = 0.9;
+    if (isTrivela) {
+      this.aimLine.material.color.setHex(0x00ff88);
+    } else if (this.shotType === 'power') {
+      this.aimLine.material.color.setHex(0xff3366);
+    } else if (Math.abs(this.currentFalso) > 0.1) {
+      this.aimLine.material.color.setHex(0xf1c40f);
+    } else {
+      this.aimLine.material.color.setHex(0x00f2fe);
+    }
   }
 
   clearAimLine() {

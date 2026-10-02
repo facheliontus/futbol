@@ -20,6 +20,8 @@ class BallPhysics {
     this.velocity = new THREE.Vector3(0, 0, 0);
     this.spin = new THREE.Vector3(0, 0, 0); // x: topspin/dip, y: side curl (falso), z: roll
     this.isMoving = false;
+    this.isTrivela = false;
+    this.preferredFoot = 'R';
     this.hasScored = false;
     this.hasHitPost = false;
     this.hasBeenSaved = false;
@@ -31,60 +33,129 @@ class BallPhysics {
     this.shadow = null;
     this.trail = [];
     this.trailMeshes = [];
+    this.vortexMeshes = [];
 
     this.createBall();
   }
 
   createBall() {
-    // Klasik Futbol Topu Dokusu (Pentagon & Hexagon Doku)
+    // FIFA QUALITY PRO - Aerodinamik Altın & Cyan Panelli Resmi Maç Topu Dokusu
     const canvas = document.createElement('canvas');
-    canvas.width = 512;
-    canvas.height = 256;
+    canvas.width = 1024;
+    canvas.height = 512;
     const ctx = canvas.getContext('2d');
 
-    ctx.fillStyle = '#f8fafc';
-    ctx.fillRect(0, 0, 512, 256);
+    // 1. Zemin: Parlak Saf Futbol Beyazı
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, 1024, 512);
 
-    // Siyah beşgenler
-    ctx.fillStyle = '#0f172a';
-    const drawPentagon = (cx, cy, r) => {
+    // İnce mikroskobik deri pütür dokusu
+    ctx.fillStyle = 'rgba(235, 240, 245, 0.5)';
+    for (let i = 0; i < 600; i++) {
+      const rx = Math.random() * 1024;
+      const ry = Math.random() * 512;
+      ctx.fillRect(rx, ry, 2, 2);
+    }
+
+    // 2. Aerodinamik Altın & Elektrik Cyan Kıvrımlı Paneller (FIFA Pro Deseni)
+    const drawCurvedPanel = (cx, cy, scale, angle) => {
+      ctx.save();
+      ctx.translate(cx, cy);
+      ctx.rotate(angle);
+      ctx.scale(scale, scale);
+
+      // Dış Altın Kavis
       ctx.beginPath();
-      for (let i = 0; i < 5; i++) {
-        const angle = (i * 2 * Math.PI / 5) - Math.PI / 2;
-        const x = cx + r * Math.cos(angle);
-        const y = cy + r * Math.sin(angle);
-        if (i === 0) ctx.moveTo(x, y);
-        else ctx.lineTo(x, y);
-      }
-      ctx.closePath();
+      ctx.moveTo(-60, -40);
+      ctx.bezierCurveTo(-20, -90, 40, -85, 75, -30);
+      ctx.bezierCurveTo(90, 15, 60, 70, 10, 80);
+      ctx.bezierCurveTo(-45, 85, -85, 30, -60, -40);
+      ctx.fillStyle = '#ffd700'; // Parlak Altın
       ctx.fill();
+
+      // İç Elektrik Cyan Aerodinamik Kanat
+      ctx.beginPath();
+      ctx.moveTo(-45, -25);
+      ctx.bezierCurveTo(-15, -65, 30, -60, 55, -20);
+      ctx.bezierCurveTo(68, 10, 45, 50, 8, 60);
+      ctx.bezierCurveTo(-30, 62, -60, 22, -45, -25);
+      ctx.fillStyle = '#00f2fe'; // Elektrik Cyan
+      ctx.fill();
+
+      // Gece Mavisi Kontrast Çekirdek
+      ctx.beginPath();
+      ctx.arc(5, 5, 20, 0, Math.PI * 2);
+      ctx.fillStyle = '#0a192f';
+      ctx.fill();
+
+      // İnce altın yıldız parıltısı
+      ctx.fillStyle = '#ffffff';
+      ctx.beginPath();
+      ctx.arc(5, 5, 5, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.restore();
     };
 
-    // Doku üzerine futbol panelleri dağıt
-    const spots = [
-      [64, 64], [192, 64], [320, 64], [448, 64],
-      [128, 160], [256, 160], [384, 160], [512, 160],
-      [64, 240], [192, 240], [320, 240], [448, 240]
+    // 8 Ana Aerodinamik Kanat Dağılımı
+    const panelCoords = [
+      [128, 128, 1.1, 0.4],
+      [384, 128, 1.1, -0.6],
+      [640, 128, 1.1, 0.8],
+      [896, 128, 1.1, -0.2],
+      [128, 384, 1.1, -0.5],
+      [384, 384, 1.1, 0.7],
+      [640, 384, 1.1, -0.4],
+      [896, 384, 1.1, 0.5]
     ];
-    spots.forEach(([x, y]) => drawPentagon(x, y, 24));
+    panelCoords.forEach(([x, y, sc, a]) => drawCurvedPanel(x, y, sc, a));
 
-    // Dikiş çizgileri
-    ctx.strokeStyle = '#94a3b8';
-    ctx.lineWidth = 2;
-    for (let x = 0; x < 512; x += 64) {
+    // 3. FIFA QUALITY PRO Resmi Onay Damgası
+    const drawFifaBadge = (x, y) => {
+      ctx.save();
+      ctx.translate(x, y);
+      ctx.fillStyle = 'rgba(10, 25, 47, 0.9)';
+      if (ctx.roundRect) ctx.roundRect(-55, -28, 110, 56, 8);
+      else ctx.rect(-55, -28, 110, 56);
+      ctx.fill();
+      ctx.strokeStyle = '#ffd700';
+      ctx.lineWidth = 2.5;
+      ctx.stroke();
+
+      ctx.fillStyle = '#ffd700';
+      ctx.font = 'bold 15px "Segoe UI", sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText("FIFA", 0, -8);
+      ctx.fillStyle = '#ffffff';
+      ctx.font = 'bold 9px "Segoe UI", sans-serif';
+      ctx.fillText("QUALITY PRO", 0, 8);
+      ctx.fillStyle = '#00f2fe';
+      ctx.font = '7px sans-serif';
+      ctx.fillText("2026 OFFICIAL MATCH", 0, 20);
+      ctx.restore();
+    };
+    drawFifaBadge(256, 256);
+    drawFifaBadge(768, 256);
+
+    // 4. Termal Yapıştırma Dikiş Olukları (Thermal Bonded Seams)
+    ctx.strokeStyle = '#cbd5e1';
+    ctx.lineWidth = 3;
+    for (let x = 0; x <= 1024; x += 128) {
       ctx.beginPath();
       ctx.moveTo(x, 0);
-      ctx.lineTo(x + 32, 256);
+      ctx.bezierCurveTo(x + 30, 170, x - 30, 340, x, 512);
       ctx.stroke();
     }
 
     const ballTexture = new THREE.CanvasTexture(canvas);
+    ballTexture.wrapS = THREE.RepeatWrapping;
+    ballTexture.wrapT = THREE.ClampToEdgeWrapping;
 
     const geo = new THREE.SphereGeometry(this.radius, 32, 32);
     const mat = new THREE.MeshStandardMaterial({
       map: ballTexture,
-      roughness: 0.35,
-      metalness: 0.15
+      roughness: 0.22,
+      metalness: 0.16
     });
 
     this.mesh = new THREE.Mesh(geo, mat);
@@ -93,18 +164,18 @@ class BallPhysics {
     this.scene.add(this.mesh);
 
     // Zemin Gölgesi
-    const shadowGeo = new THREE.CircleGeometry(this.radius * 1.1, 16);
+    const shadowGeo = new THREE.CircleGeometry(this.radius * 1.15, 20);
     const shadowMat = new THREE.MeshBasicMaterial({
       color: 0x000000,
       transparent: true,
-      opacity: 0.4
+      opacity: 0.45
     });
     this.shadow = new THREE.Mesh(shadowGeo, shadowMat);
     this.shadow.rotation.x = -Math.PI / 2;
     this.shadow.position.set(this.position.x, 0.015, this.position.z);
     this.scene.add(this.shadow);
 
-    // Trail parçacıkları havuzu
+    // Normal Trail parçacıkları havuzu
     for (let i = 0; i < 20; i++) {
       const tGeo = new THREE.SphereGeometry(this.radius * 0.4, 8, 8);
       const tMat = new THREE.MeshBasicMaterial({
@@ -116,14 +187,32 @@ class BallPhysics {
       this.scene.add(tMesh);
       this.trailMeshes.push(tMesh);
     }
+
+    // Trivela Kasırga Burgusu (Spiral Vortex Trail) Parçacıkları
+    this.vortexMeshes = [];
+    for (let i = 0; i < 24; i++) {
+      const vGeo = new THREE.RingGeometry(0.06, 0.24, 12);
+      const vMat = new THREE.MeshBasicMaterial({
+        color: (i % 2 === 0) ? 0xffd700 : 0x00f2fe,
+        side: THREE.DoubleSide,
+        transparent: true,
+        opacity: 0,
+        depthWrite: false
+      });
+      const vMesh = new THREE.Mesh(vGeo, vMat);
+      this.scene.add(vMesh);
+      this.vortexMeshes.push(vMesh);
+    }
   }
 
   // Topu Belirli Bir Konuma Sıfırla
   reset(pos = new THREE.Vector3(0, this.radius, 11)) {
     this.position.copy(pos);
+    this.prevPosition.copy(pos);
     this.velocity.set(0, 0, 0);
     this.spin.set(0, 0, 0);
     this.isMoving = false;
+    this.isTrivela = false;
     this.hasScored = false;
     this.hasHitPost = false;
     this.hasBeenSaved = false;
@@ -140,6 +229,7 @@ class BallPhysics {
 
     this.trail = [];
     this.trailMeshes.forEach(m => m.material.opacity = 0);
+    if (this.vortexMeshes) this.vortexMeshes.forEach(m => m.material.opacity = 0);
   }
 
   // TOPU YUMUŞATARAK STOP ETME (First Touch / Top Tutma)
@@ -195,14 +285,13 @@ class BallPhysics {
     }
   }
 
-  // ŞUT ATEŞLEME (Gelişmiş Roberto Carlos / Beckham Falso Fiziği)
-  shoot(dirX, dirY, power = 25, curl = 0) {
+  // ŞUT ATEŞLEME (Gelişmiş Trivela, Roberto Carlos Falso ve Füze Şut Fiziği)
+  shoot(dirX, dirY, power = 25, curl = 0, isTrivela = false, preferredFoot = 'R', shotType = 'curve') {
     this.isPass = false;
     this.onPassArrival = null;
-    // dirX: -1.5 ile +1.5 arası (Kalenin dışına ve köşelere serbestçe nişan)
-    // dirY: 0.1 (Yerden) ile 2.2 (Direk üstü ve 90'a aşırtma)
-    // power: 20 - 34 m/s (~72 - 122 km/h)
-    // curl: -1.0 (SOLA KAVİS) ile +1.0 (SAĞA KAVİS)
+    this.isTrivela = isTrivela;
+    this.preferredFoot = preferredFoot;
+    this.shotType = shotType;
 
     // Hedef nokta: Tam olarak nişan alınan koordinat
     const targetX = dirX * 4.6;
@@ -215,18 +304,26 @@ class BallPhysics {
     const flightTime = distance / power;
 
     // Falso İvmesi (X ekseninde çekiş):
-    // curl < 0 (Sola Kavis): İvme sola doğru negatif (sol kaleye çeker)
-    // curl > 0 (Sağa Kavis): İvme sağa doğru pozitif (sağ kaleye çeker)
-    this.curveAccelX = curl * 10.5;
+    if (isTrivela) {
+      // Trivela: Dış ayakla topu kamçılayarak daha sert ve late-swerve kavis üretir
+      this.curveAccelX = curl * 13.5;
+    } else if (shotType === 'power') {
+      // Füze / Sert üst vuruş: Düşük kavis, yüksek hız ve knuckleball rotası
+      this.curveAccelX = curl * 4.8;
+    } else {
+      // Standart kavis / plase
+      this.curveAccelX = curl * 10.5;
+    }
 
-    // Hedefe tam oturması için ilk fırlatma açısı (Offset launch):
-    // Top barajın dışından başlatılır ve falso ile hedefe kıvrılır!
-    const vx = (targetX - this.position.x) / flightTime - (0.5 * this.curveAccelX * flightTime);
+    // Hedefe oturması için ilk fırlatma açısı:
+    // Trivela vuruşunda top dışa doğru açılı başlar (outward slice), sonra muz gibi 90'a kırılır!
+    const offsetFactor = isTrivela ? 0.65 : 0.5;
+    const vx = (targetX - this.position.x) / flightTime - (offsetFactor * this.curveAccelX * flightTime);
 
     // Baraj üzerinden aşırtma ve çatala dalış (Dipping Arc):
     let vy = (targetY - this.position.y - 0.5 * this.gravity * flightTime * flightTime) / flightTime;
     if (dirY > 0.45) {
-      vy += (dirY - 0.45) * 2.5; // Baraj üzerinden yükselme itişi
+      vy += (dirY - 0.45) * (shotType === 'power' ? 1.8 : 2.5);
     }
 
     const vz = toTarget.z / flightTime;
@@ -236,11 +333,25 @@ class BallPhysics {
     this.elapsedFlight = 0;
 
     // Topun dönüş hızı (Görsel ve fiziksel spin)
-    this.spin.set(
-      (dirY > 0.5) ? 15 : 0, // Topspin
-      curl * 20,            // Yanal falso dönüşü
-      0
-    );
+    if (isTrivela) {
+      this.spin.set(
+        16, // Topspin / ani düşüş
+        curl * 38, // Yoğun yanal burgu
+        (preferredFoot === 'R' ? 26 : -26) // Dış ayak eksenel burgusu
+      );
+    } else if (shotType === 'power') {
+      this.spin.set(
+        22, // Sert topspin
+        curl * 10,
+        0
+      );
+    } else {
+      this.spin.set(
+        (dirY > 0.5) ? 15 : 0,
+        curl * 20,
+        0
+      );
+    }
 
     this.isMoving = true;
     this.hasScored = false;
@@ -250,7 +361,13 @@ class BallPhysics {
     this.hasTriggeredEnd = false;
 
     if (window.gameSound) {
-      window.gameSound.playKick(power / 26);
+      if (isTrivela) {
+        window.gameSound.playTrivelaWhip(power / 24);
+      } else if (shotType === 'power') {
+        window.gameSound.playPowerStrike(power / 24);
+      } else {
+        window.gameSound.playKick(power / 26);
+      }
     }
   }
 
@@ -269,12 +386,22 @@ class BallPhysics {
       }
     }
 
-    // 1. GERÇEK FALSO İVMESİ (Kullanıcı sola dediyse top sola, sağa dediyse sağa kıvrılır)
-    this.velocity.x += this.curveAccelX * dt;
+    // 1. GERÇEK FALSO İVMESİ (Magnus Etkisi & Trivela Late-Swerve Fiziği)
+    if (this.isTrivela) {
+      // Trivela Late-Swerve: Uçuşun son yarısında havanın burguyla etkileşimi katlanarak artar (muz kavis)
+      const p = Math.min(1.0, this.elapsedFlight / (this.flightTime || 1.0));
+      const lateSwerveMultiplier = (p > 0.3) ? (1.0 + Math.pow((p - 0.3) / 0.7, 1.8) * 1.8) : 0.6;
+      this.velocity.x += (this.curveAccelX * lateSwerveMultiplier) * dt;
 
-    // Topspin ile kaleye yaklaşırken aniden aşağı düşüş (Dip)
-    if (this.spin.x > 0 && this.position.z < 12) {
-      this.velocity.y -= (this.spin.x * 0.35) * dt;
+      // Trivela çatal dalışı (Topspin Dip)
+      if (p > 0.5) {
+        this.velocity.y -= (6.5 * (p - 0.5)) * dt;
+      }
+    } else {
+      this.velocity.x += this.curveAccelX * dt;
+      if (this.spin.x > 0 && this.position.z < 12) {
+        this.velocity.y -= (this.spin.x * 0.35) * dt;
+      }
     }
 
     // 2. Yerçekimi ve Hava Sürtünmesi
@@ -514,6 +641,36 @@ class BallPhysics {
       m.material.opacity = Math.max(0, 0.6 - (idx / this.trailMeshes.length) * 0.6);
       const scale = 1 - (idx / this.trailMeshes.length) * 0.6;
       m.scale.set(scale, scale, scale);
+    });
+
+    if (this.isTrivela) {
+      this.updateTrivelaVortex();
+    } else if (this.vortexMeshes) {
+      this.vortexMeshes.forEach(m => m.material.opacity = 0);
+    }
+  }
+
+  // TRİVELA KASIRGA BURGUSU (Spiral Vortex Particle Trail)
+  updateTrivelaVortex() {
+    if (!this.vortexMeshes || this.vortexMeshes.length === 0) return;
+    const time = this.elapsedFlight * 22;
+
+    this.vortexMeshes.forEach((mesh, idx) => {
+      const offsetT = (idx / this.vortexMeshes.length);
+      const angle = time - offsetT * Math.PI * 4;
+      const radius = 0.28 + offsetT * 0.26;
+      const backDist = offsetT * 1.8;
+
+      mesh.position.set(
+        this.position.x + Math.cos(angle) * radius,
+        this.position.y + Math.sin(angle) * radius,
+        this.position.z + backDist
+      );
+      mesh.rotation.z = angle;
+      mesh.rotation.x = Math.PI / 2;
+      mesh.material.opacity = Math.max(0, (1 - offsetT) * 0.75);
+      const s = 1.0 - offsetT * 0.45;
+      mesh.scale.set(s, s, s);
     });
   }
 }

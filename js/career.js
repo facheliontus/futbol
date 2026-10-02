@@ -160,11 +160,12 @@ class CareerManager {
     return localStorage.getItem('fc_career_player') !== null;
   }
 
-  createProfile(name, position, jerseyNumber, startingClubId = 'anadolu') {
+  createProfile(name, position, jerseyNumber, startingClubId = 'anadolu', preferredFoot = 'R') {
     const club = CLUBS_DATABASE[startingClubId] || CLUBS_DATABASE['anadolu'];
     this.player = {
       name: name.trim() || 'Yıldız Oyuncu',
       position: position, // 'ST' (Forvet), 'GK' (Kaleci), 'CAM' (Orta Saha)
+      preferredFoot: preferredFoot || 'R', // 'R' (Sağ Ayak), 'L' (Sol Ayak)
       jerseyNumber: parseInt(jerseyNumber) || 10,
       clubId: club.id,
       overall: position === 'GK' ? 73 : 75,
@@ -180,11 +181,18 @@ class CareerManager {
     this.saveProfile();
   }
 
+  setPreferredFoot(foot) {
+    if (!this.player) return;
+    this.player.preferredFoot = (foot === 'L' ? 'L' : 'R');
+    this.saveProfile();
+  }
+
   loadProfile() {
     try {
       const data = localStorage.getItem('fc_career_player');
       if (data) {
         this.player = JSON.parse(data);
+        if (!this.player.preferredFoot) this.player.preferredFoot = 'R';
         this.season = parseInt(localStorage.getItem('fc_career_season')) || 1;
         this.currentMatchIndex = parseInt(localStorage.getItem('fc_career_match_idx')) || 0;
         const stats = localStorage.getItem('fc_career_season_stats');

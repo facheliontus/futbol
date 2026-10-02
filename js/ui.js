@@ -49,10 +49,15 @@ class UIManager {
         const name = document.getElementById('input-player-name').value || 'Yıldız Oyuncu';
         const selectedCard = document.querySelector('.pos-card.selected');
         const pos = selectedCard ? selectedCard.dataset.pos : 'ST';
+        const footSelect = document.getElementById('select-preferred-foot');
+        const preferredFoot = footSelect ? footSelect.value : 'R';
         const num = parseInt(document.getElementById('input-jersey-num').value) || 10;
         const clubId = document.getElementById('select-starting-club').value || 'anadolu';
 
-        this.career.createProfile(name, pos, num, clubId);
+        this.career.createProfile(name, pos, num, clubId, preferredFoot);
+        if (this.game) {
+          this.game.currentFoot = preferredFoot;
+        }
         this.setupModal.classList.add('hidden');
 
         if (window.gameSound) window.gameSound.playWhistle(true);
