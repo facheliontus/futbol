@@ -152,13 +152,27 @@ class Game {
     this.animate();
   }
 
+  // KALECİ Mİ KONTROLÜ (Kariyer veya Online 1v1)
+  isHumanGoalkeeper() {
+    if (this.career && this.career.player && this.career.player.position === 'GK') return true;
+    if (window.onlineManager && window.onlineManager.isOnlineMatch && window.onlineManager.myRole === 'goalkeeper') return true;
+    return false;
+  }
+
   // KAMERA KONUMLARI
   setCameraBehindBall() {
     if (!this.ball) return;
     this.cameraYaw = 0;
     this.cameraPitch = 0.22;
     const bPos = this.ball.position;
-    this.camera.position.set(bPos.x, bPos.y + 1.8, bPos.z + 4.2);
+    // Top ile kale (0, 0, 0) arasındaki doğrultuyu hesapla, topun gerisine yerleş
+    const dirX = bPos.x;
+    const dirZ = bPos.z;
+    const len = Math.hypot(dirX, dirZ) || 1;
+    const normX = dirX / len;
+    const normZ = dirZ / len;
+
+    this.camera.position.set(bPos.x + normX * 4.2, bPos.y + 1.85, bPos.z + normZ * 4.2);
     this.camera.lookAt(0, 1.2, 0);
     if (this.gkReticleGroup) this.gkReticleGroup.visible = false;
   }
@@ -178,7 +192,7 @@ class Game {
     this.camera.lookAt(bPos.x, Math.max(1.0, bPos.y), 0);
   }
 
-  // YENİ POZİSYON / SENARYO YÜKLE
+  // YENİ POZİSYON / SENARYO YÜKLE (FRİKİK VE PENALTI SET-PIECE)
   setupScenario(scenario) {
     this.isCoopMatch = false;
     this.currentScenario = scenario;
@@ -187,7 +201,7 @@ class Game {
 
     this.playerModels.clearAll();
 
-    const isGK = this.career.player.position === 'GK';
+    const isGK = this.isHumanGoalkeeper();
     const club = this.career.getCurrentClub();
     const clubColor = parseInt(club.colors.primary.replace('#', '0x')) || 0xe74c3c;
 
@@ -196,31 +210,37 @@ class Game {
     document.getElementById('hud-scenario-desc').innerText = scenario.desc;
     document.getElementById('hud-match-distance').innerText = scenario.distance + ' Metre';
 
-    // Top Başlangıç Konumu
-    let ballPos = new THREE.Vector3(0, this.ball.radius, scenario.distance);
+    // Senaryo Koordinatları (spotX ve distance desteği)
+    let spotX = (scenario.spotX !== undefined) ? scenario.spotX : (scenario.type === 'freekick' ? (Math.random() - 0.5) * 8 : 0);
+    if (scenario.type === 'penalty') spotX = 0;
+    const distance = scenario.distance || (scenario.type === 'penalty' ? 11 : 23);
+
+    const ballPos = new THREE.Vector3(spotX, this.ball.radius, distance);
+    this.ball.reset(ballPos);
 
     if (isGK) {
       // OYUNCU KALECİ İSE:
-      if (scenario.type === 'freekick') {
-        const angleOffset = (Math.random() - 0.5) * 6;
-        ballPos.x = angleOffset;
-        this.ball.reset(ballPos);
-        this.playerModels.createWall(ballPos, 4, 0x34495e);
-      } else if (scenario.type === 'penalty') {
-        ballPos.set(0, this.ball.radius, 11);
-        this.ball.reset(ballPos);
-      } else {
-        ballPos.set(0, this.ball.radius, scenario.distance || 22);
-        this.ball.reset(ballPos);
-      }
-
       this.gkMouseX = 0;
       this.gkMouseY = 0.5;
       this.setCameraGoalkeeperView();
+
       // Kaleciyi oluştur (Kullanıcının forması)
       this.playerModels.createGoalkeeper(clubColor);
-      // Rakip Forveti Topun Başına Koy
-      this.playerModels.createKicker(ballPos, 0xe74c3c, 9);
+
+      // Rakip Forveti Topun 1.8m arkasına koy
+      const kickerPos = new THREE.Vector3(spotX, 0.11, distance + 1.8);
+      this.playerModels.createKicker(kickerPos, 0xe74c3c, 9);
+      if (this.playerModels.kicker && this.playerModels.kicker.group) {
+        this.playerModels.kicker.group.lookAt(0, 0, 0);
+      }
+
+      // Baraj (Penaltı değilse)
+      if (scenario.type === 'freekick' || scenario.wall) {
+        const wallCount = scenario.wall || 4;
+        const wallZ = Math.max(5.5, distance - 9.15);
+        const wallX = spotX * 0.65;
+        this.playerModels.createWall(new THREE.Vector3(wallX, 0.11, wallZ), wallCount, 0x34495e);
+      }
 
       if (this.gkReticleGroup) {
         this.gkReticleGroup.visible = true;
@@ -229,67 +249,41 @@ class Game {
 
       const hintEl = document.getElementById('hud-control-hint');
       if (hintEl) {
-        hintEl.innerHTML = `🧤 <b>KALECİ KONTROLÜ:</b> Fareyle eldivenleri yönlendir | [Sol Tık / Boşluk] Uçarak Kurtar | [A / D] Adımla`;
+        hintEl.innerHTML = `🧤 <b>KALECİ KONTROLÜ:</b> [A] Sol Alt | [D] Sağ Alt | [A+Space] Sol Üst (90) | [D+Space] Sağ Üst (90) | [Space] Zıpla | [Fare] Refleks Hamlesi`;
       }
       const fBar = document.querySelector('.falso-control-bar');
       if (fBar) fBar.style.display = 'none';
 
-      // Rakip AI Şut Hazırlığı
+      // Rakip AI Şut Hazırlığı (Online değilse)
       if (!window.onlineManager || !window.onlineManager.isOnlineMatch) {
         setTimeout(() => {
           if (this.currentScenario === scenario) {
-            this.executeAIShot(ballPos, scenario.distance);
+            this.executeAIShot(ballPos, distance);
           }
         }, 1600);
       }
     } else {
-      // OYUNCU FORVET VEYA ORTA SAHA İSE:
+      // OYUNCU FORVET İSE (ŞUT ÇEKEN):
       this.playerModels.createGoalkeeper(0x27ae60);
+      this.playerModels.clearDefenders();
 
-      const isOpenPlay = (scenario.type !== 'freekick' && scenario.type !== 'penalty');
-
-      if (scenario.type === 'freekick') {
-        const angleOffset = (Math.random() - 0.5) * 6;
-        ballPos.x = angleOffset;
-        this.ball.reset(ballPos);
-        this.playerModels.createWall(ballPos, 4, 0x34495e);
-        this.hasBallPossession = false;
-        this.setCameraBehindBall();
-        this.playerModels.createKicker(new THREE.Vector3(ballPos.x, 0.11, ballPos.z + 1.8), clubColor, this.career.player.jerseyNumber);
-      } else if (scenario.type === 'penalty') {
-        ballPos.set(0, this.ball.radius, 11);
-        this.ball.reset(ballPos);
-        this.playerModels.clearDefenders();
-        this.hasBallPossession = false;
-        this.setCameraBehindBall();
-        this.playerModels.createKicker(new THREE.Vector3(0, 0.11, 13.5), clubColor, this.career.player.jerseyNumber);
-      } else {
-        // AÇIK OYUN / HIZLI HÜCUM / CEZA SAHASI AKINI:
-        // Top oyuncunun ayağında başlar!
-        const startX = (Math.random() - 0.5) * 6;
-        const startZ = scenario.distance || 28;
-        ballPos.set(startX, this.ball.radius, startZ);
-        this.ball.reset(ballPos);
-
-        // Kendi oyuncumuzu oluştur ve top kontrolünü ver
-        this.playerModels.createKicker(ballPos, clubColor, this.career.player.jerseyNumber);
-        this.hasBallPossession = true;
-
-        // Üzerimize deparla koşup pres yapacak 2-3 stoper oluştur!
-        const def1Pos = new THREE.Vector3(startX - 2.6, 0.11, startZ - 8.0);
-        const def2Pos = new THREE.Vector3(startX + 3.0, 0.11, startZ - 13.0);
-        const def3Pos = new THREE.Vector3(startX * 0.4, 0.11, startZ - 5.5);
-        this.playerModels.createDefenders([def1Pos, def2Pos, def3Pos], 0x1e3a8a);
-
-        // Kamerayı oyuncunun arkasına dinamik açıya koy
-        this.cameraYaw = 0;
-        this.cameraPitch = 0.22;
-        this.cameraDistance = 7.0;
-        this.camera.position.set(startX, 2.5, startZ + 5.5);
-        this.camera.lookAt(startX, 1.2, startZ - 8);
-
-        this.showGoalBanner("⚔️ HÜCUM BAŞLADI! Stoperler üstüne koşuyor! Çalım at [E/V], faul al veya şut çek!");
+      // Oyuncumuz topun hemen arkasında şuta hazır durur
+      const kickerPos = new THREE.Vector3(spotX, 0.11, distance + 1.8);
+      this.playerModels.createKicker(kickerPos, clubColor, this.career.player.jerseyNumber || 10);
+      if (this.playerModels.kicker && this.playerModels.kicker.group) {
+        this.playerModels.kicker.group.lookAt(0, 0, 0);
       }
+
+      // Baraj kur (Penaltı hariç)
+      if (scenario.type === 'freekick' || scenario.wall) {
+        const wallCount = scenario.wall || (distance >= 28 ? 5 : 4);
+        const wallZ = Math.max(5.5, distance - 9.15);
+        const wallX = spotX * 0.65;
+        this.playerModels.createWall(new THREE.Vector3(wallX, 0.11, wallZ), wallCount, 0x34495e);
+      }
+
+      this.hasBallPossession = true;
+      this.setCameraBehindBall();
 
       if (this.gkReticleGroup) {
         this.gkReticleGroup.visible = false;
@@ -297,11 +291,7 @@ class Game {
 
       const hintEl = document.getElementById('hud-control-hint');
       if (hintEl) {
-        if (isOpenPlay) {
-          hintEl.innerHTML = `⚔️ <b>AÇIK OYUN:</b> Stoperler üstüne koşuyor! [WASD] Serbest Koş | ⚡ [E / V] Çalım | 🟨 Faul Al & Frikik Kazan | 💣 [Sol Tık] Şut`;
-        } else {
-          hintEl.innerHTML = `🎯 <b>DURAN TOP:</b> Fareyle sol tık basılı tutup çekerek nişan al, bırak! | [Q / Tekerlek] Falso Ver | [R] Tekrar Vur`;
-        }
+        hintEl.innerHTML = `🎯 <b>FRİKİK / PENALTI:</b> Fareyle sol tık basılı tutup çekerek nişan al, bırak! | [Q / Tekerlek / E] Falso | [R] Tekrar Vur`;
       }
       const fBar = document.querySelector('.falso-control-bar');
       if (fBar) fBar.style.display = 'flex';
@@ -514,6 +504,11 @@ class Game {
 
   // TOP AYAKTA MI / VURUŞ ALANINDA MI KONTROLÜ
   isBallInKickRange() {
+    // Duran top (Frikik ve Penaltı) modunda oyuncu her zaman topun başında hazır durur
+    if (!this.isCoopMatch) {
+      return { canKick: true, dist: 0.5, type: 'ground' };
+    }
+
     if (!this.ball || !this.playerModels || !this.playerModels.kicker) {
       return { canKick: false, dist: 99, type: 'too_far' };
     }
@@ -1024,9 +1019,9 @@ class Game {
   initInputs() {
     const canvas = this.renderer.domElement;
 
-    // MOUSE DOWN: Nişan almaya başla
+    // MOUSE DOWN: Nişan almaya başla veya Kaleci hamlesi
     canvas.addEventListener('mousedown', (e) => {
-      if (this.career.player && this.career.player.position === 'GK') {
+      if (this.isHumanGoalkeeper()) {
         this.handleGoalkeeperDiveAction();
         return;
       }
@@ -1036,7 +1031,7 @@ class Game {
       // Top ayağımızda değilse şut çekmeye izin verme
       const kickCheck = this.isBallInKickRange();
       if (!kickCheck.canKick) {
-        this.showGoalBanner("⚠️ TOP AYAKTA DEĞİL! (" + Math.round(kickCheck.dist) + "m Uzakta - WASD ile Koş)");
+        this.showGoalBanner("⚠️ TOP AYAKTA DEĞİL!");
         return;
       }
 
@@ -1049,7 +1044,7 @@ class Game {
 
     // MOUSE MOVE: Nişan çizgisini güncelle veya Kaleciyi hareket ettir
     window.addEventListener('mousemove', (e) => {
-      if (this.career.player && this.career.player.position === 'GK') {
+      if (this.isHumanGoalkeeper()) {
         const xNorm = (e.clientX / window.innerWidth) * 2 - 1;
         const yNorm = THREE.MathUtils.clamp(1.0 - (e.clientY / window.innerHeight), 0, 1);
         this.gkMouseX = xNorm;
@@ -1077,7 +1072,7 @@ class Game {
         return;
       }
 
-      // Fareyi sağa/sola/yukarı/aşağı hareket ettirince kamera serbestçe 360 döner (FIFA/PES Orbit Kamera)
+      // Fareyi sağa/sola/yukarı/aşağı hareket ettirince kamera serbestçe döner
       if (this.lastMouseX !== null && this.lastMouseY !== null) {
         const dx = e.clientX - this.lastMouseX;
         const dy = e.clientY - this.lastMouseY;
@@ -1122,10 +1117,58 @@ class Game {
       this.executePlayerShot(dx, dy);
     });
 
-    // KLAVYE KONTROLLERİ (WASD Koşma, Shift Depar, Boşluk Pas, E/V Çalım, Q Falso, R Tekrar, F Tam Ekran)
+    // KLAVYE KONTROLLERİ (Kaleci: A, D, Space, S, W | Forvet: Q, E, R, F)
     window.addEventListener('keydown', (e) => {
       if (this.keys.hasOwnProperty(e.code)) {
         this.keys[e.code] = true;
+      }
+
+      // 🧤 İNSAN KALECİ KLAVYE HAMLELERİ (A: Sol Alt | D: Sağ Alt | A+Space: Sol Üst | D+Space: Sağ Üst | Space: Zıpla | S: Yere Kapan)
+      if (this.isHumanGoalkeeper()) {
+        const isSpaceDown = this.keys.Space || e.code === 'Space';
+        const isD = (e.code === 'KeyD' || e.code === 'ArrowRight');
+        const isA = (e.code === 'KeyA' || e.code === 'ArrowLeft');
+        const isS = (e.code === 'KeyS' || e.code === 'ArrowDown');
+        const isW = (e.code === 'KeyW' || e.code === 'ArrowUp');
+
+        if (isD) {
+          if (isSpaceDown) {
+            this.executeHumanGKDive(1.0, 0.92, 'dive_high_right');
+          } else {
+            this.executeHumanGKDive(1.0, 0.15, 'dive_low_right');
+          }
+          return;
+        }
+
+        if (isA) {
+          if (isSpaceDown) {
+            this.executeHumanGKDive(-1.0, 0.92, 'dive_high_left');
+          } else {
+            this.executeHumanGKDive(-1.0, 0.15, 'dive_low_left');
+          }
+          return;
+        }
+
+        if (e.code === 'Space') {
+          if (this.keys.KeyD || this.keys.ArrowRight) {
+            this.executeHumanGKDive(1.0, 0.92, 'dive_high_right');
+          } else if (this.keys.KeyA || this.keys.ArrowLeft) {
+            this.executeHumanGKDive(-1.0, 0.92, 'dive_high_left');
+          } else {
+            this.executeHumanGKDive(0.0, 0.95, 'dive_high_center');
+          }
+          return;
+        }
+
+        if (isS) {
+          this.executeHumanGKDive(0.0, 0.12, 'dive_low_center');
+          return;
+        }
+
+        if (isW) {
+          this.executeHumanGKDive(0.0, 0.95, 'dive_high_center');
+          return;
+        }
       }
 
       if (e.code === 'KeyF') {
@@ -1137,15 +1180,11 @@ class Game {
       if (e.code === 'KeyQ') {
         this.adjustFalso(-0.25);
       }
-      if (e.code === 'KeyV' || (e.code === 'KeyE' && (this.hasBallPossession || this.keys.KeyW || this.keys.KeyA || this.keys.KeyS || this.keys.KeyD))) {
-        this.executeSkillMove();
-      } else if (e.code === 'KeyE') {
+      if (e.code === 'KeyE') {
         this.adjustFalso(0.25);
       }
       if (e.code === 'Space' || e.code === 'KeyX' || e.code === 'KeyC') {
-        if (this.career.player && this.career.player.position === 'GK') {
-          this.handleGoalkeeperDiveAction();
-        } else {
+        if (this.isCoopMatch) {
           this.handleQuickPassAction();
         }
       }
@@ -1282,7 +1321,7 @@ class Game {
     }
   }
 
-  // KALECİ DALIŞ / UÇUŞ HAMLESİ
+  // KALECİ DALIŞ / UÇUŞ HAMLESİ (Fare Tıklaması)
   handleGoalkeeperDiveAction() {
     if (!this.playerModels.goalkeeper) return;
     this.playerModels.setGoalkeeperManualPosition(this.gkMouseX || 0, this.gkMouseY || 0.5, true);
@@ -1295,6 +1334,41 @@ class Game {
       window.onlineManager.sendGoalkeeperMove(this.gkMouseX || 0, this.gkMouseY || 0.5, true);
     }
     if (window.gameSound) window.gameSound.playSave();
+  }
+
+  // KALECİ KLAVYE DALIŞ / UÇUŞ HAMLESİ (A, D, Space, S, W)
+  executeHumanGKDive(xRatio, yRatio, diveType) {
+    if (!this.playerModels || !this.playerModels.goalkeeper) return;
+    this.gkMouseX = xRatio;
+    this.gkMouseY = yRatio;
+
+    // 1. Kaleci dalış hamlesi ve çarpışma kutusu tetiklemesi
+    this.playerModels.setGoalkeeperManualPosition(xRatio, yRatio, true);
+
+    // 2. 3D Reticle hedefi
+    if (this.gkReticleGroup) {
+      const targetX = xRatio * 3.4;
+      const targetY = 0.25 + yRatio * 2.15;
+      this.gkReticleGroup.position.set(targetX, targetY, 0.4);
+    }
+
+    // 3. Online senkronizasyon (Rakibe uçuşu anında ilet)
+    if (window.onlineManager && window.onlineManager.isOnlineMatch) {
+      window.onlineManager.sendGoalkeeperMove(xRatio, yRatio, true);
+    }
+
+    // 4. Ses efekti
+    if (window.gameSound) window.gameSound.playSave();
+
+    // 5. Görsel bildirim bannerı
+    let bannerMsg = "🧤 KALECİ HAMLESİ!";
+    if (diveType === 'dive_high_right') bannerMsg = "🧤 [D + SPACE] SAĞ ÜSTE 90'A UÇTUN!";
+    else if (diveType === 'dive_low_right') bannerMsg = "🧤 [D] SAĞ ALTA YERE ATLADIN!";
+    else if (diveType === 'dive_high_left') bannerMsg = "🧤 [A + SPACE] SOL ÜSTE 90'A UÇTUN!";
+    else if (diveType === 'dive_low_left') bannerMsg = "🧤 [A] SOL ALTA YERE ATLADIN!";
+    else if (diveType === 'dive_high_center') bannerMsg = "🧤 [SPACE] ORTAYA YÜKSELDİN!";
+    else if (diveType === 'dive_low_center') bannerMsg = "🧤 [S] YERE KAPANIP KAPATTIN!";
+    this.showGoalBanner(bannerMsg);
   }
 
   // NİŞAN ÇİZGİSİNİ VE 3D NİŞANGAHI ÇİZ (Tamamen Serbest Sınırlar ve Gerçek Kavis)
@@ -1564,11 +1638,11 @@ class Game {
     // Ani fps düşüşlerinde patlamayı önlemek için dt'yi sınırla
     dt = Math.min(dt, 0.1) * this.timeScale;
 
-    // WASD ile Oyuncu Koşma & Top Kontrolü (Dribling)
-    this.updatePlayerMovement(dt);
-
-    // AI Defans Oyuncuları (Pres & Müdahale)
-    this.updateDefenders(dt);
+    // Yalnızca Co-op 2 Kişilik Eşli Hücum modunda serbest hareket ve defanslar çalışır
+    if (this.isCoopMatch) {
+      this.updatePlayerMovement(dt);
+      this.updateDefenders(dt);
+    }
 
     // Top Fiziğini Güncelle
     if (this.ball && this.ball.isMoving) {
@@ -1584,24 +1658,23 @@ class Game {
         () => this.onBallStopped()
       );
 
-      // Şut atıldıktan sonra topu takip et
-      if (this.career.player && this.career.player.position !== 'GK') {
+      // Şut atıldıktan sonra topu takip et (Forvet açısı)
+      if (!this.isHumanGoalkeeper()) {
         this.setCameraFollowBall();
       }
     } else {
-      // Top serbest veya ayaktayken oyuncuyu takip eden dinamik 3. şahıs kamera
-      if (this.career.player && this.career.player.position !== 'GK') {
+      if (this.isCoopMatch && !this.isHumanGoalkeeper()) {
         this.updateFollowCamera(dt);
       }
     }
 
     // Kaleci modunda dinamik yayın kamerası: Kalecinin yana hareketini yumuşakça takip eder
-    if (this.career.player && this.career.player.position === 'GK') {
-      const targetCamX = (this.gkMouseX || 0) * 0.65;
+    if (this.isHumanGoalkeeper()) {
+      const targetCamX = (this.gkMouseX || 0) * 0.75;
       this.camera.position.x = THREE.MathUtils.lerp(this.camera.position.x, targetCamX, 0.08);
       this.camera.position.y = 2.6;
       this.camera.position.z = -3.4;
-      this.camera.lookAt((this.gkMouseX || 0) * 0.25, 1.1, 14);
+      this.camera.lookAt((this.gkMouseX || 0) * 0.3, 1.1, 14);
     }
 
     // Kaleci Idle Salınımı

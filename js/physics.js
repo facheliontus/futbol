@@ -16,6 +16,7 @@ class BallPhysics {
 
     // Durum Değişkenleri
     this.position = new THREE.Vector3(0, this.radius, 11);
+    this.prevPosition = new THREE.Vector3(0, this.radius, 11);
     this.velocity = new THREE.Vector3(0, 0, 0);
     this.spin = new THREE.Vector3(0, 0, 0); // x: topspin/dip, y: side curl (falso), z: roll
     this.isMoving = false;
@@ -280,7 +281,8 @@ class BallPhysics {
     this.velocity.y += this.gravity * dt;
     this.velocity.multiplyScalar(1 - this.dragCoeff * dt);
 
-    // 3. Konum Güncellemesi
+    // 3. Konum Güncellemesi (Önceki konumu sakla)
+    this.prevPosition.copy(this.position);
     this.position.addScaledVector(this.velocity, dt);
 
     // 4. Top Kendi Etrafında Dönüşü (Görsel Animasyon)
@@ -347,7 +349,7 @@ class BallPhysics {
       }
     }
 
-    // 8. KALECİ ELDİVENİ / KURTARIŞ ÇARPIŞMASI (Adil ve Tatmin Edici Boyut)
+    // 8. KALECİ ELDİVENİ / VÜCUDU / KURTARIŞ ÇARPIŞMASI (TOP ASLA İÇİNDEN GEÇMEZ)
     if (playerModels && !this.hasBeenSaved && !this.hasScored) {
       const gkBounds = playerModels.getGoalkeeperGlovesBounds();
       if (gkBounds) {
@@ -356,17 +358,55 @@ class BallPhysics {
         const dMid = gkBounds.glovesMid ? this.position.distanceTo(gkBounds.glovesMid) : 999;
         const dBody = this.position.distanceTo(gkBounds.bodyCenter);
 
-        // İnsan kaleci kontrol ederken refleksler ve fare etkileşimi için adil ve tatmin edici kurtarış penceresi
         const isHuman = !!gkBounds.isPlayerGK;
-        const gloveThreshold = isHuman ? 0.65 : 0.30;
-        const bodyThreshold = isHuman ? 0.75 : 0.42;
+        const isDiving = !!gkBounds.isDiving;
+        const gloveThreshold = isHuman ? (isDiving ? 1.05 : 0.85) : 0.42;
+        const bodyThreshold = isHuman ? (isDiving ? 1.15 : 0.90) : 0.55;
 
-        if (dLeft < gloveThreshold || dRight < gloveThreshold || dMid < gloveThreshold || (dBody < bodyThreshold && this.position.z < 1.0)) {
+        let isSaved = false;
+
+        // 1. Noktasal mesafe kontrolü (Eldivenler, orta nokta ve gövde)
+        if (dLeft < gloveThreshold || dRight < gloveThreshold || dMid < gloveThreshold || (dBody < bodyThreshold && this.position.z < 1.4)) {
+          isSaved = true;
+        }
+
+        // 2. Sürekli Çarpışma Testi (CCD): Top kaleci düzlemini geçerken kalecinin kapsama alanına girdi mi?
+        if (!isSaved && gkBounds.coverageBox) {
+          const box = gkBounds.coverageBox;
+          const zGK = 0.4;
+          const crossedZ = (this.prevPosition.z >= (zGK - 0.25) && this.position.z <= (zGK + 0.65)) ||
+                           (this.position.z >= box.minZ && this.position.z <= box.maxZ);
+
+          if (crossedZ) {
+            const dz = this.position.z - this.prevPosition.z;
+            let checkX = this.position.x;
+            let checkY = this.position.y;
+            if (Math.abs(dz) > 0.001) {
+              const alpha = THREE.MathUtils.clamp((zGK - this.prevPosition.z) / dz, 0, 1);
+              checkX = this.prevPosition.x + alpha * (this.position.x - this.prevPosition.x);
+              checkY = this.prevPosition.y + alpha * (this.position.y - this.prevPosition.y);
+            }
+
+            if (checkX >= box.minX && checkX <= box.maxX && checkY >= box.minY && checkY <= box.maxY) {
+              isSaved = true;
+            }
+          }
+        }
+
+        if (isSaved) {
           this.hasBeenSaved = true;
           this.hasTriggeredEnd = true;
-          this.velocity.x += (Math.random() - 0.5) * 7;
-          this.velocity.y = Math.abs(this.velocity.y) * 0.4 + 3;
-          this.velocity.z = Math.abs(this.velocity.z) * 0.6 + 2.0;
+
+          // TOP KALECİNİN İÇİNDEN ASLA GEÇMEZ: Topu kalecinin önüne sabitle!
+          this.position.z = Math.max(0.48, this.position.z);
+          this.mesh.position.copy(this.position);
+
+          // Topu öne sahaya doğru ve yana sertçe çel
+          const deflectDirX = (this.position.x >= (gkBounds.bodyCenter ? gkBounds.bodyCenter.x : 0)) ? 1 : -1;
+          this.velocity.x = deflectDirX * (Math.random() * 4 + 4);
+          this.velocity.y = Math.abs(this.velocity.y) * 0.4 + 3.2;
+          this.velocity.z = Math.abs(this.velocity.z) * 0.65 + 4.5; // Sahaya doğru fırlar!
+
           if (window.gameSound) window.gameSound.playSave();
           if (onSave) onSave();
         }
@@ -433,7 +473,7 @@ class BallPhysics {
     }
 
     // 10. GOL TESPİTİ (Kale Çizgisini Geçme)
-    if (!this.hasScored && stadium) {
+    if (!this.hasScored && !this.hasBeenSaved && stadium) {
       const halfW = stadium.goalWidth / 2;
       const h = stadium.goalHeight;
 

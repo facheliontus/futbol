@@ -230,28 +230,36 @@ class CareerManager {
       rivalName = club.tier === 3 ? 'Barcelona FC (Şampiyonlar Ligi Finali)' : 'Fenerbahçe SK (Kupa Finali)';
     }
 
-    // Maç senaryosu türleri: 'freekick', 'penalty', 'pass_shoot'
+    // Maç senaryosu türleri: 'freekick', 'penalty'
     let scenarios = [];
     if (this.player.position === 'GK') {
-      // Kaleci senaryoları: Rakip frikik ve penaltıları kurtarma
-      scenarios = [
-        { type: 'penalty', title: '90. Dakika Penaltı Kurtarışı!', distance: 11, desc: 'Rakip forvet topun başında. Köşeyi doğru tahmin et ve kurtar!' },
-        { type: 'freekick', title: 'Kritik Baraj Üstü Frikik', distance: 23, desc: 'Ceza yayından tehlikeli frikik. Uç ve köşeden çıkar!' },
-        { type: 'freekick', title: 'Uzaktan 90\'a Falsolu Şut', distance: 28, desc: 'Çaprazdan sert falso geliyor. Kaleyi savun!' },
-        { type: 'penalty', title: 'Kupa Maçı Penaltı Düellosu', distance: 11, desc: 'Soğukkanlı kal, topa doğru hamle yap!' }
-      ];
-    } else {
-      // Forvet ve Orta Saha Senaryoları (Dinamik Açık Oyun, Pres Yapan Stoperler & Frikikler)
+      // Kaleci Senaryoları (Farklı mesafeler, açılar ve barajlar)
       const pool = [
-        { type: 'open_play', title: 'Hızlı Kontratak & Defansı Çalımla', distance: 29, desc: 'Stoperler üstüne koşuyor! [E/V] ile çalım at veya sıyrıl, golü yaz!' },
-        { type: 'box_attack', title: 'Ceza Sahasına Akın & 1v2 Hücum', distance: 24, desc: 'Defanslar sert pres yapıyor! Çalım at veya faul alıp serbest vuruş kazan!' },
-        { type: 'dribble_shoot', title: 'Birebir Çalımlama & 90\'a Füze', distance: 22, desc: 'Rakip stoperi terse yatırıp sıyrıl, kalecinin uzanamayacağı köşeye vur!' },
-        { type: 'freekick', title: '24 Metre Serbest Vuruş', distance: 24, desc: 'Barajın üstünden kalenin 90\'ına falsolu şut çek!' },
-        { type: 'counter_attack', title: 'Akan Oyunda Şık Plase', distance: 27, desc: 'Pres yapan defansları ekarte et, kaleciyle karşı karşıya bitir!' },
-        { type: 'penalty', title: 'Hakem Penaltı Noktasını Gösterdi!', distance: 11, desc: 'Kaleciyi ters köşeye yatır veya çatala gönder!' },
-        { type: 'freekick', title: '90+3 Son Dakika Frikik', distance: 27, desc: 'Şampiyonluk bu vuruşa bağlı! Kalecinin uzanamayacağı köşeye falsola!' }
+        { type: 'penalty', title: '90. Dakika Penaltı Kurtarışı!', distance: 11, spotX: 0, wall: 0, desc: 'Rakip forvet topun başında! [A/D] ile yere atla veya [A/D + Space] ile 90\'a uç!' },
+        { type: 'freekick', title: '21 Metre Sol Çapraz Frikik', distance: 21, spotX: -5.0, wall: 4, desc: 'Sol çaprazdan baraj üstü tehlikeli falso! Köşeyi kapat ve devleş!' },
+        { type: 'freekick', title: '24 Metre Sağ Çapraz (Beckham Kavis)', distance: 24, spotX: 6.2, wall: 4, desc: 'Sağdan kalenin 90\'ına sert kavis geliyor! [D + Space] ile uç!' },
+        { type: 'freekick', title: '28 Metre Roberto Carlos Roketi!', distance: 28, spotX: -8.5, wall: 5, desc: 'Çok sert mermi gibi geliyor! Zamanlamanı iyi ayarla ve çel!' },
+        { type: 'freekick', title: '18 Metre Ceza Yayı Karşıdan Frikik', distance: 18, spotX: 0, wall: 4, desc: 'Çok yakın mesafe! Barajın üstünden düşen topu üst direkte tokatla!' },
+        { type: 'penalty', title: 'Kupa Maçı Penaltı Düellosu', distance: 11, spotX: 0, wall: 0, desc: 'Baskı altında soğukkanlı kal! Doğru köşeye uzan!' },
+        { type: 'freekick', title: '19 Metre Dar Açı Frikik', distance: 19, spotX: 7.8, wall: 3, desc: 'Dar açıdan doğrudan kaleye sert vuruş geliyor! Direk dibini koru!' },
+        { type: 'freekick', title: '30 Metre Knuckleball / Bomba Şut', distance: 30, spotX: 2.0, wall: 5, desc: 'Havada yön değiştiren mermi! Reflekslerini konuştur!' }
       ];
-      // Karışık 4 senaryo seç (Açık oyun ağırlıklı)
+      scenarios = pool.sort(() => 0.5 - Math.random()).slice(0, 4);
+    } else {
+      // Forvet ve Orta Saha Senaryoları (Zengin Frikik ve Penaltı Çeşitleri)
+      const pool = [
+        { type: 'penalty', title: 'Hakem Penaltı Noktasını Gösterdi!', distance: 11, spotX: 0, wall: 0, desc: 'Soğukkanlı kal, kaleciyi ters köşeye yatır veya 90\'a as!' },
+        { type: 'freekick', title: '17 Metre Ceza Sahası Çizgisi Frikik', distance: 17, spotX: -3.5, wall: 3, desc: 'Ceza yayı önü çok yakın mesafe! Barajın üstünden köşeye bırak!' },
+        { type: 'freekick', title: '20 Metre Ceza Yayı Karşıdan Vuruş', distance: 20, spotX: 0, wall: 4, desc: 'Tam karşıdan net bir frikik fırsatı! Barajı aşırtıp köşeye tak!' },
+        { type: 'freekick', title: '22 Metre Sol Çapraz Serbest Vuruş', distance: 22, spotX: -5.5, wall: 4, desc: 'Sol çaprazdan sağ köşeye nefis bir plase veya sert falso gönder!' },
+        { type: 'freekick', title: '24 Metre Sağ Çapraz (Beckham Kavis)', distance: 24, spotX: 6.2, wall: 4, desc: 'Sağ çaprazdan sola doğru dış falsoyla kaleciyi çaresiz bırak!' },
+        { type: 'freekick', title: '28 Metre Roberto Carlos Füzesi!', distance: 28, spotX: -8.5, wall: 5, desc: 'Sol açık açıdan barajın dışından ters kavisle 90\'a roket yolla!' },
+        { type: 'freekick', title: '30 Metre Uzak Mesafe Bomba Şut', distance: 30, spotX: 2.0, wall: 5, desc: 'Çok uzak mesafe! Maksimum güçle tavana veya direk dibine sert şut çıkar!' },
+        { type: 'freekick', title: '19 Metre Dar Açı Frikik', distance: 19, spotX: 7.8, wall: 3, desc: 'Sağ dar açıdan ön direğe sert veya uzak direğin 90\'ına aşırtma vur!' },
+        { type: 'freekick', title: '90+3 Son Dakika Şampiyonluk Frikiki', distance: 26, spotX: -4.0, wall: 4, desc: 'Tüm stat nefesini tuttu! Barajın üstünden köşeye falsola ve maçı bitir!' },
+        { type: 'penalty', title: 'Kupa Finali Seri Penaltı', distance: 11, spotX: 0, wall: 0, desc: 'Tarihi an! Çatala mermiyi gönder ve kupayı getir!' }
+      ];
+      // Karışık 4 senaryo seç
       scenarios = pool.sort(() => 0.5 - Math.random()).slice(0, 4);
     }
 

@@ -682,49 +682,97 @@ class PlayerModels {
     requestAnimationFrame(diveLoop);
   }
 
-  // OYUNCUNUN KONTROL ETTİĞİ KALECİ (Kaleci Mevkisinde Oynarken - 2D X ve Y Kontrolü)
+  // OYUNCUNUN KONTROL ETTİĞİ KALECİ (A/D ile yere, Space+A/D ile 90'a uçuş)
   setGoalkeeperManualPosition(xRatio, yRatio = 0.5, isDivingAction = false) {
     if (!this.goalkeeper) return;
     this.isPlayerGK = true;
+    this.lastDiveXRatio = xRatio;
+    this.lastDiveYRatio = yRatio;
 
     // xRatio: -1.0 (Sol direk) ile +1.0 (Sağ direk)
     // yRatio: 0.0 (Zemin) ile 1.0 (Üst direk / 90)
-    const targetX = xRatio * 3.4;
-    this.goalkeeper.group.position.x = THREE.MathUtils.lerp(this.goalkeeper.group.position.x, targetX, 0.35);
-
-    // Kolların ve eldivenlerin fareye göre 3D uzanması:
-    if (this.goalkeeper.leftArm && this.goalkeeper.rightArm) {
-      if (yRatio > 0.6) {
-        // Yüksek toplarda kollar yukarı ve 90 köşelerine açılır
-        this.goalkeeper.leftArm.rotation.z = Math.PI - 0.4 + (xRatio * 0.3);
-        this.goalkeeper.rightArm.rotation.z = -Math.PI + 0.4 + (xRatio * 0.3);
-        this.goalkeeper.leftArm.rotation.x = -0.3;
-        this.goalkeeper.rightArm.rotation.x = -0.3;
-      } else if (yRatio < 0.35) {
-        // Alçak ve yerden gelen şutlarda kollar aşağı uzanır
-        this.goalkeeper.leftArm.rotation.z = 0.2 + (xRatio * 0.4);
-        this.goalkeeper.rightArm.rotation.z = -0.2 + (xRatio * 0.4);
-        this.goalkeeper.leftArm.rotation.x = 0.5;
-        this.goalkeeper.rightArm.rotation.x = 0.5;
-      } else {
-        // Orta seviye dengeli kurtarış duruşu
-        this.goalkeeper.leftArm.rotation.z = 0.8 + (xRatio * 0.5);
-        this.goalkeeper.rightArm.rotation.z = -0.8 + (xRatio * 0.5);
-        this.goalkeeper.leftArm.rotation.x = 0;
-        this.goalkeeper.rightArm.rotation.x = 0;
-      }
-    }
+    const targetX = xRatio * 3.35;
 
     if (isDivingAction) {
-      // Uçuş hamlesi: Vücut açıyla havaya fırlar ve yana eğilir
-      const jumpHeight = Math.max(0.7, yRatio * 1.8);
-      this.goalkeeper.group.position.y = THREE.MathUtils.lerp(this.goalkeeper.group.position.y, jumpHeight, 0.4);
-      this.goalkeeper.group.rotation.z = THREE.MathUtils.lerp(this.goalkeeper.group.rotation.z, -xRatio * 1.1, 0.35);
+      this.isDiving = true;
+      this.goalkeeper.state = 'diving';
+
+      if (xRatio !== 0) {
+        if (yRatio >= 0.5) {
+          // 🚀 ÜSTE UÇUŞ (A + Space veya D + Space: 90'a uçuş)
+          const targetY = 1.70;
+          this.goalkeeper.group.position.x = THREE.MathUtils.lerp(this.goalkeeper.group.position.x, targetX, 0.55);
+          this.goalkeeper.group.position.y = THREE.MathUtils.lerp(this.goalkeeper.group.position.y, targetY, 0.55);
+          this.goalkeeper.group.rotation.z = THREE.MathUtils.lerp(this.goalkeeper.group.rotation.z, -Math.sign(xRatio) * 1.15, 0.5);
+
+          // Kollar 90 köşesine sonuna kadar uzanır
+          if (this.goalkeeper.leftArm && this.goalkeeper.rightArm) {
+            this.goalkeeper.leftArm.rotation.z = (xRatio < 0 ? -1.85 : 0.6);
+            this.goalkeeper.rightArm.rotation.z = (xRatio > 0 ? 1.85 : -0.6);
+            this.goalkeeper.leftArm.rotation.x = -0.4;
+            this.goalkeeper.rightArm.rotation.x = -0.4;
+          }
+        } else {
+          // 🛡️ ALTA / YERE DALIŞ (Sadece A veya Sadece D: Yere atlayış)
+          const targetY = 0.22;
+          this.goalkeeper.group.position.x = THREE.MathUtils.lerp(this.goalkeeper.group.position.x, targetX, 0.6);
+          this.goalkeeper.group.position.y = THREE.MathUtils.lerp(this.goalkeeper.group.position.y, targetY, 0.6);
+          this.goalkeeper.group.rotation.z = THREE.MathUtils.lerp(this.goalkeeper.group.rotation.z, -Math.sign(xRatio) * 1.35, 0.55);
+
+          // Kollar çimlerin üstünde köşeye doğru uzanır
+          if (this.goalkeeper.leftArm && this.goalkeeper.rightArm) {
+            this.goalkeeper.leftArm.rotation.z = (xRatio < 0 ? -1.65 : 0.3);
+            this.goalkeeper.rightArm.rotation.z = (xRatio > 0 ? 1.65 : -0.3);
+            this.goalkeeper.leftArm.rotation.x = 0.65;
+            this.goalkeeper.rightArm.rotation.x = 0.65;
+          }
+        }
+      } else {
+        // Ortaya müdahale (Space tek başına veya S tek başına)
+        if (yRatio >= 0.5) {
+          // Üst ortaya zıpla (Space)
+          this.goalkeeper.group.position.y = THREE.MathUtils.lerp(this.goalkeeper.group.position.y, 1.85, 0.55);
+          this.goalkeeper.group.rotation.z = 0;
+          if (this.goalkeeper.leftArm && this.goalkeeper.rightArm) {
+            this.goalkeeper.leftArm.rotation.z = Math.PI - 0.2;
+            this.goalkeeper.rightArm.rotation.z = -Math.PI + 0.2;
+          }
+        } else {
+          // Alt ortaya yat (S)
+          this.goalkeeper.group.position.y = THREE.MathUtils.lerp(this.goalkeeper.group.position.y, 0.15, 0.6);
+          this.goalkeeper.group.rotation.z = 0;
+          if (this.goalkeeper.leftArm && this.goalkeeper.rightArm) {
+            this.goalkeeper.leftArm.rotation.z = 0.3;
+            this.goalkeeper.rightArm.rotation.z = -0.3;
+          }
+        }
+      }
+
+      // 1.1 saniye sonra kaleci ayağa kalkar
+      clearTimeout(this._gkResetTimer);
+      this._gkResetTimer = setTimeout(() => {
+        this.resetGoalkeeper();
+      }, 1100);
+
     } else {
-      // Ayakta duruş (Hafif yaylanma ve hazır bekleme)
+      // Ayakta konum alma / adımlama
+      this.goalkeeper.group.position.x = THREE.MathUtils.lerp(this.goalkeeper.group.position.x, targetX, 0.35);
       const baseHeight = (yRatio > 0.65) ? (yRatio - 0.65) * 0.8 : 0;
       this.goalkeeper.group.position.y = THREE.MathUtils.lerp(this.goalkeeper.group.position.y, baseHeight, 0.25);
       this.goalkeeper.group.rotation.z = THREE.MathUtils.lerp(this.goalkeeper.group.rotation.z, -xRatio * 0.2, 0.2);
+
+      if (this.goalkeeper.leftArm && this.goalkeeper.rightArm) {
+        if (yRatio > 0.6) {
+          this.goalkeeper.leftArm.rotation.z = Math.PI - 0.4 + (xRatio * 0.3);
+          this.goalkeeper.rightArm.rotation.z = -Math.PI + 0.4 + (xRatio * 0.3);
+        } else if (yRatio < 0.35) {
+          this.goalkeeper.leftArm.rotation.z = 0.2 + (xRatio * 0.4);
+          this.goalkeeper.rightArm.rotation.z = -0.2 + (xRatio * 0.4);
+        } else {
+          this.goalkeeper.leftArm.rotation.z = 0.8 + (xRatio * 0.5);
+          this.goalkeeper.rightArm.rotation.z = -0.8 + (xRatio * 0.5);
+        }
+      }
     }
   }
 
@@ -739,7 +787,7 @@ class PlayerModels {
     this.goalkeeper.state = 'idle';
   }
 
-  // Kaleci Eldivenlerinin Dünya Koordinatları (Top Çarpışma Tespiti İçin)
+  // Kaleci Eldivenlerinin ve Vücudunun Dünya Koordinatları & Çarpışma Kutusu (Top İçinden Geçmesin)
   getGoalkeeperGlovesBounds() {
     if (!this.goalkeeper) return null;
     const leftPos = new THREE.Vector3();
@@ -749,13 +797,42 @@ class PlayerModels {
 
     // İki eldivenin orta noktası
     const glovesMid = leftPos.clone().add(rightPos).multiplyScalar(0.5);
+    const bodyCenter = this.goalkeeper.group.position.clone().add(new THREE.Vector3(0, 1.05, 0));
+
+    // Geniş ve sağlam kapsama kutusu (Coverage Box)
+    const gkX = this.goalkeeper.group.position.x;
+    const gkY = this.goalkeeper.group.position.y;
+
+    let minX = gkX - 0.85;
+    let maxX = gkX + 0.85;
+    let minY = Math.max(0, gkY - 0.35);
+    let maxY = gkY + 2.05;
+
+    if (this.isDiving || this.goalkeeper.state === 'diving') {
+      if (this.lastDiveXRatio > 0) {
+        minX = Math.min(minX, gkX - 0.5);
+        maxX = Math.max(maxX, gkX + 1.45);
+      } else if (this.lastDiveXRatio < 0) {
+        minX = Math.min(minX, gkX - 1.45);
+        maxX = Math.max(maxX, gkX + 0.5);
+      }
+
+      if (this.lastDiveYRatio > 0.45) {
+        maxY = Math.max(maxY, 2.5);
+      } else {
+        minY = 0;
+        maxY = Math.max(maxY, 1.4);
+      }
+    }
 
     return {
       leftGlove: leftPos,
       rightGlove: rightPos,
       glovesMid: glovesMid,
-      bodyCenter: this.goalkeeper.group.position.clone().add(new THREE.Vector3(0, 1.1, 0)),
-      isPlayerGK: this.isPlayerGK
+      bodyCenter: bodyCenter,
+      coverageBox: { minX, maxX, minY, maxY, minZ: -0.25, maxZ: 1.15 },
+      isPlayerGK: this.isPlayerGK,
+      isDiving: this.isDiving || this.goalkeeper.state === 'diving'
     };
   }
 
