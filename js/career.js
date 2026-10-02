@@ -41,8 +41,8 @@ const CLUBS_DATABASE = {
   },
   'genclerbirligi': {
     id: 'genclerbirligi',
-    name: 'Gençlerbirliği SK',
-    short: 'GBR',
+    name: 'Başkent Kırmızı Kara',
+    short: 'BKK',
     tier: 1,
     reputation: 68,
     colors: { primary: '#c0392b', secondary: '#111111', text: '#ffffff' },
@@ -52,8 +52,8 @@ const CLUBS_DATABASE = {
   },
   'sakaryaspor': {
     id: 'sakaryaspor',
-    name: 'Sakaryaspor',
-    short: 'SAK',
+    name: 'Sakarya Yeşil Siyah',
+    short: 'SYS',
     tier: 1,
     reputation: 67,
     colors: { primary: '#16a085', secondary: '#111111', text: '#ffffff' },
@@ -63,8 +63,8 @@ const CLUBS_DATABASE = {
   },
   'kocaelispor': {
     id: 'kocaelispor',
-    name: 'Kocaelispor',
-    short: 'KOC',
+    name: 'Körfez Yeşil Siyah',
+    short: 'KYS',
     tier: 1,
     reputation: 68,
     colors: { primary: '#27ae60', secondary: '#111111', text: '#ffffff' },
@@ -74,8 +74,8 @@ const CLUBS_DATABASE = {
   },
   'bandirmaspor': {
     id: 'bandirmaspor',
-    name: 'Bandırmaspor',
-    short: 'BAN',
+    name: 'Bandırma Bordo Beyaz',
+    short: 'BBB',
     tier: 1,
     reputation: 65,
     colors: { primary: '#8e44ad', secondary: '#ffffff', text: '#ffffff' },
@@ -85,8 +85,8 @@ const CLUBS_DATABASE = {
   },
   'corumfk': {
     id: 'corumfk',
-    name: 'Çorum FK',
-    short: 'COR',
+    name: 'İç Anadolu Kırmızı Siyah',
+    short: 'AKS',
     tier: 1,
     reputation: 63,
     colors: { primary: '#c0392b', secondary: '#ffffff', text: '#ffffff' },
@@ -96,8 +96,8 @@ const CLUBS_DATABASE = {
   },
   'amedspor': {
     id: 'amedspor',
-    name: 'Amed Sportif',
-    short: 'AMD',
+    name: 'Güneydoğu Yeşil Kırmızı',
+    short: 'GYK',
     tier: 1,
     reputation: 66,
     colors: { primary: '#27ae60', secondary: '#c0392b', text: '#ffffff' },
@@ -107,8 +107,8 @@ const CLUBS_DATABASE = {
   },
   'boluspor': {
     id: 'boluspor',
-    name: 'Boluspor',
-    short: 'BOL',
+    name: 'Köroğlu Kırmızı Beyaz',
+    short: 'KKB',
     tier: 1,
     reputation: 63,
     colors: { primary: '#c0392b', secondary: '#ffffff', text: '#ffffff' },
@@ -118,8 +118,8 @@ const CLUBS_DATABASE = {
   },
   'umraniyespor': {
     id: 'umraniyespor',
-    name: 'Ümraniyespor',
-    short: 'UMR',
+    name: 'Ümraniye Kırmızı Beyaz',
+    short: 'UKB',
     tier: 1,
     reputation: 62,
     colors: { primary: '#c0392b', secondary: '#ffffff', text: '#ffffff' },
@@ -129,8 +129,8 @@ const CLUBS_DATABASE = {
   },
   'igdirfk': {
     id: 'igdirfk',
-    name: 'Iğdır FK',
-    short: 'IGD',
+    name: 'Aras Yeşil Beyaz',
+    short: 'AYB',
     tier: 1,
     reputation: 64,
     colors: { primary: '#27ae60', secondary: '#ffffff', text: '#ffffff' },
@@ -140,12 +140,12 @@ const CLUBS_DATABASE = {
   },
 
   // ==========================================================
-  // SÜPER LİG KULÜPLERİ (Tier 2)
+  // SÜPER LİG KULÜPLERİ (Tier 2 - Nostaljik Parodi İsimler)
   // ==========================================================
   'galatasaray': {
     id: 'galatasaray',
-    name: 'Galatasaray SK',
-    short: 'GS',
+    name: 'Sarı Kırmızı Aslanlar',
+    short: 'SKA',
     tier: 2,
     reputation: 84,
     colors: { primary: '#b81414', secondary: '#f39c12', text: '#ffffff' },
@@ -155,8 +155,8 @@ const CLUBS_DATABASE = {
   },
   'fenerbahce': {
     id: 'fenerbahce',
-    name: 'Fenerbahçe SK',
-    short: 'FB',
+    name: 'Sarı Kanarya SK',
+    short: 'SKS',
     tier: 2,
     reputation: 84,
     colors: { primary: '#0c2461', secondary: '#f1c40f', text: '#ffffff' },
@@ -166,8 +166,8 @@ const CLUBS_DATABASE = {
   },
   'besiktas': {
     id: 'besiktas',
-    name: 'Beşiktaş JK',
-    short: 'BJK',
+    name: 'Kara Kartal JK',
+    short: 'KKJ',
     tier: 2,
     reputation: 82,
     colors: { primary: '#111111', secondary: '#ffffff', text: '#ffffff' },
@@ -177,8 +177,8 @@ const CLUBS_DATABASE = {
   },
   'trabzonspor': {
     id: 'trabzonspor',
-    name: 'Trabzonspor',
-    short: 'TS',
+    name: 'Karadeniz Fırtınası',
+    short: 'KDF',
     tier: 2,
     reputation: 80,
     colors: { primary: '#6e1d24', secondary: '#0984e3', text: '#ffffff' },
@@ -188,8 +188,8 @@ const CLUBS_DATABASE = {
   },
   'basaksehir': {
     id: 'basaksehir',
-    name: 'Başakşehir FK',
-    short: 'IBFK',
+    name: 'Turuncu Bozkır FK',
+    short: 'TBF',
     tier: 2,
     reputation: 77,
     colors: { primary: '#e67e22', secondary: '#0c2461', text: '#ffffff' },
@@ -199,8 +199,8 @@ const CLUBS_DATABASE = {
   },
   'samsunspor': {
     id: 'samsunspor',
-    name: 'Samsunspor',
-    short: 'SAM',
+    name: 'Kırmızı Şimşekler',
+    short: 'KSM',
     tier: 2,
     reputation: 76,
     colors: { primary: '#c0392b', secondary: '#ffffff', text: '#ffffff' },
@@ -210,8 +210,8 @@ const CLUBS_DATABASE = {
   },
   'goztepe': {
     id: 'goztepe',
-    name: 'Göztepe SK',
-    short: 'GOZ',
+    name: 'Göztepe Sahil SK',
+    short: 'GSS',
     tier: 2,
     reputation: 76,
     colors: { primary: '#f1c40f', secondary: '#c0392b', text: '#111111' },
@@ -221,8 +221,8 @@ const CLUBS_DATABASE = {
   },
   'eyupspor': {
     id: 'eyupspor',
-    name: 'Eyüpspor',
-    short: 'EYP',
+    name: 'Eflatun Şövalyeler',
+    short: 'EFS',
     tier: 2,
     reputation: 75,
     colors: { primary: '#6c5ce7', secondary: '#f1c40f', text: '#ffffff' },
@@ -232,8 +232,8 @@ const CLUBS_DATABASE = {
   },
   'antalyaspor': {
     id: 'antalyaspor',
-    name: 'Antalyaspor',
-    short: 'ANT',
+    name: 'Akdeniz Akrepleri',
+    short: 'AKA',
     tier: 2,
     reputation: 74,
     colors: { primary: '#c0392b', secondary: '#ffffff', text: '#ffffff' },
@@ -243,8 +243,8 @@ const CLUBS_DATABASE = {
   },
   'sivasspor': {
     id: 'sivasspor',
-    name: 'Sivasspor',
-    short: 'SIV',
+    name: 'Yiğidolar Kırmızı Beyaz',
+    short: 'YKB',
     tier: 2,
     reputation: 73,
     colors: { primary: '#c0392b', secondary: '#ffffff', text: '#ffffff' },
@@ -254,8 +254,8 @@ const CLUBS_DATABASE = {
   },
   'kasimpasa': {
     id: 'kasimpasa',
-    name: 'Kasımpaşa SK',
-    short: 'KAS',
+    name: 'Haliç Lacivert Beyaz',
+    short: 'HLB',
     tier: 2,
     reputation: 73,
     colors: { primary: '#0984e3', secondary: '#ffffff', text: '#ffffff' },
@@ -265,8 +265,8 @@ const CLUBS_DATABASE = {
   },
   'konyaspor': {
     id: 'konyaspor',
-    name: 'Konyaspor',
-    short: 'KON',
+    name: 'Yeşil Kartallar SK',
+    short: 'YKS',
     tier: 2,
     reputation: 73,
     colors: { primary: '#27ae60', secondary: '#ffffff', text: '#ffffff' },
@@ -276,8 +276,8 @@ const CLUBS_DATABASE = {
   },
   'rizespor': {
     id: 'rizespor',
-    name: 'Çaykur Rizespor',
-    short: 'RIZ',
+    name: 'Çayeli Yeşil Mavi',
+    short: 'CYM',
     tier: 2,
     reputation: 73,
     colors: { primary: '#27ae60', secondary: '#0984e3', text: '#ffffff' },
@@ -287,8 +287,8 @@ const CLUBS_DATABASE = {
   },
   'gaziantepfk': {
     id: 'gaziantepfk',
-    name: 'Gaziantep FK',
-    short: 'GFK',
+    name: 'Kırmızı Şahinler FK',
+    short: 'KSF',
     tier: 2,
     reputation: 72,
     colors: { primary: '#c0392b', secondary: '#111111', text: '#ffffff' },
@@ -298,8 +298,8 @@ const CLUBS_DATABASE = {
   },
   'alanyaspor': {
     id: 'alanyaspor',
-    name: 'Alanyaspor',
-    short: 'ALN',
+    name: 'Güney Turuncu Yeşil',
+    short: 'GTY',
     tier: 2,
     reputation: 72,
     colors: { primary: '#e67e22', secondary: '#27ae60', text: '#ffffff' },
@@ -309,8 +309,8 @@ const CLUBS_DATABASE = {
   },
   'kayserispor': {
     id: 'kayserispor',
-    name: 'Kayserispor',
-    short: 'KAY',
+    name: 'Erciyes Sarı Kırmızı',
+    short: 'ESK',
     tier: 2,
     reputation: 71,
     colors: { primary: '#f1c40f', secondary: '#c0392b', text: '#111111' },
@@ -320,8 +320,8 @@ const CLUBS_DATABASE = {
   },
   'bodrumfk': {
     id: 'bodrumfk',
-    name: 'Bodrum FK',
-    short: 'BOD',
+    name: 'Mavi Körfez FK',
+    short: 'MKF',
     tier: 2,
     reputation: 70,
     colors: { primary: '#27ae60', secondary: '#ffffff', text: '#ffffff' },
@@ -331,8 +331,8 @@ const CLUBS_DATABASE = {
   },
   'hatayspor': {
     id: 'hatayspor',
-    name: 'Hatayspor',
-    short: 'HAT',
+    name: 'Asi Nehri Bordo Beyaz',
+    short: 'ANB',
     tier: 2,
     reputation: 70,
     colors: { primary: '#8b0000', secondary: '#ffffff', text: '#ffffff' },
@@ -342,8 +342,8 @@ const CLUBS_DATABASE = {
   },
   'adanademirspor': {
     id: 'adanademirspor',
-    name: 'Adana Demirspor',
-    short: 'ADS',
+    name: 'Mavi Şimşekler ADS',
+    short: 'MSD',
     tier: 2,
     reputation: 71,
     colors: { primary: '#0984e3', secondary: '#0c2461', text: '#ffffff' },
@@ -353,126 +353,126 @@ const CLUBS_DATABASE = {
   },
 
   // ==========================================================
-  // AVRUPA & DÜNYA DEVLERİ (Tier 3 - Şampiyonlar Ligi)
+  // AVRUPA & DÜNYA DEVLERİ (Tier 3 - PES Klasik Lisanssız İsimler)
   // ==========================================================
   'realmadrid': {
     id: 'realmadrid',
-    name: 'Real Madrid CF',
-    short: 'RMA',
+    name: 'Chamartin B (Madrid Beyaz)',
+    short: 'CHM',
     tier: 3,
     reputation: 96,
     colors: { primary: '#f5f6fa', secondary: '#d4af37', text: '#1e272e' },
-    league: 'La Liga / Şampiyonlar Ligi',
+    league: 'Avrupa Ligi',
     budget: '€140M',
     badge: '👑'
   },
   'mancity': {
     id: 'mancity',
-    name: 'Manchester City',
-    short: 'MCI',
+    name: 'Man Blue (Mavi Gökler)',
+    short: 'MNB',
     tier: 3,
     reputation: 95,
     colors: { primary: '#68c5db', secondary: '#0c2461', text: '#ffffff' },
-    league: 'Premier League',
+    league: 'İngiltere Ligi',
     budget: '€160M',
     badge: '🚢'
   },
   'bayern': {
     id: 'bayern',
-    name: 'Bayern München',
-    short: 'FCB',
+    name: 'Bavyera Kırmızı (Isar FC)',
+    short: 'BVR',
     tier: 3,
     reputation: 94,
     colors: { primary: '#eb2f06', secondary: '#0c2461', text: '#ffffff' },
-    league: 'Bundesliga',
+    league: 'Almanya Ligi',
     budget: '€120M',
     badge: '🔴'
   },
   'arsenal': {
     id: 'arsenal',
-    name: 'Arsenal FC',
-    short: 'ARS',
+    name: 'Kuzey Londra Topçuları',
+    short: 'KLT',
     tier: 3,
     reputation: 93,
     colors: { primary: '#e55039', secondary: '#ffffff', text: '#ffffff' },
-    league: 'Premier League',
+    league: 'İngiltere Ligi',
     budget: '€110M',
     badge: '💣'
   },
   'barcelona': {
     id: 'barcelona',
-    name: 'FC Barcelona',
-    short: 'BAR',
+    name: 'Katalonya Blaugrana',
+    short: 'KTB',
     tier: 3,
     reputation: 94,
     colors: { primary: '#0984e3', secondary: '#b81414', text: '#ffffff' },
-    league: 'La Liga',
+    league: 'İspanya Ligi',
     budget: '€115M',
     badge: '🔵'
   },
   'liverpool': {
     id: 'liverpool',
-    name: 'Liverpool FC',
-    short: 'LIV',
+    name: 'Merseyside Red (Liman Kırmızıları)',
+    short: 'MSR',
     tier: 3,
     reputation: 93,
     colors: { primary: '#c0392b', secondary: '#f1c40f', text: '#ffffff' },
-    league: 'Premier League',
+    league: 'İngiltere Ligi',
     budget: '€115M',
     badge: '🔴'
   },
   'psg': {
     id: 'psg',
-    name: 'Paris Saint-Germain',
-    short: 'PSG',
+    name: 'Paris Başkent Lacivert',
+    short: 'PBL',
     tier: 3,
     reputation: 92,
     colors: { primary: '#0c2461', secondary: '#c0392b', text: '#ffffff' },
-    league: 'Ligue 1',
+    league: 'Fransa Ligi',
     budget: '€130M',
     badge: '🗼'
   },
   'inter': {
     id: 'inter',
-    name: 'Inter Milan',
-    short: 'INT',
+    name: 'Lombardia Mavi Siyah',
+    short: 'LMS',
     tier: 3,
     reputation: 91,
     colors: { primary: '#0984e3', secondary: '#111111', text: '#ffffff' },
-    league: 'Serie A',
+    league: 'İtalya Ligi',
     budget: '€90M',
     badge: '🐍'
   },
   'juventus': {
     id: 'juventus',
-    name: 'Juventus FC',
-    short: 'JUV',
+    name: 'Piemonte Siyah Beyaz (PM Black White)',
+    short: 'PMB',
     tier: 3,
     reputation: 90,
     colors: { primary: '#111111', secondary: '#ffffff', text: '#ffffff' },
-    league: 'Serie A',
+    league: 'İtalya Ligi',
     budget: '€85M',
     badge: '🦓'
   },
   'leverkusen': {
     id: 'leverkusen',
-    name: 'Bayer Leverkusen',
-    short: 'B04',
+    name: 'Ren Kırmızı Siyah',
+    short: 'RKS',
     tier: 3,
     reputation: 90,
     colors: { primary: '#c0392b', secondary: '#111111', text: '#ffffff' },
-    league: 'Bundesliga',
+    league: 'Almanya Ligi',
     budget: '€85M',
     badge: '🦁'
   },
   'atletico': {
     id: 'atletico',
-    name: 'Atlético de Madrid',
-    short: 'ATM',
+    name: 'Manzanares Kırmızı Beyaz',
+    short: 'MZB',
     tier: 3,
     reputation: 89,
     colors: { primary: '#c0392b', secondary: '#0984e3', text: '#ffffff' },
-    league: 'La Liga',
+    league: 'İspanya Ligi',
     budget: '€80M',
     badge: '🐻'
   }
@@ -673,21 +673,21 @@ const STORE_CATALOG = {
 };
 
 // ==========================================================
-// DÜNYA EFSANELERİ LİDERLİK TABLOSU VERİLERİ (LEADERBOARD)
+// OYUNCU TOPLULUĞU LİDERLİK TABLOSU VERİLERİ (ONLINE SITE PLAYERS)
 // ==========================================================
 const BASE_LEADERBOARD = [
-  { name: 'Cristiano Ronaldo', club: 'Al Nassr', ovr: 86, money: 260000000, country: '🇵🇹', isIcon: true },
-  { name: 'Lionel Messi', club: 'Inter Miami', ovr: 88, money: 185000000, country: '🇦🇷', isIcon: true },
-  { name: 'Neymar Jr', club: 'Al Hilal', ovr: 87, money: 145000000, country: '🇧🇷', isIcon: true },
-  { name: 'Kylian Mbappé', club: 'Real Madrid', ovr: 91, money: 115000000, country: '🇫🇷', isIcon: true },
-  { name: 'Erling Haaland', club: 'Manchester City', ovr: 91, money: 85000000, country: '🇳🇴', isIcon: true },
-  { name: 'Kevin De Bruyne', club: 'Manchester City', ovr: 91, money: 65000000, country: '🇧🇪', isIcon: true },
-  { name: 'Vinicius Jr', club: 'Real Madrid', ovr: 90, money: 55000000, country: '🇧🇷', isIcon: true },
-  { name: 'Jude Bellingham', club: 'Real Madrid', ovr: 90, money: 48000000, country: '🏴󠁧󠁢󠁥󠁮󠁧󠁿', isIcon: true },
-  { name: 'Harry Kane', club: 'Bayern München', ovr: 90, money: 45000000, country: '🏴󠁧󠁢󠁥󠁮󠁧󠁿', isIcon: true },
-  { name: 'Arda Güler', club: 'Real Madrid', ovr: 82, money: 18000000, country: '🇹🇷', isIcon: true },
-  { name: 'Mauro Icardi', club: 'Galatasaray', ovr: 83, money: 28000000, country: '🇦🇷', isIcon: true },
-  { name: 'Dusan Tadic', club: 'Fenerbahçe', ovr: 82, money: 22000000, country: '🇷🇸', isIcon: true }
+  { name: 'TrivelaMaster_99', club: 'Chamartin B (Madrid Beyaz)', ovr: 89, money: 34500000, country: '🇹🇷', isIcon: false },
+  { name: 'KadıköyBoğası_FB', club: 'Sarı Kanarya SK', ovr: 88, money: 29800000, country: '🇹🇷', isIcon: false },
+  { name: 'AslanYürek_GS', club: 'Sarı Kırmızı Aslanlar', ovr: 88, money: 28500000, country: '🇹🇷', isIcon: false },
+  { name: 'PanterKaleci_34', club: 'Kara Kartal JK', ovr: 87, money: 24200000, country: '🇹🇷', isIcon: false },
+  { name: 'FalsoKralı_Arda', club: 'Chamartin B (Madrid Beyaz)', ovr: 86, money: 21500000, country: '🇹🇷', isIcon: false },
+  { name: 'KuzeyRüzgarı_61', club: 'Karadeniz Fırtınası', ovr: 85, money: 18400000, country: '🇹🇷', isIcon: false },
+  { name: 'SniperKemal_10', club: 'Man Blue (Mavi Gökler)', ovr: 85, money: 17200000, country: '🇹🇷', isIcon: false },
+  { name: 'BuzAdam_90', club: 'Bavyera Kırmızı (Isar FC)', ovr: 84, money: 15600000, country: '🇹🇷', isIcon: false },
+  { name: 'GöztepeTayfa_35', club: 'Göztepe Sahil SK', ovr: 83, money: 12800000, country: '🇹🇷', isIcon: false },
+  { name: 'GeceKartalı_06', club: 'Başkent Kırmızı Kara', ovr: 82, money: 9500000, country: '🇹🇷', isIcon: false },
+  { name: 'Rövaşata_Emre', club: 'Katalonya Blaugrana', ovr: 81, money: 8200000, country: '🇹🇷', isIcon: false },
+  { name: 'ÇölFırtınası_ADS', club: 'Mavi Şimşekler ADS', ovr: 80, money: 6700000, country: '🇹🇷', isIcon: false }
 ];
 
 class CareerManager {
@@ -936,9 +936,13 @@ class CareerManager {
     }
 
     // ========================================================
-    // MAAŞ & PRİM KAZANÇLARI (BANKAYA GEÇEN PARA)
+    // MAAŞ & PRİM KAZANÇLARI (HAFTALIK MAAŞ SİSTEMİ)
     // ========================================================
-    const baseWage = this.player.wage || 25000;
+    // Her maç performans primi alınır; tam haftalık maaş ise 2 maçta bir (haftalık periyotta) yatar!
+    const isPayday = (this.currentMatchIndex % 2 === 1) || (this.currentMatchIndex + 1 >= this.matchesPerSeason);
+    const weeklyWage = this.player.wage || 25000;
+    const baseWage = isPayday ? weeklyWage : 0;
+
     const goalBonus = this.currentMatch.goalsThisMatch * 15000;
     const saveBonus = this.currentMatch.savesThisMatch * 12000;
     const winBonus = isWin ? 35000 : (isDraw ? 10000 : 0);
@@ -962,6 +966,8 @@ class CareerManager {
       isDraw: isDraw,
       earnings: {
         baseWage,
+        weeklyWage,
+        isPayday,
         goalBonus,
         saveBonus,
         winBonus,
@@ -1145,6 +1151,73 @@ class CareerManager {
       avgRating,
       stats: { ...this.seasonStats },
       offers
+    };
+  }
+
+  // ==========================================================
+  // İSTEDİĞİ KULÜPLE ANLAŞMA & TRANSFER TALEBİ SİSTEMİ
+  // ==========================================================
+  getAllClubsForTransfer() {
+    if (!this.player) return [];
+    const currentClub = this.getCurrentClub();
+    const ovr = this.player.overall;
+
+    return Object.values(CLUBS_DATABASE).map(club => {
+      let minOvrNeeded = 60;
+      if (club.tier === 1) {
+        minOvrNeeded = club.reputation >= 66 ? 68 : 64;
+      } else if (club.tier === 2) {
+        minOvrNeeded = club.reputation >= 80 ? 79 : (club.reputation >= 75 ? 74 : 71);
+      } else {
+        // Avrupa Devleri
+        minOvrNeeded = club.reputation >= 94 ? 88 : 84;
+      }
+
+      let offeredWage = Math.round((club.reputation * 1000) * (club.tier === 3 ? 2.5 : (club.tier === 2 ? 1.2 : 0.4)));
+
+      const isCurrent = (club.id === currentClub.id);
+      const isEligible = (ovr >= minOvrNeeded);
+      const ovrDiff = minOvrNeeded - ovr;
+
+      return {
+        ...club,
+        minOvrNeeded,
+        offeredWage,
+        isCurrent,
+        isEligible,
+        ovrDiff
+      };
+    });
+  }
+
+  requestTransferToClub(targetClubId) {
+    if (!this.player) return { success: false, msg: 'Oyuncu profili bulunamadı.' };
+    const club = CLUBS_DATABASE[targetClubId];
+    if (!club) return { success: false, msg: 'Kulüp bulunamadı.' };
+    if (club.id === this.player.clubId) {
+      return { success: false, msg: 'Zaten bu kulüpte forma giyiyorsun!' };
+    }
+
+    const clubsList = this.getAllClubsForTransfer();
+    const clubInfo = clubsList.find(c => c.id === targetClubId);
+
+    if (!clubInfo || !clubInfo.isEligible) {
+      const neededOvr = clubInfo ? clubInfo.minOvrNeeded : 75;
+      const diff = clubInfo ? clubInfo.ovrDiff : 5;
+      return {
+        success: false,
+        neededOvr: neededOvr,
+        msg: `${club.badge} ${club.name} Menajeri: "Yeteneğin dikkat çekici ancak kulübümüzün seviyesi için en az ${neededOvr} OVR olmalısın! (${diff} OVR daha gelişmelisin)"`
+      };
+    }
+
+    // Transfer kabul edildi!
+    this.acceptTransfer(club.id, clubInfo.offeredWage);
+    return {
+      success: true,
+      club: club,
+      wage: clubInfo.offeredWage,
+      msg: `👑 ANLAŞMA SAĞLANDI! ${club.badge} ${club.name} ile haftalık €${clubInfo.offeredWage.toLocaleString('tr-TR')} bedelle resmi sözleşme imzaladın!`
     };
   }
 

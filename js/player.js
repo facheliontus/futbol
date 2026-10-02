@@ -492,9 +492,7 @@ class PlayerModels {
     }
 
     const group = new THREE.Group();
-    // MODEL ÖN YÖNÜNÜ THREE.JS STANDARDI (-Z) İLE EŞİTLEMEK İÇİN İÇ WRAPPER:
     const visualGroup = new THREE.Group();
-    visualGroup.rotation.y = Math.PI;
     group.add(visualGroup);
 
     // 1. Atletik V-Taper Torso (Kaleci Forması)
@@ -579,10 +577,7 @@ class PlayerModels {
     const kitStyle = cosmetics.kit || 'kit_club';
 
     const group = new THREE.Group();
-    // MODELİN ÖNÜNÜ THREE.JS -Z STANDARDI İLE EŞİTLEMEK İÇİN İÇ WRAPPER:
-    // Böylece lookAt(0, 0, 0) dendiğinde YÜZÜ VE GÖĞSÜ KALEYE BAKAR (Arkası dönük olmaz!)
     const visualGroup = new THREE.Group();
-    visualGroup.rotation.y = Math.PI;
     group.add(visualGroup);
 
     // 1. Atletik V-Taper Torso & HD Forma
@@ -648,8 +643,9 @@ class PlayerModels {
     group.add(labelSprite);
 
     group.position.copy(kickerPos);
-    // KALEYE DOĞRU BAK (Önü ve yüzü kaleye bakar!)
-    group.lookAt(0, 0.11, 0);
+    // KALEYE DOĞRU BAK (Yüzü kaleye, sırtı arkadaki kameraya bakar!)
+    const initAngle = Math.atan2(-kickerPos.x, -kickerPos.z);
+    group.rotation.set(0, initAngle, 0);
 
     this.scene.add(group);
     this.kicker = {
@@ -913,7 +909,6 @@ class PlayerModels {
     for (let i = 0; i < count; i++) {
       const defGroup = new THREE.Group();
       const visualGroup = new THREE.Group();
-      visualGroup.rotation.y = Math.PI;
       defGroup.add(visualGroup);
 
       const offset = (i - (count - 1) / 2) * 0.76;
@@ -949,8 +944,9 @@ class PlayerModels {
       visualGroup.add(rArm);
 
       defGroup.position.copy(pos);
-      // Baraj doğrudan topun olduğu yere bakar!
-      defGroup.lookAt(lookTarget.x, defGroup.position.y, lookTarget.z);
+      // Baraj doğrudan topun olduğu yere bakar (yüzü topa bakar):
+      const wallAngle = Math.atan2(lookTarget.x - pos.x, lookTarget.z - pos.z);
+      defGroup.rotation.set(0, wallAngle, 0);
 
       this.scene.add(defGroup);
       this.wall.push({
@@ -1175,7 +1171,6 @@ class PlayerModels {
 
     const group = new THREE.Group();
     const visualGroup = new THREE.Group();
-    visualGroup.rotation.y = Math.PI;
     group.add(visualGroup);
 
     const torsoData = this.createAthleticTorso(jerseyColorHex, number, labelText, false);
@@ -1318,7 +1313,6 @@ class PlayerModels {
   createSingleDefender(pos, jerseyColorHex = 0x1e3a8a, number = 4, labelText = 'DEFANS') {
     const group = new THREE.Group();
     const visualGroup = new THREE.Group();
-    visualGroup.rotation.y = Math.PI;
     group.add(visualGroup);
 
     const torsoData = this.createAthleticTorso(jerseyColorHex, number, labelText, false);
@@ -1339,7 +1333,7 @@ class PlayerModels {
     visualGroup.add(rLeg);
 
     group.position.copy(pos);
-    group.lookAt(pos.x, 0.11, pos.z + 10);
+    group.rotation.set(0, 0, 0);
     this.scene.add(group);
 
     return {

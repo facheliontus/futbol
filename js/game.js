@@ -288,9 +288,9 @@ class Game {
     if (!this.playerModels || !this.playerModels.kicker || !this.ball) return;
     const bPos = this.ball.position;
     const footOffsetX = (this.currentFoot === 'R') ? -0.65 : 0.65;
-    const kickerPos = new THREE.Vector3(bPos.x + footOffsetX, 0.11, bPos.z + 1.85);
     this.playerModels.kicker.group.position.copy(kickerPos);
-    this.playerModels.kicker.group.lookAt(0, 0.11, 0);
+    const stanceAngle = Math.atan2(-kickerPos.x, -kickerPos.z);
+    this.playerModels.kicker.group.rotation.set(0, stanceAngle, 0);
   }
 
   // HUD KONTROL BUTONLARINI GÜNCELLE
@@ -1645,7 +1645,8 @@ class Game {
 
     // Nişan alırken forvetin gövdesi ve yüzü doğrudan hedefe döner
     if (this.playerModels && this.playerModels.kicker && this.playerModels.kicker.group) {
-      this.playerModels.kicker.group.lookAt(targetX, 0.11, 0);
+      const aimAngle = Math.atan2(targetX - this.playerModels.kicker.group.position.x, 0 - this.playerModels.kicker.group.position.z);
+      this.playerModels.kicker.group.rotation.set(0, aimAngle, 0);
     }
 
     // 3D Nişangahı hedef noktasına taşı ve göster

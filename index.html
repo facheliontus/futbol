@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>PRO FOOTBALL 3D - Kariyer & Transfer Efsanesi</title>
   <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>⚽</text></svg>">
-  <link rel="stylesheet" href="style.css?v=fc_pro_2026_v4">
+  <link rel="stylesheet" href="style.css?v=fc_pro_2026_v5">
 
   <!-- Three.js 3D Motoru (r128) -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
@@ -36,6 +36,7 @@
       </div>
 
       <div class="hud-actions">
+        <button id="btn-open-transfers" class="hud-btn transfer-hub-btn" title="İstediğin Kulüple Transfer Görüşmesi Yap">🤝 TRANSFER OL</button>
         <button id="btn-open-store" class="hud-btn store-btn" title="Kariyer Mağazası (Top, Krampon, Saç, Forma)">🛒 MAĞAZA</button>
         <button id="btn-open-leaderboard" class="hud-btn leaderboard-btn" title="Dünya Liderlik Sıralaması">🏆 LİDERLİK</button>
         <button id="btn-online-mode-toggle" class="hud-btn online-mode-toggle-btn" style="display: none;" title="Oyun Modunu Değiştir">🔄 MOD DEĞİŞTİR: 🤝 2 KİŞİLİK EŞLİ HÜCUM</button>
@@ -434,15 +435,41 @@
     </div>
   </div>
 
+  <!-- MODAL 9: KULÜP SEÇİMİ VE TRANSFER PAZARI (TRANSFER HUB) -->
+  <div id="transfer-hub-modal" class="modal-overlay hidden">
+    <div class="modal-container transfer-hub-modal-container">
+      <div class="modal-header-row">
+        <div class="modal-header-info">
+          <h2 class="modal-title" style="text-align: left; margin: 0;">🤝 TRANSFER MASASI (KULÜP GÖRÜŞMESİ)</h2>
+          <p class="modal-subtitle" style="text-align: left; margin: 0.2rem 0 0 0;">İstediğin kulüple görüşme talep et! Yeteneğin (OVR) yetiyorsa sözleşmeyi anında imzala!</p>
+        </div>
+        <button id="btn-close-transfer-hub" class="modal-close-btn" title="Kapat">✕</button>
+      </div>
+
+      <!-- Lig Filtre Sekmeleri -->
+      <div class="transfer-hub-tabs">
+        <button class="th-tab-btn active" data-tier="all">🔥 TÜM KULÜPLER</button>
+        <button class="th-tab-btn" data-tier="1">🟢 1. LİG</button>
+        <button class="th-tab-btn" data-tier="2">⚡ SÜPER LİG</button>
+        <button class="th-tab-btn" data-tier="3">👑 AVRUPA DEVLERİ</button>
+      </div>
+
+      <!-- Kulüpler Listesi Izgarası -->
+      <div id="transfer-hub-clubs-grid" class="transfer-hub-grid">
+        <!-- JavaScript ile dinamik doldurulur -->
+      </div>
+    </div>
+  </div>
+
   <!-- Oyun Modülleri -->
-  <script src="js/audio.js?v=fc_pro_2026_v4"></script>
-  <script src="js/career.js?v=fc_pro_2026_v4"></script>
-  <script src="js/stadium.js?v=fc_pro_2026_v4"></script>
-  <script src="js/player.js?v=fc_pro_2026_v4"></script>
-  <script src="js/physics.js?v=fc_pro_2026_v4"></script>
-  <script src="js/online.js?v=fc_pro_2026_v4"></script>
-  <script src="js/game.js?v=fc_pro_2026_v4"></script>
-  <script src="js/ui.js?v=fc_pro_2026_v4"></script>
+  <script src="js/audio.js?v=fc_pro_2026_v5"></script>
+  <script src="js/career.js?v=fc_pro_2026_v5"></script>
+  <script src="js/stadium.js?v=fc_pro_2026_v5"></script>
+  <script src="js/player.js?v=fc_pro_2026_v5"></script>
+  <script src="js/physics.js?v=fc_pro_2026_v5"></script>
+  <script src="js/online.js?v=fc_pro_2026_v5"></script>
+  <script src="js/game.js?v=fc_pro_2026_v5"></script>
+  <script src="js/ui.js?v=fc_pro_2026_v5"></script>
 
   <!-- Başlatıcı -->
   <script>

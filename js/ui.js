@@ -10,11 +10,13 @@ class UIManager {
     this.setupModal = document.getElementById('setup-modal');
     this.matchSummaryModal = document.getElementById('match-summary-modal');
     this.transferModal = document.getElementById('transfer-modal');
+    this.transferHubModal = document.getElementById('transfer-hub-modal');
     this.signingModal = document.getElementById('signing-modal');
     this.storeModal = document.getElementById('store-modal');
     this.leaderboardModal = document.getElementById('leaderboard-modal');
     this.currentStoreCategory = 'balls';
     this.currentLeaderboardFilter = 'money';
+    this.currentTransferTier = 'all';
 
     this.initEvents();
   }
@@ -247,6 +249,32 @@ class UIManager {
         this.renderLeaderboard(this.currentLeaderboardFilter);
       });
     });
+
+    // 14. Transfer Masası / İstenen Kulüple Görüşme Aç / Kapat
+    const btnOpenTransfers = document.getElementById('btn-open-transfers');
+    const btnCloseTransferHub = document.getElementById('btn-close-transfer-hub');
+    if (btnOpenTransfers && this.transferHubModal) {
+      btnOpenTransfers.addEventListener('click', () => {
+        this.renderTransferHub(this.currentTransferTier);
+        this.transferHubModal.classList.remove('hidden');
+      });
+    }
+    if (btnCloseTransferHub && this.transferHubModal) {
+      btnCloseTransferHub.addEventListener('click', () => {
+        this.transferHubModal.classList.add('hidden');
+      });
+    }
+
+    // Transfer Masası Lig Filtre Sekmeleri
+    const thTabs = document.querySelectorAll('.th-tab-btn');
+    thTabs.forEach(tab => {
+      tab.addEventListener('click', () => {
+        thTabs.forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+        this.currentTransferTier = tab.dataset.tier;
+        this.renderTransferHub(this.currentTransferTier);
+      });
+    });
   }
 
   // OYUNCU BİLGİ KARTINI GÜNCELLE
@@ -321,7 +349,13 @@ class UIManager {
     if (summary.earnings) {
       const e = summary.earnings;
       const elWage = document.getElementById('sum-earn-wage');
-      if (elWage) elWage.innerText = '€' + (e.baseWage || 0).toLocaleString('tr-TR');
+      if (elWage) {
+        if (e.isPayday) {
+          elWage.innerHTML = `€${(e.baseWage || 0).toLocaleString('tr-TR')} <span style="font-size:0.75rem; color:#00ff88; font-weight:700;">(Haftalık Bordro 💰)</span>`;
+        } else {
+          elWage.innerHTML = `€0 <span style="font-size:0.75rem; color:#94a3b8; font-weight:700;">(Hafta İçi - Maaş Gününe 1 Maç Kaldı 📅)</span>`;
+        }
+      }
       const elPerf = document.getElementById('sum-earn-perf');
       if (elPerf) elPerf.innerText = '+€' + ((e.goalBonus || 0) + (e.saveBonus || 0)).toLocaleString('tr-TR');
       const elWin = document.getElementById('sum-earn-win');
@@ -577,6 +611,103 @@ class UIManager {
     };
 
     this.launchConfetti();
+  }
+
+  // ==========================================================
+  // TRANSFER MASASI (İSTEDİĞİ KULÜPLE ANLAŞMA VE TRANSFER GÖRÜŞMESİ)
+  // ==========================================================
+  renderTransferHub(tierFilter = 'all') {
+    const grid = document.getElementById('transfer-hub-clubs-grid');
+    if (!grid) return;
+    grid.innerHTML = '';
+
+    const clubs = this.career.getAllClubsForTransfer();
+    const filteredClubs = tierFilter === 'all' 
+      ? clubs 
+      : clubs.filter(c => String(c.tier) === String(tierFilter));
+
+    filteredClubs.forEach(club => {
+      const card = document.createElement('div');
+      card.className = 'club-card';
+      if (club.isCurrent) card.classList.add('current');
+      else if (!club.isEligible) card.classList.add('locked');
+
+      let actionBtnHtml = '';
+      if (club.isCurrent) {
+        actionBtnHtml = `<button class="btn-club-action current" disabled>MEVCUT KULÜBÜN</button>`;
+      } else if (club.isEligible) {
+        actionBtnHtml = `<button class="btn-club-action sign" data-club="${club.id}">✍️ ANLAŞMA SAĞLA & İMZALA</button>`;
+      } else {
+        actionBtnHtml = `<button class="btn-club-action locked" disabled>🔒 ${club.minOvrNeeded} OVR GEREKLİ (+${club.ovrDiff})</button>`;
+      }
+
+      card.innerHTML = `
+        <div class="club-card-header">
+          <div class="club-card-badge">${club.badge}</div>
+          <div class="club-card-info">
+            <h4 class="club-card-name">${club.name}</h4>
+            <span class="club-card-league">${club.league}</span>
+          </div>
+          <span class="club-tier-badge tier-${club.tier}">
+            ${club.tier === 3 ? '👑 AVRUPA DEVİ' : (club.tier === 2 ? '⚡ SÜPER LİG' : '🟢 1. LİG')}
+          </span>
+        </div>
+        <div class="club-card-body">
+          <div class="club-stat-row">
+            <span>Kulüp İtibarı:</span>
+            <b>⭐ ${club.reputation} / 100</b>
+          </div>
+          <div class="club-stat-row">
+            <span>Gereken Asgari OVR:</span>
+            <b style="color:${club.isEligible ? '#00ff88' : '#e74c3c'}">${club.minOvrNeeded} OVR</b>
+          </div>
+          <div class="club-stat-row">
+            <span>Teklif Edilen Haftalık Maaş:</span>
+            <b style="color:#00f2fe">€${club.offeredWage.toLocaleString('tr-TR')}</b>
+          </div>
+        </div>
+        <div class="club-card-footer">
+          ${actionBtnHtml}
+        </div>
+      `;
+
+      const btnSign = card.querySelector('.btn-club-action.sign');
+      if (btnSign) {
+        btnSign.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const res = this.career.requestTransferToClub(club.id);
+          if (res.success) {
+            this.transferHubModal.classList.add('hidden');
+            const signModal = this.signingModal;
+            const p = this.career.player;
+            document.getElementById('sign-title').innerText = `${club.badge} ${club.name} İLE ANLAŞMA SAĞLANDI!`;
+            document.getElementById('sign-player-name').innerText = p.name;
+            document.getElementById('sign-jersey-num').innerText = '#' + p.jerseyNumber;
+            document.getElementById('sign-wage-text').innerText = `Haftalık €${club.offeredWage.toLocaleString('tr-TR')} ile resmi sözleşme imzalandı!`;
+
+            signModal.classList.remove('hidden');
+
+            if (window.gameSound) {
+              window.gameSound.playGoalCheer();
+              window.gameSound.playWhistle(true);
+            }
+
+            const btnNewSeason = document.getElementById('btn-start-new-season');
+            btnNewSeason.onclick = () => {
+              signModal.classList.add('hidden');
+              this.updatePlayerHUD();
+              this.startNextMatch();
+            };
+
+            this.launchConfetti();
+          } else {
+            alert(res.msg);
+          }
+        });
+      }
+
+      grid.appendChild(card);
+    });
   }
 
   // KONFETİ PATLAMASI KUTLAMASI
