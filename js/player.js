@@ -1,5 +1,7 @@
 // ==========================================================
 // 3D ATLETİK OYUNCULAR, KRAMPONLAR, KALECİ VE TRİVELA SİSTEMİ (player.js)
+// Gerçekçi Pro Kaleci & Atletik Futbolcu Modelleri, Anatomik Kas Hatları,
+// 4mm German Latex 5 Parmaklı Kaleci Eldiveni, Dirseklik, Çizgili Tozluk & Kramponlar
 // ==========================================================
 
 class PlayerModels {
@@ -23,7 +25,7 @@ class PlayerModels {
   }
 
   // ==========================================================
-  // 1. GERÇEKÇİ 3D KRAMPON (Boot: Saya, Bağcık, Çiviler & Trivela Çizgisi)
+  // 1. GERÇEKÇİ 3D KRAMPON (Boot: Ergonomik Saya, Bağcık, Çiviler & Trivela Çizgisi)
   // ==========================================================
   createBoot(isLeft = false, bootColor = 0x111827, accentColor = 0x00f2fe, bootStyle = 'boot_copa') {
     const bootGroup = new THREE.Group();
@@ -62,7 +64,7 @@ class PlayerModels {
     const laceMat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.7 });
     const studMat = new THREE.MeshStandardMaterial({ color: isMetallic ? 0xffd700 : 0xd4af37, roughness: 0.25, metalness: 0.85 });
 
-    // 1. Saya / Gövde (Curved Ergonomic Boot Upper)
+    // 1. Saya / Gövde (Ergonomik Kavisli Krampon Gövdesi)
     const upperGeo = new THREE.BoxGeometry(0.125, 0.09, 0.25);
     const upper = new THREE.Mesh(upperGeo, bootMat);
     upper.position.set(0, 0.045, 0.04);
@@ -252,17 +254,19 @@ class PlayerModels {
 
   // ==========================================================
   // 3. V-TAPER ATLETİK GÖVDE & HD FORMA DOKUSU (ÖN VE ARKA AYRI)
+  // Kaleci için Özel Yüksek Görünürlüklü Neon Shard Forması
   // ==========================================================
   createAthleticTorso(jerseyColorHex, number = 10, name = 'YILDIZ', isGK = false, kitStyle = 'kit_club') {
     const torsoGroup = new THREE.Group();
 
-    // Renk Ayarı
     let basePrimary = '#' + new THREE.Color(jerseyColorHex).getHexString();
-    let sponsorText = "PRO FOOTBALL";
-    let subText = "— ULTRA 3D EDITION —";
+    let sponsorText = isGK ? "SAFE HANDS" : "PRO FOOTBALL";
+    let subText = isGK ? "★ PRO GOALKEEPER ★" : "— ULTRA 3D EDITION —";
     let isSpecialKit = false;
 
-    if (kitStyle === 'kit_blackgold') {
+    if (isGK) {
+      basePrimary = '#00ff88'; // Parlak Neon Yeşil Kaleci Rengi
+    } else if (kitStyle === 'kit_blackgold') {
       basePrimary = '#0d1117'; // Gece Siyahı
       isSpecialKit = true;
     } else if (kitStyle === 'kit_cyber') {
@@ -277,82 +281,112 @@ class PlayerModels {
       isSpecialKit = true;
     }
 
-    // 1. ÖN YÜZ DOKUSU (Göğüs, Kulüp Arması, Sponsor)
+    // 1. ÖN YÜZ DOKUSU (512x512 Ultra Net Çözünürlük)
     const frontCanvas = document.createElement('canvas');
-    frontCanvas.width = 256;
-    frontCanvas.height = 256;
+    frontCanvas.width = 512;
+    frontCanvas.height = 512;
     const fctx = frontCanvas.getContext('2d');
     fctx.fillStyle = basePrimary;
-    fctx.fillRect(0, 0, 256, 256);
+    fctx.fillRect(0, 0, 512, 512);
 
-    // Kumaş dokusu / Retro çizgiler
-    if (kitStyle === 'kit_retro') {
+    if (isGK) {
+      // Kaleciye Özel Dinamik Geometrik Kamuflaj / Shard Deseni
+      fctx.fillStyle = 'rgba(0, 242, 254, 0.35)';
+      for (let i = 0; i < 8; i++) {
+        fctx.beginPath();
+        fctx.moveTo(i * 64, 0);
+        fctx.lineTo(i * 64 + 40, 512);
+        fctx.lineTo(i * 64 + 75, 512);
+        fctx.lineTo(i * 64 + 35, 0);
+        fctx.fill();
+      }
+      fctx.fillStyle = 'rgba(15, 23, 42, 0.25)';
+      for (let i = 0; i < 512; i += 16) {
+        fctx.fillRect(0, i, 512, 4);
+      }
+    } else if (kitStyle === 'kit_retro') {
       fctx.fillStyle = '#ffffff';
-      for (let x = 20; x < 256; x += 55) {
-        fctx.fillRect(x, 0, 26, 256);
+      for (let x = 40; x < 512; x += 110) {
+        fctx.fillRect(x, 0, 52, 512);
       }
     } else if (kitStyle === 'kit_blackgold') {
-      fctx.fillStyle = 'rgba(241, 196, 15, 0.15)';
-      fctx.fillRect(100, 0, 56, 256);
+      fctx.fillStyle = 'rgba(241, 196, 15, 0.18)';
+      fctx.fillRect(200, 0, 112, 512);
     } else {
-      fctx.fillStyle = 'rgba(0, 0, 0, 0.06)';
-      for (let y = 0; y < 256; y += 6) {
-        fctx.fillRect(0, y, 256, 3);
+      // Modern Sporcu Nefes Alan Mikro-Petek Kumaş Dokusu
+      fctx.fillStyle = 'rgba(0, 0, 0, 0.08)';
+      for (let y = 0; y < 512; y += 10) {
+        fctx.fillRect(0, y, 512, 4);
       }
     }
 
-    // Sol Göğüste Kulüp Arması
-    fctx.fillStyle = isSpecialKit ? '#f1c40f' : '#ffffff';
+    // Yaka & V-Neck Detayı
+    fctx.fillStyle = isGK ? '#0a1424' : '#ffffff';
     fctx.beginPath();
-    fctx.arc(65, 65, 20, 0, Math.PI * 2);
+    fctx.moveTo(216, 0);
+    fctx.lineTo(296, 0);
+    fctx.lineTo(256, 75);
+    fctx.closePath();
+    fctx.fill();
+
+    // Sol Göğüste Kulüp / Kaleci Arması
+    const crestColor = isGK ? '#0a1424' : (isSpecialKit ? '#f1c40f' : '#ffffff');
+    fctx.fillStyle = crestColor;
+    fctx.beginPath();
+    fctx.arc(130, 130, 42, 0, Math.PI * 2);
     fctx.fill();
     fctx.fillStyle = '#0a1424';
     fctx.beginPath();
-    fctx.arc(65, 65, 17, 0, Math.PI * 2);
+    fctx.arc(130, 130, 36, 0, Math.PI * 2);
     fctx.fill();
-    fctx.fillStyle = '#f1c40f';
-    fctx.font = 'bold 15px "Segoe UI", sans-serif';
+    fctx.fillStyle = isGK ? '#00ff88' : '#f1c40f';
+    fctx.font = 'bold 34px "Segoe UI", sans-serif';
     fctx.textAlign = 'center';
     fctx.textBaseline = 'middle';
-    fctx.fillText("⚽", 65, 66);
+    fctx.fillText(isGK ? "🧤" : "⚽", 130, 132);
 
     // Göğüs Sponsor Bannerı
-    fctx.fillStyle = (kitStyle === 'kit_blackgold') ? '#f1c40f' : ((kitStyle === 'kit_cyber') ? '#00f2fe' : '#ffffff');
-    fctx.font = '900 20px "Segoe UI", sans-serif';
+    fctx.fillStyle = isGK ? '#0a1424' : ((kitStyle === 'kit_blackgold') ? '#f1c40f' : ((kitStyle === 'kit_cyber') ? '#00f2fe' : '#ffffff'));
+    fctx.font = '900 42px "Segoe UI", sans-serif';
     fctx.textAlign = 'center';
-    fctx.fillText(sponsorText, 128, 145);
-    fctx.fillStyle = (kitStyle === 'kit_cyber') ? '#ff007f' : '#cbd5e1';
-    fctx.font = 'bold 9px "Segoe UI", sans-serif';
-    fctx.fillText(subText, 128, 170);
+    fctx.fillText(sponsorText, 256, 290);
+    fctx.fillStyle = isGK ? '#0f172a' : ((kitStyle === 'kit_cyber') ? '#ff007f' : '#cbd5e1');
+    fctx.font = 'bold 20px "Segoe UI", sans-serif';
+    fctx.fillText(subText, 256, 338);
 
     // 2. ARKA YÜZ DOKUSU (Oyuncu İsmi ve Büyük Forma Numarası)
     const backCanvas = document.createElement('canvas');
-    backCanvas.width = 256;
-    backCanvas.height = 256;
+    backCanvas.width = 512;
+    backCanvas.height = 512;
     const bctx = backCanvas.getContext('2d');
     bctx.fillStyle = basePrimary;
-    bctx.fillRect(0, 0, 256, 256);
+    bctx.fillRect(0, 0, 512, 512);
 
-    if (kitStyle === 'kit_retro') {
+    if (isGK) {
+      bctx.fillStyle = 'rgba(15, 23, 42, 0.2)';
+      for (let i = 0; i < 512; i += 16) {
+        bctx.fillRect(0, i, 512, 4);
+      }
+    } else if (kitStyle === 'kit_retro') {
       bctx.fillStyle = '#ffffff';
-      for (let x = 20; x < 256; x += 55) {
-        bctx.fillRect(x, 0, 26, 256);
+      for (let x = 40; x < 512; x += 110) {
+        bctx.fillRect(x, 0, 52, 512);
       }
     }
 
     // Oyuncu İsmi
-    bctx.fillStyle = (kitStyle === 'kit_blackgold') ? '#f1c40f' : '#ffffff';
-    bctx.font = 'bold 22px "Segoe UI", sans-serif';
+    bctx.fillStyle = isGK ? '#0a1424' : ((kitStyle === 'kit_blackgold') ? '#f1c40f' : '#ffffff');
+    bctx.font = '900 44px "Segoe UI", sans-serif';
     bctx.textAlign = 'center';
-    bctx.fillText(name.toUpperCase(), 128, 62);
+    bctx.fillText(name.toUpperCase(), 256, 120);
 
-    // Büyük Forma Numarası (Gölge efektli)
-    bctx.fillStyle = 'rgba(0, 0, 0, 0.4)';
-    bctx.font = '900 102px "Segoe UI", sans-serif';
-    bctx.fillText(number.toString(), 132, 172);
+    // Büyük Forma Numarası (Gölge ve 3D Kontur Efektli)
+    bctx.fillStyle = 'rgba(0, 0, 0, 0.45)';
+    bctx.font = '900 210px "Segoe UI", sans-serif';
+    bctx.fillText(number.toString(), 262, 345);
 
-    bctx.fillStyle = (kitStyle === 'kit_blackgold') ? '#f1c40f' : '#ffffff';
-    bctx.fillText(number.toString(), 128, 168);
+    bctx.fillStyle = isGK ? '#0a1424' : ((kitStyle === 'kit_blackgold') ? '#f1c40f' : '#ffffff');
+    bctx.fillText(number.toString(), 256, 340);
 
     const frontTex = new THREE.CanvasTexture(frontCanvas);
     const backTex = new THREE.CanvasTexture(backCanvas);
@@ -365,7 +399,7 @@ class PlayerModels {
     const frontMat = new THREE.MeshStandardMaterial({ map: frontTex, roughness: 0.5, metalness: 0.15 });
     const backMat = new THREE.MeshStandardMaterial({ map: backTex, roughness: 0.5, metalness: 0.15 });
 
-    // BoxGeometry yüzleri: [right (+X), left (-X), top (+Y), bottom (-Y), front (+Z), back (-Z)]
+    // Üst Göğüs Plakası (V-Taper Geniş Göğüs)
     const upperChestGeo = new THREE.BoxGeometry(0.56, 0.38, 0.28);
     const chestMaterials = [sideMat, sideMat, sideMat, sideMat, frontMat, backMat];
     const upperChest = new THREE.Mesh(upperChestGeo, chestMaterials);
@@ -374,16 +408,15 @@ class PlayerModels {
     torsoGroup.add(upperChest);
 
     // Omuz Başları (Deltoid Caps)
-    const deltoidGeo = new THREE.SphereGeometry(0.09, 12, 12);
-    const deltoidMat = sideMat;
-    const lDelt = new THREE.Mesh(deltoidGeo, deltoidMat);
+    const deltoidGeo = new THREE.SphereGeometry(0.095, 14, 14);
+    const lDelt = new THREE.Mesh(deltoidGeo, sideMat);
     lDelt.position.set(-0.30, 1.45, 0);
     torsoGroup.add(lDelt);
-    const rDelt = new THREE.Mesh(deltoidGeo, deltoidMat);
+    const rDelt = new THREE.Mesh(deltoidGeo, sideMat);
     rDelt.position.set(0.30, 1.45, 0);
     torsoGroup.add(rDelt);
 
-    // Daralan Bel / Karın (Tapered Waist)
+    // Daralan Atletik Karın / Bel (Tapered Waist)
     const waistGeo = new THREE.CylinderGeometry(0.24, 0.21, 0.28, 14);
     const waist = new THREE.Mesh(waistGeo, sideMat);
     waist.position.y = 1.04;
@@ -394,7 +427,7 @@ class PlayerModels {
   }
 
   // ==========================================================
-  // 4. ATLETİK BACAK, ÇİZGİLİ TOZLUK VE 3D KRAMPON
+  // 4. ATLETİK BACAK, ÇİZGİLİ TOZLUK, AYAK BİLEK BANDAJI & 3D KRAMPON
   // ==========================================================
   createAthleticLeg(isLeft = true, skinColorHex = 0xffdbac, sockColorHex = 0xffffff, stripeColorHex = 0xe74c3c, bootColorHex = 0x111827, bootAccentHex = 0x00f2fe, bootStyle = 'boot_copa') {
     const legGroup = new THREE.Group();
@@ -404,34 +437,40 @@ class PlayerModels {
     const skinMat = new THREE.MeshStandardMaterial({ color: skinColorHex, roughness: 0.65 });
     const sockMat = new THREE.MeshStandardMaterial({ color: sockColorHex, roughness: 0.75 });
     const stripeMat = new THREE.MeshStandardMaterial({ color: stripeColorHex, roughness: 0.6 });
+    const tapeMat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.85 }); // Beyaz bilek bandajı
 
-    // Üst Uyluk Kası (Thigh)
-    const thighGeo = new THREE.CylinderGeometry(0.095, 0.082, 0.36, 12);
+    // Üst Uyluk / Kuadriseps Kası (Thigh)
+    const thighGeo = new THREE.CylinderGeometry(0.098, 0.082, 0.36, 14);
     const thigh = new THREE.Mesh(thighGeo, skinMat);
     thigh.position.y = -0.18;
     thigh.castShadow = true;
     legGroup.add(thigh);
 
-    // Diz Kapağı (Knee Cap)
-    const kneeGeo = new THREE.SphereGeometry(0.074, 10, 10);
+    // Diz Kapağı (Anatomik Patella)
+    const kneeGeo = new THREE.SphereGeometry(0.076, 12, 12);
     const knee = new THREE.Mesh(kneeGeo, skinMat);
-    knee.position.set(0, -0.36, 0.015);
+    knee.position.set(0, -0.36, 0.018);
     legGroup.add(knee);
 
-    // Alt Bacak ve Çizgili Tozluk
-    const calfGeo = new THREE.CylinderGeometry(0.082, 0.072, 0.38, 12);
+    // Alt Bacak ve Çizgili Tozluk (Gastroknemius Kalf Kası)
+    const calfGeo = new THREE.CylinderGeometry(0.085, 0.072, 0.38, 14);
     const calf = new THREE.Mesh(calfGeo, sockMat);
     calf.position.y = -0.56;
     calf.castShadow = true;
     legGroup.add(calf);
 
     // Tozluk Çift Çizgisi
-    const stripe1 = new THREE.Mesh(new THREE.CylinderGeometry(0.084, 0.084, 0.028, 12), stripeMat);
+    const stripe1 = new THREE.Mesh(new THREE.CylinderGeometry(0.087, 0.087, 0.028, 14), stripeMat);
     stripe1.position.y = -0.42;
     legGroup.add(stripe1);
-    const stripe2 = new THREE.Mesh(new THREE.CylinderGeometry(0.084, 0.084, 0.024, 12), stripeMat);
+    const stripe2 = new THREE.Mesh(new THREE.CylinderGeometry(0.087, 0.087, 0.024, 14), stripeMat);
     stripe2.position.y = -0.47;
     legGroup.add(stripe2);
+
+    // Modern Profesyonel Ayak Bileği Beyaz Bandajı (Bellingham / Neymar Ankle Grip Tape)
+    const ankleTape = new THREE.Mesh(new THREE.CylinderGeometry(0.076, 0.076, 0.055, 14), tapeMat);
+    ankleTape.position.y = -0.68;
+    legGroup.add(ankleTape);
 
     // 3D Detaylı Krampon
     const boot = this.createBoot(isLeft, bootColorHex, bootAccentHex, bootStyle);
@@ -442,50 +481,97 @@ class PlayerModels {
   }
 
   // ==========================================================
-  // 5. KALECİ ELDİVENİ (4mm German Latex, Dolgulu Yumruk Alanı)
+  // 5. PROFESYONEL KALECİ ELDİVENİ (4mm German Latex, 5 Eklemli Parmak,
+  //    Kabartmalı Yumruk Bölgesi / Punch Zone ve Neopren Bilek Bandı)
   // ==========================================================
   createGoalkeeperGlove(isLeft = true, gloveColorHex = 0x00ff88) {
     const gloveGroup = new THREE.Group();
-    const palmMat = new THREE.MeshStandardMaterial({
+
+    // 4mm German Contact Latex (Yüksek sürtünmeli parlak kavrama yüzeyi)
+    const latexPalmMat = new THREE.MeshStandardMaterial({
       color: gloveColorHex,
-      roughness: 0.3,
+      roughness: 0.25,
       metalness: 0.15
     });
+
+    // Arka El Koruyucu Plaka & Silikon Punch Zone
     const backhandMat = new THREE.MeshStandardMaterial({
       color: 0x0f172a,
-      roughness: 0.5,
-      metalness: 0.4
+      roughness: 0.45,
+      metalness: 0.35
     });
-    const strapMat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.6 });
+    const punchZoneMat = new THREE.MeshStandardMaterial({
+      color: 0x00f2fe,
+      roughness: 0.2,
+      metalness: 0.6
+    });
+    const strapMat = new THREE.MeshStandardMaterial({
+      color: 0xffffff,
+      roughness: 0.6
+    });
 
-    const palmGeo = new THREE.BoxGeometry(0.15, 0.15, 0.09);
-    const palm = new THREE.Mesh(palmGeo, palmMat);
+    // 1. Ana Avuç İçi Lateks Taban (Palm Base)
+    const palmGeo = new THREE.BoxGeometry(0.14, 0.14, 0.065);
+    const palm = new THREE.Mesh(palmGeo, latexPalmMat);
     palm.castShadow = true;
     gloveGroup.add(palm);
 
-    const padGeo = new THREE.BoxGeometry(0.14, 0.13, 0.04);
-    const pad = new THREE.Mesh(padGeo, backhandMat);
-    pad.position.set(0, 0, -0.05);
-    gloveGroup.add(pad);
+    // 2. Arka El Koruyucu Ped & Kabartmalı Yumruk Alanı (Punch Zone)
+    const backGeo = new THREE.BoxGeometry(0.13, 0.13, 0.035);
+    const back = new THREE.Mesh(backGeo, backhandMat);
+    back.position.set(0, 0, -0.04);
+    gloveGroup.add(back);
 
-    const thumbGeo = new THREE.BoxGeometry(0.045, 0.08, 0.06);
-    const thumb = new THREE.Mesh(thumbGeo, palmMat);
+    // 3D Silikon Punch Ridges (Topu yumruklama kanalları)
+    for (let r = -0.04; r <= 0.04; r += 0.025) {
+      const ridgeGeo = new THREE.BoxGeometry(0.11, 0.012, 0.015);
+      const ridge = new THREE.Mesh(ridgeGeo, punchZoneMat);
+      ridge.position.set(0, r, -0.06);
+      gloveGroup.add(ridge);
+    }
+
+    // 3. DÖRT AYRI ANATOMİK PARMAK (İşaret, Orta, Yüzük, Serçe - Roll Finger Cut)
+    const fingerWidth = 0.026;
+    const fingerThickness = 0.045;
+    const fingerSpacing = 0.031;
+    const fingerHeights = [0.082, 0.095, 0.088, 0.074]; // Serçe, Yüzük, Orta, İşaret
+
+    fingerHeights.forEach((fHeight, fIdx) => {
+      const fX = (fIdx - 1.5) * fingerSpacing;
+      // Lateks parmak silindiri
+      const fGeo = new THREE.CylinderGeometry(fingerWidth / 2, fingerWidth / 2, fHeight, 10);
+      const finger = new THREE.Mesh(fGeo, latexPalmMat);
+      finger.position.set(fX, 0.07 + fHeight / 2, 0.005);
+      gloveGroup.add(finger);
+
+      // Parmak ucu kubbesi (Fingertip dome)
+      const capGeo = new THREE.SphereGeometry(fingerWidth / 2, 8, 8);
+      const cap = new THREE.Mesh(capGeo, latexPalmMat);
+      cap.position.set(fX, 0.07 + fHeight, 0.005);
+      gloveGroup.add(cap);
+    });
+
+    // 4. BAŞ PARMAK (Lateks Kaplı Eğimli Başparmak)
+    const thumbGeo = new THREE.BoxGeometry(0.045, 0.085, 0.05);
+    const thumb = new THREE.Mesh(thumbGeo, latexPalmMat);
     const thumbX = isLeft ? 0.085 : -0.085;
     thumb.position.set(thumbX, 0.02, 0.02);
+    thumb.rotation.z = isLeft ? -0.35 : 0.35;
     gloveGroup.add(thumb);
 
-    const strapGeo = new THREE.CylinderGeometry(0.078, 0.078, 0.05, 12);
-    const strap = new THREE.Mesh(strapGeo, strapMat);
-    strap.position.y = 0.09;
-    gloveGroup.add(strap);
+    // 5. NEOPREN BİLEKLİK & ÇİFT SARMALLI AYARLANABİLİR BANT (Wrist Bandage)
+    const wristGeo = new THREE.CylinderGeometry(0.078, 0.078, 0.065, 14);
+    const wrist = new THREE.Mesh(wristGeo, strapMat);
+    wrist.position.y = -0.095;
+    gloveGroup.add(wrist);
 
     return gloveGroup;
   }
 
   // ==========================================================
-  // KALECİ 3D MODELİ OLUŞTURMA (Modern Atletik Kaleci)
+  // KALECİ 3D MODELİ OLUŞTURMA (Modern Atletik Dev Kaleci - 1.96m Heybetli Duruş)
   // ==========================================================
-  createGoalkeeper(colorHex = 0xf39c12) {
+  createGoalkeeper(colorHex = 0x00ff88) {
     if (this.goalkeeper) {
       this.scene.remove(this.goalkeeper.group);
       this.goalkeeper = null;
@@ -493,6 +579,8 @@ class PlayerModels {
 
     const group = new THREE.Group();
     const visualGroup = new THREE.Group();
+    // Kaleci daha uzun boylu ve geniş kanat açıklığına sahiptir (Courtois / Neuer oranı)
+    visualGroup.scale.set(1.05, 1.06, 1.05);
     group.add(visualGroup);
 
     // 1. Atletik V-Taper Torso (Kaleci Forması)
@@ -504,46 +592,82 @@ class PlayerModels {
     head.position.y = 1.74;
     visualGroup.add(head);
 
-    // 3. Kaleci Şortu
-    const shortsMat = new THREE.MeshStandardMaterial({ color: 0x111111, roughness: 0.8 });
-    const shorts = new THREE.Mesh(new THREE.BoxGeometry(0.52, 0.32, 0.28), shortsMat);
+    // 3. Kaleci Şortu & Yan Darbe Koruyucu Pedler (Hip Crash Pads)
+    const shortsMat = new THREE.MeshStandardMaterial({ color: 0x0f172a, roughness: 0.8 });
+    const padMat = new THREE.MeshStandardMaterial({ color: 0x1e293b, roughness: 0.5 });
+
+    const shorts = new THREE.Mesh(new THREE.BoxGeometry(0.53, 0.32, 0.28), shortsMat);
     shorts.position.y = 0.86;
     shorts.castShadow = true;
     visualGroup.add(shorts);
 
+    // Kalça Darbe Yastıkları
+    const lHipPad = new THREE.Mesh(new THREE.BoxGeometry(0.025, 0.18, 0.16), padMat);
+    lHipPad.position.set(-0.275, 0.86, 0);
+    visualGroup.add(lHipPad);
+    const rHipPad = new THREE.Mesh(new THREE.BoxGeometry(0.025, 0.18, 0.16), padMat);
+    rHipPad.position.set(0.275, 0.86, 0);
+    visualGroup.add(rHipPad);
+
     // 4. Bacaklar, Çizgili Tozluklar ve Kramponlar
-    const leftLeg = this.createAthleticLeg(true, 0xffdbac, 0x111111, colorHex, 0x111827, 0x00ff88);
-    const rightLeg = this.createAthleticLeg(false, 0xffdbac, 0x111111, colorHex, 0x111827, 0x00ff88);
+    const leftLeg = this.createAthleticLeg(true, 0xffdbac, 0x0f172a, colorHex, 0x111827, 0x00ff88);
+    const rightLeg = this.createAthleticLeg(false, 0xffdbac, 0x0f172a, colorHex, 0x111827, 0x00ff88);
     visualGroup.add(leftLeg);
     visualGroup.add(rightLeg);
 
-    // 5. Kollar ve Dolgulu Kaleci Eldivenleri
+    // 5. Uzun Kollu Forma & Dirsek Koruyucu Pedler (Elbow Pads)
     const armMat = new THREE.MeshStandardMaterial({ color: colorHex, roughness: 0.5 });
-    const armGeo = new THREE.CylinderGeometry(0.075, 0.065, 0.48, 12);
+    const armGeo = new THREE.CylinderGeometry(0.076, 0.066, 0.52, 14);
+    const elbowPadGeo = new THREE.BoxGeometry(0.09, 0.11, 0.07);
 
+    // Sol Kol
     const leftArmGroup = new THREE.Group();
-    leftArmGroup.position.set(-0.34, 1.45, 0);
+    leftArmGroup.position.set(-0.35, 1.45, 0);
     const lArm = new THREE.Mesh(armGeo, armMat);
-    lArm.position.y = -0.22;
+    lArm.position.y = -0.24;
     leftArmGroup.add(lArm);
+
+    // Dirseklik
+    const lElbow = new THREE.Mesh(elbowPadGeo, padMat);
+    lElbow.position.set(0, -0.24, -0.03);
+    leftArmGroup.add(lElbow);
+
     const leftGlove = this.createGoalkeeperGlove(true, 0x00ff88);
-    leftGlove.position.y = -0.52;
+    leftGlove.position.y = -0.55;
     leftArmGroup.add(leftGlove);
     visualGroup.add(leftArmGroup);
 
+    // Sağ Kol
     const rightArmGroup = new THREE.Group();
-    rightArmGroup.position.set(0.34, 1.45, 0);
+    rightArmGroup.position.set(0.35, 1.45, 0);
     const rArm = new THREE.Mesh(armGeo, armMat);
-    rArm.position.y = -0.22;
+    rArm.position.y = -0.24;
     rightArmGroup.add(rArm);
+
+    const rElbow = new THREE.Mesh(elbowPadGeo, padMat);
+    rElbow.position.set(0, -0.24, -0.03);
+    rightArmGroup.add(rElbow);
+
     const rightGlove = this.createGoalkeeperGlove(false, 0x00ff88);
-    rightGlove.position.y = -0.52;
+    rightGlove.position.y = -0.55;
     rightArmGroup.add(rightGlove);
     visualGroup.add(rightArmGroup);
 
+    // ==========================================================
+    // DOĞAL KALECİ HAZIR DURUŞU (Natural Goalkeeper Ready Stance)
+    // Kaleci dimdik durmaz! Dizler hafif kırık, gövde öne eğik, kollar açık ve hazır!
+    // ==========================================================
+    torsoData.group.rotation.x = 0.18; // Gövde topa doğru hafif eğik
+    head.rotation.x = -0.15; // Baş topa kilitli
+
+    leftLeg.rotation.x = -0.12; // Dizler kırık
+    rightLeg.rotation.x = -0.12;
+
+    leftArmGroup.rotation.set(0.42, 0, -0.45); // Kollar iki yana açık, avuçlar önde
+    rightArmGroup.rotation.set(0.42, 0, 0.45);
+
     group.position.copy(this.gkDefaultPos);
-    // Kaleci sahaya / forvete (+Z yönüne) baksın
-    group.lookAt(0, 0.11, 20);
+    group.lookAt(0, 0.11, 20); // Forvete doğru bak
     this.scene.add(group);
 
     this.goalkeeper = {
@@ -551,6 +675,8 @@ class PlayerModels {
       visualGroup: visualGroup,
       torso: torsoData.group,
       head: head,
+      leftLeg: leftLeg,
+      rightLeg: rightLeg,
       leftArm: leftArmGroup,
       rightArm: rightArmGroup,
       leftGlove: leftGlove,
@@ -603,8 +729,9 @@ class PlayerModels {
     visualGroup.add(leftLeg);
     visualGroup.add(rightLeg);
 
-    // 5. Kollar
+    // 5. Kollar & Sporcu Bilekliği
     const armMat = new THREE.MeshStandardMaterial({ color: jerseyColorHex, roughness: 0.5 });
+    const wristbandMat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.8 });
     const armGeo = new THREE.CylinderGeometry(0.07, 0.06, 0.52, 10);
 
     const leftArmGroup = new THREE.Group();
@@ -619,6 +746,11 @@ class PlayerModels {
     const rArm = new THREE.Mesh(armGeo, armMat);
     rArm.position.y = -0.24;
     rightArmGroup.add(rArm);
+
+    // Sağ Bilekte Havlu Sporcu Bandajı
+    const rWristband = new THREE.Mesh(new THREE.CylinderGeometry(0.068, 0.068, 0.07, 12), wristbandMat);
+    rWristband.position.y = -0.42;
+    rightArmGroup.add(rWristband);
     visualGroup.add(rightArmGroup);
 
     // Baş Üstünde Oyuncu İsim Etiketi
@@ -896,8 +1028,6 @@ class PlayerModels {
     this.wall.forEach(def => this.scene.remove(def.group));
     this.wall = [];
 
-    // wallPos doğrudan barajın merkezi olarak kullanılır.
-    // GÜVENLİK SINIRI: Baraj KESİNLİKLE kalenin içinde veya arkasında olamaz (min z: 5.8m)
     const wallZ = Math.max(5.8, wallPos.z || 12);
     const wallX = wallPos.x || 0;
     const wallCenter = new THREE.Vector3(wallX, 0.11, wallZ);
@@ -924,6 +1054,7 @@ class PlayerModels {
       const shortsMat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.8 });
       const shorts = new THREE.Mesh(new THREE.BoxGeometry(0.50, 0.32, 0.27), shortsMat);
       shorts.position.y = 0.86;
+      shorts.castShadow = true;
       visualGroup.add(shorts);
 
       const lLeg = this.createAthleticLeg(true, 0xe0ac69, jerseyColorHex, 0xffffff, 0x111827, 0xf1c40f);
@@ -944,7 +1075,6 @@ class PlayerModels {
       visualGroup.add(rArm);
 
       defGroup.position.copy(pos);
-      // Baraj doğrudan topun olduğu yere bakar (yüzü topa bakar):
       const wallAngle = Math.atan2(lookTarget.x - pos.x, lookTarget.z - pos.z);
       defGroup.rotation.set(0, wallAngle, 0);
 
@@ -974,7 +1104,7 @@ class PlayerModels {
   }
 
   // ==========================================================
-  // KALECİ AI DALIŞ & UÇUŞ ANİMASYONU
+  // KALECİ AI DALIŞ & UÇUŞ ANİMASYONU (Gelişmiş 90 Uçuşu & Yerden Kapanma)
   // ==========================================================
   triggerGoalkeeperDive(targetX, targetY, targetZ, travelTime = 0.8) {
     if (!this.goalkeeper) return;
@@ -982,11 +1112,11 @@ class PlayerModels {
     this.goalkeeper.state = 'diving';
 
     const startPos = this.goalkeeper.group.position.clone();
-    const clampedTargetX = THREE.MathUtils.clamp(targetX * 0.65, -2.1, 2.1);
-    const clampedTargetY = THREE.MathUtils.clamp(targetY * 0.8, 0.4, 1.95);
+    const clampedTargetX = THREE.MathUtils.clamp(targetX * 0.72, -2.3, 2.3);
+    const clampedTargetY = THREE.MathUtils.clamp(targetY * 0.85, 0.35, 2.15);
 
     let startTime = performance.now();
-    const duration = Math.max(0.75, travelTime) * 1000;
+    const duration = Math.max(0.72, travelTime) * 1000;
 
     const diveLoop = () => {
       const elapsed = performance.now() - startTime;
@@ -996,12 +1126,18 @@ class PlayerModels {
       this.goalkeeper.group.position.x = THREE.MathUtils.lerp(startPos.x, clampedTargetX, ease);
       this.goalkeeper.group.position.y = THREE.MathUtils.lerp(0, clampedTargetY, Math.sin(progress * Math.PI));
 
-      const rollAngle = (clampedTargetX > 0 ? -1 : 1) * Math.sin(progress * Math.PI) * 1.0;
+      const isFlyingHigh = (clampedTargetY > 1.35);
+      const rollAngle = (clampedTargetX > 0 ? -1 : 1) * Math.sin(progress * Math.PI) * (isFlyingHigh ? 1.25 : 1.45);
       this.goalkeeper.group.rotation.z = rollAngle;
 
       if (this.goalkeeper.leftArm && this.goalkeeper.rightArm) {
-        this.goalkeeper.leftArm.rotation.z = (clampedTargetX < 0 ? -1.5 : 0.4);
-        this.goalkeeper.rightArm.rotation.z = (clampedTargetX > 0 ? 1.5 : -0.4);
+        if (clampedTargetX < 0) {
+          this.goalkeeper.leftArm.rotation.set(-0.2, 0, -1.8);
+          this.goalkeeper.rightArm.rotation.set(-0.2, 0, 0.4);
+        } else {
+          this.goalkeeper.rightArm.rotation.set(-0.2, 0, 1.8);
+          this.goalkeeper.leftArm.rotation.set(-0.2, 0, -0.4);
+        }
       }
 
       if (progress < 1) {
@@ -1016,7 +1152,9 @@ class PlayerModels {
     requestAnimationFrame(diveLoop);
   }
 
+  // ==========================================================
   // MANUEL KALECİ KONTROLÜ (İnsan Kaleci Refleks & Uçuş)
+  // ==========================================================
   setGoalkeeperManualPosition(xRatio, yRatio, isAction = false) {
     if (!this.goalkeeper) return;
     this.isPlayerGK = true;
@@ -1031,31 +1169,34 @@ class PlayerModels {
 
       if (Math.abs(xRatio) > 0.15) {
         if (yRatio >= 0.45) {
-          const targetY = 1.70;
+          // 90'a Uçuş (Top Corner Flying Dive)
+          const targetY = 1.75;
           this.goalkeeper.group.position.x = THREE.MathUtils.lerp(this.goalkeeper.group.position.x, targetX, 0.55);
           this.goalkeeper.group.position.y = THREE.MathUtils.lerp(this.goalkeeper.group.position.y, targetY, 0.55);
-          this.goalkeeper.group.rotation.z = THREE.MathUtils.lerp(this.goalkeeper.group.rotation.z, -Math.sign(xRatio) * 1.15, 0.5);
+          this.goalkeeper.group.rotation.z = THREE.MathUtils.lerp(this.goalkeeper.group.rotation.z, -Math.sign(xRatio) * 1.25, 0.5);
 
           if (this.goalkeeper.leftArm && this.goalkeeper.rightArm) {
-            this.goalkeeper.leftArm.rotation.z = (xRatio < 0 ? -1.85 : 0.6);
-            this.goalkeeper.rightArm.rotation.z = (xRatio > 0 ? 1.85 : -0.6);
-            this.goalkeeper.leftArm.rotation.x = -0.4;
-            this.goalkeeper.rightArm.rotation.x = -0.4;
+            this.goalkeeper.leftArm.rotation.z = (xRatio < 0 ? -1.95 : 0.6);
+            this.goalkeeper.rightArm.rotation.z = (xRatio > 0 ? 1.95 : -0.6);
+            this.goalkeeper.leftArm.rotation.x = -0.3;
+            this.goalkeeper.rightArm.rotation.x = -0.3;
           }
         } else {
+          // Yerden Köşeye Kapanma (Low Corner Smother)
           const targetY = 0.22;
           this.goalkeeper.group.position.x = THREE.MathUtils.lerp(this.goalkeeper.group.position.x, targetX, 0.6);
           this.goalkeeper.group.position.y = THREE.MathUtils.lerp(this.goalkeeper.group.position.y, targetY, 0.6);
-          this.goalkeeper.group.rotation.z = THREE.MathUtils.lerp(this.goalkeeper.group.rotation.z, -Math.sign(xRatio) * 1.35, 0.55);
+          this.goalkeeper.group.rotation.z = THREE.MathUtils.lerp(this.goalkeeper.group.rotation.z, -Math.sign(xRatio) * 1.45, 0.55);
 
           if (this.goalkeeper.leftArm && this.goalkeeper.rightArm) {
-            this.goalkeeper.leftArm.rotation.z = (xRatio < 0 ? -1.65 : 0.3);
-            this.goalkeeper.rightArm.rotation.z = (xRatio > 0 ? 1.65 : -0.3);
+            this.goalkeeper.leftArm.rotation.z = (xRatio < 0 ? -1.75 : 0.3);
+            this.goalkeeper.rightArm.rotation.z = (xRatio > 0 ? 1.75 : -0.3);
             this.goalkeeper.leftArm.rotation.x = 0.65;
             this.goalkeeper.rightArm.rotation.x = 0.65;
           }
         }
       } else {
+        // Ortaya gelen şutlarda zıplama veya yere çökme
         if (yRatio >= 0.5) {
           this.goalkeeper.group.position.y = THREE.MathUtils.lerp(this.goalkeeper.group.position.y, 1.85, 0.55);
           this.goalkeeper.group.rotation.z = 0;
@@ -1078,6 +1219,7 @@ class PlayerModels {
         this.resetGoalkeeper();
       }, 1100);
     } else {
+      // Hareket halindeyken açı kapatma
       this.goalkeeper.group.position.x = THREE.MathUtils.lerp(this.goalkeeper.group.position.x, targetX, 0.35);
       const baseHeight = (yRatio > 0.65) ? (yRatio - 0.65) * 0.8 : 0;
       this.goalkeeper.group.position.y = THREE.MathUtils.lerp(this.goalkeeper.group.position.y, baseHeight, 0.25);
@@ -1091,19 +1233,29 @@ class PlayerModels {
           this.goalkeeper.leftArm.rotation.z = 0.2 + (xRatio * 0.4);
           this.goalkeeper.rightArm.rotation.z = -0.2 + (xRatio * 0.4);
         } else {
-          this.goalkeeper.leftArm.rotation.z = 0.8 + (xRatio * 0.5);
-          this.goalkeeper.rightArm.rotation.z = -0.8 + (xRatio * 0.5);
+          // Hazır bekleme açısı
+          this.goalkeeper.leftArm.rotation.z = -0.45 + (xRatio * 0.3);
+          this.goalkeeper.rightArm.rotation.z = 0.45 + (xRatio * 0.3);
         }
       }
     }
   }
 
+  // Kaleciyi Doğal Hazır Bekleme Duruşuna Döndür
   resetGoalkeeper() {
     if (!this.goalkeeper) return;
     this.goalkeeper.group.position.copy(this.gkDefaultPos);
     this.goalkeeper.group.rotation.set(0, 0, 0);
-    this.goalkeeper.leftArm.rotation.set(0, 0, 0);
-    this.goalkeeper.rightArm.rotation.set(0, 0, 0);
+
+    // Doğal hazır duruş kollarını geri yükle
+    if (this.goalkeeper.leftArm && this.goalkeeper.rightArm) {
+      this.goalkeeper.leftArm.rotation.set(0.42, 0, -0.45);
+      this.goalkeeper.rightArm.rotation.set(0.42, 0, 0.45);
+    }
+    if (this.goalkeeper.torso) {
+      this.goalkeeper.torso.rotation.x = 0.18;
+    }
+
     this.isDiving = false;
     this.goalkeeper.state = 'idle';
   }
@@ -1154,9 +1306,54 @@ class PlayerModels {
     };
   }
 
+  // ==========================================================
+  // CANLI GERÇEKÇİ ANİMASYON DÖNGÜSÜ (Canlı Nefes, Parmak Ucu Sekmesi & Baş Takibi)
+  // ==========================================================
   updateIdle(time) {
-    if (this.goalkeeper && !this.isDiving) {
-      this.goalkeeper.group.position.y = Math.abs(Math.sin(time * 5)) * 0.05;
+    // 1. KALECİ CANLI BEKLEME HAREKETLERİ (Gerçek Maç İçi Parmak Ucu Yaylanması)
+    if (this.goalkeeper && !this.isDiving && this.goalkeeper.state === 'idle') {
+      // Ayak parmak uçlarında ritmik sekme (Pre-jump bounce)
+      const gkHop = Math.abs(Math.sin(time * 6.5)) * 0.038;
+      this.goalkeeper.group.position.y = gkHop;
+
+      // Göğüs nefes alma ve hazır kolların mikro salınımı
+      if (this.goalkeeper.torso) {
+        this.goalkeeper.torso.rotation.x = 0.18 + Math.sin(time * 3.5) * 0.025;
+      }
+      if (this.goalkeeper.leftArm && this.goalkeeper.rightArm) {
+        this.goalkeeper.leftArm.rotation.z = -0.45 + Math.sin(time * 6.5) * 0.04;
+        this.goalkeeper.rightArm.rotation.z = 0.45 - Math.sin(time * 6.5) * 0.04;
+      }
+
+      // Topa doğru baş odaklanması
+      if (this.goalkeeper.head) {
+        this.goalkeeper.head.rotation.y = Math.sin(time * 1.5) * 0.05;
+      }
+    }
+
+    // 2. FORVET CANLI BEKLEME HAREKETLERİ (Nefes Alma ve Konsantrasyon)
+    if (this.kicker && !this.kicker.isKicking) {
+      const breath = Math.sin(time * 2.8) * 0.015;
+      if (this.kicker.torso) {
+        this.kicker.torso.position.y = breath;
+      }
+      if (this.kicker.head) {
+        this.kicker.head.rotation.x = -0.05 + breath * 0.8;
+      }
+      if (this.kicker.leftArmGroup && this.kicker.rightArmGroup) {
+        this.kicker.leftArmGroup.rotation.x = Math.sin(time * 2.8) * 0.06;
+        this.kicker.rightArmGroup.rotation.x = -Math.sin(time * 2.8) * 0.06;
+      }
+    }
+
+    // 3. SAVUNMA BARAJI DİRİ BEKLEME HAREKETİ
+    if (this.wall && this.wall.length > 0) {
+      this.wall.forEach((def, dIdx) => {
+        if (def.group) {
+          const shift = Math.sin(time * 2.5 + dIdx * 0.7) * 0.012;
+          def.group.position.y = Math.max(0, shift);
+        }
+      });
     }
   }
 
@@ -1183,6 +1380,7 @@ class PlayerModels {
     const shortsMat = new THREE.MeshStandardMaterial({ color: 0x111111, roughness: 0.8 });
     const shorts = new THREE.Mesh(new THREE.BoxGeometry(0.50, 0.32, 0.27), shortsMat);
     shorts.position.y = 0.86;
+    shorts.castShadow = true;
     visualGroup.add(shorts);
 
     const lLeg = this.createAthleticLeg(true, 0xffdbac, 0xffffff, jerseyColorHex, 0x111827, 0x00ff88);
@@ -1325,6 +1523,7 @@ class PlayerModels {
     const shortsMat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.8 });
     const shorts = new THREE.Mesh(new THREE.BoxGeometry(0.50, 0.32, 0.27), shortsMat);
     shorts.position.y = 0.86;
+    shorts.castShadow = true;
     visualGroup.add(shorts);
 
     const lLeg = this.createAthleticLeg(true, 0xe0ac69, jerseyColorHex, 0xffffff, 0x111827, 0xe74c3c);
