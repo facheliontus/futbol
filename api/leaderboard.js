@@ -4,6 +4,8 @@
 
 const https = require('https');
 
+const FIREBASE_DB_URL = 'https://futbol-62e5b-default-rtdb.firebaseio.com';
+const FIREBASE_LEADERBOARD_URL = FIREBASE_DB_URL + '/leaderboard.json';
 const CLOUD_OBJECT_ID = 'ff808181a09d98f701a0fbb2a1f55f53';
 const CLOUD_URL = 'https://api.restful-api.dev/objects/' + CLOUD_OBJECT_ID;
 
@@ -96,13 +98,23 @@ module.exports = async (req, res) => {
   }
 
   try {
-    // 1. GET: Liderlik tablosunu oku
+    // 1. GET: Liderlik tablosunu oku (Öncelikli: Firebase Realtime Database)
     if (req.method === 'GET') {
+      try {
+        const fbData = await httpGet(FIREBASE_LEADERBOARD_URL);
+        if (fbData && typeof fbData === 'object') {
+          const players = Object.values(fbData).filter(p => p && p.isRealPlayer !== false);
+          return res.status(200).json({ success: true, source: 'firebase', players });
+        }
+      } catch (fbErr) {
+        console.warn('Firebase GET hatası, cloud fallback deneniyor:', fbErr.message);
+      }
+
       const cloudData = await httpGet(CLOUD_URL);
       const players = (cloudData.data && Array.isArray(cloudData.data.players)) 
         ? cloudData.data.players 
         : [];
-      return res.status(200).json({ success: true, players });
+      return res.status(200).json({ success: true, source: 'cloud_backup', players });
     }
 
     // 2. POST: Yeni/güncel oyuncu kaydet
@@ -118,37 +130,46 @@ module.exports = async (req, res) => {
         return res.status(400).json({ success: false, error: 'Geçersiz oyuncu verisi' });
       }
 
-      // Mevcut listeyi çek ve birleştir
-      const cloudData = await httpGet(CLOUD_URL);
-      let players = (cloudData.data && Array.isArray(cloudData.data.players)) 
-        ? cloudData.data.players 
-        : [];
-
-      // Varsa güncelle, yoksa ekle
-      const existingIdx = players.findIndex(p => p.id === cleanPlayer.id || p.name === cleanPlayer.name);
-      if (existingIdx >= 0) {
-        players[existingIdx] = { ...players[existingIdx], ...cleanPlayer };
-      } else {
-        players.push(cleanPlayer);
+      // Firebase Realtime Database'e yaz
+      let fbSuccess = false;
+      try {
+        await httpPut(`${FIREBASE_DB_URL}/leaderboard/${cleanPlayer.id}.json`, cleanPlayer);
+        fbSuccess = true;
+      } catch (fbWriteErr) {
+        console.warn('Firebase POST hatası:', fbWriteErr.message);
       }
 
-      // Hileli kayıtları temizle ve son 50 gerçek oyuncuyu sakla
-      players = players
-        .map(p => validateAndSanitizePlayer(p))
-        .filter(Boolean)
-        .slice(-50);
+      // Yedek bulut nesnesine de yaz
+      let players = [];
+      try {
+        const cloudData = await httpGet(CLOUD_URL);
+        players = (cloudData.data && Array.isArray(cloudData.data.players)) 
+          ? cloudData.data.players 
+          : [];
 
-      // Buluta geri yaz
-      await httpPut(CLOUD_URL, {
-        name: 'PRO_FOOTBALL_3D_GLOBAL_LEADERBOARD',
-        data: {
-          version: 1,
-          lastUpdated: Date.now(),
-          players: players
+        const existingIdx = players.findIndex(p => p.id === cleanPlayer.id || p.name === cleanPlayer.name);
+        if (existingIdx >= 0) {
+          players[existingIdx] = { ...players[existingIdx], ...cleanPlayer };
+        } else {
+          players.push(cleanPlayer);
         }
-      });
 
-      return res.status(200).json({ success: true, player: cleanPlayer, totalPlayers: players.length });
+        players = players
+          .map(p => validateAndSanitizePlayer(p))
+          .filter(Boolean)
+          .slice(-60);
+
+        await httpPut(CLOUD_URL, {
+          name: 'PRO_FOOTBALL_3D_GLOBAL_LEADERBOARD',
+          data: {
+            version: 2,
+            lastUpdated: Date.now(),
+            players: players
+          }
+        });
+      } catch (backupErr) {}
+
+      return res.status(200).json({ success: true, firebase: fbSuccess, player: cleanPlayer, totalPlayers: players.length, players: players });
     }
 
     return res.status(405).json({ error: 'Method not allowed' });

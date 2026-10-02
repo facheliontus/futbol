@@ -758,6 +758,7 @@ class CareerManager {
     this.matchesPerSeason = 6;
     this.currentMatch = null;
     this._inLegitTransaction = false;
+    this.firebaseDbUrl = 'https://futbol-62e5b-default-rtdb.firebaseio.com';
     this.cloudLeaderboardId = 'ff808181a09d98f701a0fbb2a1f55f53';
     this.cachedCloudPlayers = [];
     this.seasonStats = {
@@ -770,6 +771,30 @@ class CareerManager {
     };
     this.history = [];
     this.loadProfile();
+    this.initFirebaseLiveStream();
+  }
+
+  // Canlı Firebase Akışı (F5 basmadan diğer oyuncuların puanlarını anında gösterir)
+  initFirebaseLiveStream() {
+    if (typeof window === 'undefined' || !window.EventSource) return;
+    try {
+      const streamUrl = `${this.firebaseDbUrl}/leaderboard.json`;
+      const sse = new EventSource(streamUrl);
+      sse.addEventListener('put', (e) => {
+        try {
+          const parsed = JSON.parse(e.data);
+          if (parsed && parsed.data && typeof parsed.data === 'object') {
+            const list = Object.values(parsed.data).filter(p => p && p.isRealPlayer !== false);
+            if (list.length > 0) {
+              this.cachedCloudPlayers = list;
+              if (window.uiManager && window.uiManager.leaderboardModal && !window.uiManager.leaderboardModal.classList.contains('hidden')) {
+                window.uiManager.renderLeaderboard(window.uiManager.currentLeaderboardFilter || 'money');
+              }
+            }
+          }
+        } catch (err) {}
+      });
+    } catch (err) {}
   }
 
   hasSavedProfile() {
@@ -1208,6 +1233,23 @@ class CareerManager {
         isRealPlayer: true
       };
 
+      // 0. Firebase Realtime Database Entegrasyonu (Token gerektirmez!)
+      if (this.firebaseDbUrl) {
+        try {
+          const fbRes = await fetch(`${this.firebaseDbUrl}/leaderboard/${payload.id}.json`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+          }).catch(() => null);
+
+          if (fbRes && fbRes.ok) {
+            // Firebase'e başarıyla yazıldı!
+            console.log('[FIREBASE] Oyuncu profili Firebase Realtime Database ile eşitlendi.');
+            return;
+          }
+        } catch (e) {}
+      }
+
       // 1. Vercel Serverless API dene
       let res = await fetch('/api/leaderboard', {
         method: 'POST',
@@ -1216,6 +1258,13 @@ class CareerManager {
       }).catch(() => null);
 
       if (res && res.ok) {
+        const json = await res.json().catch(() => null);
+        if (json && Array.isArray(json.players)) {
+          this.cachedCloudPlayers = json.players;
+          try {
+            localStorage.setItem('fc_cached_cloud_players', JSON.stringify(json.players));
+          } catch (e) {}
+        }
         return;
       }
 
@@ -1268,17 +1317,34 @@ class CareerManager {
 
     let cloudPlayers = [];
     try {
-      // 1. Vercel API üzerinden oku
-      let res = await fetch('/api/leaderboard').catch(() => null);
-      if (res && res.ok) {
-        const json = await res.json();
-        if (json.success && Array.isArray(json.players)) {
-          cloudPlayers = json.players.filter(p => p && p.isRealPlayer !== false && !String(p.id).startsWith('bot_'));
+      // 0. Firebase Realtime Database üzerinden oku
+      if (this.firebaseDbUrl) {
+        try {
+          const fbRes = await fetch(`${this.firebaseDbUrl}/leaderboard.json?t=${Date.now()}`).catch(() => null);
+          if (fbRes && fbRes.ok) {
+            const fbObj = await fbRes.json();
+            if (fbObj && typeof fbObj === 'object') {
+              cloudPlayers = Object.values(fbObj).filter(p => p && p.isRealPlayer !== false);
+            }
+          }
+        } catch (e) {}
+      }
+
+      // 1. Vercel API üzerinden oku (Firebase boşsa veya yoksa)
+      if (cloudPlayers.length === 0) {
+        let res = await fetch('/api/leaderboard').catch(() => null);
+        if (res && res.ok) {
+          const json = await res.json();
+          if (json.success && Array.isArray(json.players)) {
+            cloudPlayers = json.players.filter(p => p && p.isRealPlayer !== false && !String(p.id).startsWith('bot_'));
+          }
         }
-      } else {
-        // 2. Doğrudan bulut nesnesinden oku
-        const cloudRes = await fetch(`https://api.restful-api.dev/objects/${this.cloudLeaderboardId}?t=${Date.now()}`);
-        if (cloudRes.ok) {
+      }
+
+      // 2. Doğrudan genel bulut nesnesinden oku (Son fallback)
+      if (cloudPlayers.length === 0) {
+        const cloudRes = await fetch(`https://api.restful-api.dev/objects/${this.cloudLeaderboardId}?t=${Date.now()}`).catch(() => null);
+        if (cloudRes && cloudRes.ok) {
           const cloudData = await cloudRes.json();
           if (cloudData.data && Array.isArray(cloudData.data.players)) {
             cloudPlayers = cloudData.data.players.filter(p => p && p.isRealPlayer !== false && !String(p.id).startsWith('bot_'));
